@@ -18,6 +18,10 @@ The AnyFX demo project (which is optional) also uses:
 DevIL
 glm
 
+AnyFX is split into two major parts, the compiler and the API. The compiler will take one AnyFX formatted effect file and output a binary blob which can then be read by the API. The API then provides a simple interface to use the resources generated from the effect. 
+
+Setup
+====
 
 AnyFX can be setup in different ways. When running CMake, you will see four variables. These are:
 
@@ -34,4 +38,23 @@ The ANYFX_BUILD_GRAMMAR will detect any changes in the AnyFX.g ANTLR grammar fil
 
 The ANYFX_TRANSPOSE_MATRICES is deprecated and will be removed soon. 
 
+Features
+====
+
 AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no backwards compatibility with earlier versions of OpenGL or GLSL.
+
+AnyFX supports the following GLSL features:
+- Vertex and fragment shaders.
+- Hull/domain and geometry shaders.
+- Compute shaders.
+- Offline compilation and validation. (but not using program binaries)
+- Cross-shader variables.
+- Uniform blocks.
+- Subroutines.
+
+And the following OpenGL features:
+- Sampler objects.
+- Render states.
+- Program assembly.
+- Per-program variable usage.
+- Application global uniform block sharing.
