@@ -24,7 +24,7 @@ public:
 	enum Status
 	{
 		Success,
-        Warnings,
+	        Warnings,
 		Failed
 	};
 

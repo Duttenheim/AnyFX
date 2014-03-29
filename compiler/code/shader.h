@@ -119,7 +119,7 @@ private:
 	unsigned codeOffset;
 
 	std::string preamble;
-    std::map<int, std::pair<std::string, std::string>> indexToFileMap;
+    	std::map<int, std::pair<std::string, std::string> > indexToFileMap;
 }; 
 
 //------------------------------------------------------------------------------
