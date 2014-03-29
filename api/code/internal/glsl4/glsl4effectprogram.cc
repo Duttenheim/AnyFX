@@ -190,7 +190,7 @@ GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLuint& numBinding
 {
     std::map<std::string, InternalEffectSubroutine*>::const_iterator it;
 
-    std::vector<std::pair<GLuint, GLuint>> intermediateMap;
+    std::vector<std::pair<GLuint, GLuint> > intermediateMap;
     unsigned numActiveSubroutines = 0;
     for (it = bindings.begin(); it != bindings.end(); it++)
     {

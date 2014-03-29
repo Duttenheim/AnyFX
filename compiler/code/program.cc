@@ -94,7 +94,7 @@ Program::TypeCheck( TypeChecker& typechecker )
         {
             if (!typechecker.HasSymbol((*it).first))
             {
-                std::string msg = AnyFX::Format("Subroutine interface '%s' is not defined, %s\n", (*it).first, this->ErrorSuffix().c_str());
+                std::string msg = AnyFX::Format("Subroutine interface '%s' is not defined, %s\n", (*it).first.c_str(), this->ErrorSuffix().c_str());
                 typechecker.Error(msg);
             }
             else
@@ -105,20 +105,20 @@ Program::TypeCheck( TypeChecker& typechecker )
                     Variable* sub = (Variable*)sym;
                     if (!sub->IsSubroutine())
                     {
-                        std::string msg = AnyFX::Format("Symbol '%s' doesn't denote a subroutine prototype, %s\n", (*it).first, this->ErrorSuffix().c_str());
+                        std::string msg = AnyFX::Format("Symbol '%s' doesn't denote a subroutine prototype, %s\n", (*it).first.c_str(), this->ErrorSuffix().c_str());
                         typechecker.Error(msg);
                     }
                 }
                 else
                 {
-                    std::string msg = AnyFX::Format("Symbol '%s' is not of subroutine type, %s\n", (*it).first, this->ErrorSuffix().c_str());
+                    std::string msg = AnyFX::Format("Symbol '%s' is not of subroutine type, %s\n", (*it).first.c_str(), this->ErrorSuffix().c_str());
                     typechecker.Error(msg);
                 }
             }
 
             if (!typechecker.HasSymbol((*it).second))
             {
-                std::string msg = AnyFX::Format("Subroutine implementation '%s' is not defined, %s\n", (*it).second, this->ErrorSuffix().c_str());
+                std::string msg = AnyFX::Format("Subroutine implementation '%s' is not defined, %s\n", (*it).second.c_str(), this->ErrorSuffix().c_str());
                 typechecker.Error(msg);
             }
             else
@@ -129,13 +129,13 @@ Program::TypeCheck( TypeChecker& typechecker )
                     Subroutine* sub = (Subroutine*)sym;
                     if (sub->GetSubroutineType() != Subroutine::Implementation)
                     {
-                        std::string msg = AnyFX::Format("Subroutine symbol '%s' must be declared as subroutine implementation, %s\n", (*it).second, this->ErrorSuffix().c_str());
+                        std::string msg = AnyFX::Format("Subroutine symbol '%s' must be declared as subroutine implementation, %s\n", (*it).second.c_str(), this->ErrorSuffix().c_str());
                         typechecker.Error(msg);
                     }
                 }
                 else
                 {
-                    std::string msg = AnyFX::Format("Symbol '%s' is not of subroutine type, %s\n", (*it).second, this->ErrorSuffix().c_str());
+                    std::string msg = AnyFX::Format("Symbol '%s' is not of subroutine type, %s\n", (*it).second.c_str(), this->ErrorSuffix().c_str());
                     typechecker.Error(msg);
                 }
             }

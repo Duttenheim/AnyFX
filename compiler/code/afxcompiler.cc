@@ -189,8 +189,8 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 			effect.TypeCheck(typeChecker);
 
 			// compile effect
-            TypeChecker::Status typeCheckerStatus = typeChecker.GetStatus();
-            if (typeCheckerStatus == TypeChecker::Success || typeCheckerStatus == TypeChecker::Warnings)
+			int typeCheckerStatus = typeChecker.GetStatus();
+		        if (typeCheckerStatus == TypeChecker::Success || typeCheckerStatus == TypeChecker::Warnings)
 			{
 				// create code generator
 				Generator generator;
@@ -199,20 +199,20 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 				generator.SetHeader(header);
 				effect.Generate(generator);
 
-                // set warnings as 'error' buffer
-                if (typeCheckerStatus == TypeChecker::Warnings)
-                {
-                    unsigned warnings = typeChecker.GetWarningCount();
-                    std::string errorMessage;
-                    errorMessage = typeChecker.GetErrorBuffer();
-                    errorMessage = errorMessage + Format("Type checking returned with %d warnings\n", warnings);
+        	        	// set warnings as 'error' buffer
+	        	        if (typeCheckerStatus == TypeChecker::Warnings)
+        	        	{
+	                	    unsigned warnings = typeChecker.GetWarningCount();
+		                    std::string errorMessage;
+        		            errorMessage = typeChecker.GetErrorBuffer();
+                		    errorMessage = errorMessage + Format("Type checking returned with %d warnings\n", warnings);
 
-                    *errorBuffer = new AnyFXErrorBlob;
-                    (*errorBuffer)->buffer = new char[errorMessage.size()];
-                    (*errorBuffer)->size = errorMessage.size();
-                    errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
-                    (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
-                }
+		                    *errorBuffer = new AnyFXErrorBlob;
+        		            (*errorBuffer)->buffer = new char[errorMessage.size()];
+                		    (*errorBuffer)->size = errorMessage.size();
+	                	    errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
+	        	            (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
+		                }
 
 				if (generator.GetStatus() == Generator::Success)
 				{
@@ -238,7 +238,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 						errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
 						(*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
 						return false;
-					}					
+					}
 				}
 				else
 				{
@@ -270,7 +270,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 				errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
 				(*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
 				return false;
-			}	
+			}
 		}
 		else
 		{
