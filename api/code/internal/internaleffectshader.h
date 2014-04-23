@@ -49,11 +49,15 @@ protected:
 	/// returns code
 	const std::string& GetCode() const;
 
+    /// returns list of local sizes used for compute shaders
+    const unsigned* GetLocalSizes() const;
+
 	Effect* effect;
 	InternalShaderType type;
 	std::string sourceCode;
 	std::string name;
 	std::string error;
+    unsigned localSizes[3];
 }; 
 
 
@@ -83,6 +87,16 @@ InternalEffectShader::GetCode() const
 {
 	return this->sourceCode;
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned* 
+InternalEffectShader::GetLocalSizes() const
+{
+    return this->localSizes;
+}
+
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

@@ -46,6 +46,9 @@ public:
 	/// the OpenGL4 backend automatically sets the patch size
 	const bool SupportsTessellation() const;
 
+    /// returns the group sizes defined if the program uses a compute shader
+    const unsigned* GetLocalSizes() const;
+
 	/// returns true if linking of program was successful
 	bool IsValid();
 	/// returns linking error string

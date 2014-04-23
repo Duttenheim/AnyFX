@@ -52,6 +52,13 @@ EffectShaderStreamLoader::Load( BinReader* reader, Effect* effect)
 	internalShader->sourceCode = code;
 	bool success = internalShader->Compile();
 
+    if (internalShader->type == InternalEffectShader::ComputeShader)
+    {
+        internalShader->localSizes[0] = reader->ReadInt();
+        internalShader->localSizes[1] = reader->ReadInt();
+        internalShader->localSizes[2] = reader->ReadInt();
+    }
+
 	if (success)
 	{
 		EffectShader* shader = new EffectShader;

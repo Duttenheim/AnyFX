@@ -915,3 +915,9 @@ binaryexpatom		returns [ Expression* tree ]
 						$tree->SetFile((const char*)LT(-1)->custom);
 					}
 					;
+					
+// expands an expression surrounded by paranthesis
+parantexpression	returns [ Expression* tree ]
+					:
+					LP expression RP { $tree = $expression.tree; }
+					;

@@ -60,7 +60,7 @@ GLSL4EffectVarblock::Setup( std::vector<InternalEffectProgram*> programs )
 
 	// bind buffer and initialize size
 	glBindBuffer(GL_UNIFORM_BUFFER, this->buffer);
-	glBufferData(GL_UNIFORM_BUFFER, this->dataBlock->size, NULL, GL_STATIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, this->dataBlock->size, NULL, GL_DYNAMIC_DRAW);
 
 	// unbind last buffer
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -124,7 +124,7 @@ GLSL4EffectVarblock::Commit()
 		// bind buffer, orphan the old one, and buffer new data
 		glBindBuffer(GL_UNIFORM_BUFFER, this->buffer);
 		glInvalidateBufferData(this->buffer);
-		glBufferData(GL_UNIFORM_BUFFER, this->dataBlock->size, this->dataBlock->data, GL_STATIC_DRAW);
+		glBufferData(GL_UNIFORM_BUFFER, this->dataBlock->size, this->dataBlock->data, GL_DYNAMIC_DRAW);
 
 		// reset dirty flag
 		this->isDirty = false;

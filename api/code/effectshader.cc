@@ -61,4 +61,13 @@ EffectShader::GetCode() const
 {
 	return this->internalShader->GetCode();
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+const unsigned* 
+EffectShader::GetLocalSizes() const
+{
+    return this->internalShader->GetLocalSizes();
+}
 } // namespace AnyFX

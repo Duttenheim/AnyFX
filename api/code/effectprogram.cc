@@ -4,8 +4,10 @@
 //------------------------------------------------------------------------------
 #include "./effectprogram.h"
 #include "./effectrenderstate.h"
+#include "./effectshader.h"
 #include "internal/internaleffectprogram.h"
 #include <assert.h>
+
 
 namespace AnyFX
 {
@@ -99,5 +101,15 @@ const bool
 EffectProgram::SupportsTessellation() const
 {
 	return this->internalProgram->SupportsTessellation();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+const unsigned* 
+EffectProgram::GetLocalSizes() const
+{
+    assert(0 != this->shaderBlock.cs);
+    return this->shaderBlock.cs->GetLocalSizes();
 }
 } // namespace AnyFX

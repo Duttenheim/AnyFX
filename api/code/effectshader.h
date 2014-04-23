@@ -36,6 +36,9 @@ public:
 	/// return error, only possibly viable after compilation
 	const std::string& GetError() const;
 
+    /// return list of local sizes (only viable for compute shaders)
+    const unsigned* GetLocalSizes() const;
+
 private:
 	friend class EffectShaderStreamLoader;
 	friend class EffectProgramStreamLoader;

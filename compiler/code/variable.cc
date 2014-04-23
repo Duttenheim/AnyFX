@@ -415,9 +415,9 @@ Variable::Format( const Header& header, bool inVarblock ) const
 	// add GLSL uniform qualifier
 	if (header.GetType() == Header::GLSL && !inVarblock)
 	{
-        if (this->isSubroutine) formattedCode.append("subroutine ");
+        if (this->isSubroutine)                 formattedCode.append("subroutine ");
         if (this->qualifierFlags & GroupShared) formattedCode.append("shared ");
-		formattedCode.append("uniform ");
+		else                                    formattedCode.append("uniform ");
 	}
 
 	formattedCode.append(DataType::ToProfileType(this->GetVarType(), header.GetType()));

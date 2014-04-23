@@ -23,13 +23,17 @@ public:
 	/// destructor
 	virtual ~InternalEffectSubroutine();
 
+    /// too bad this has to be public...
     /// returns the name of the subroutine object
     const std::string& GetName() const;
-    /// returns the subroutine type
-    const EffectSubroutine::SubroutineType& GetType() const;
 
 private:
+    friend class EffectSubroutine;
     friend class EffectSubroutineStreamLoader;
+
+
+    /// returns the subroutine type
+    const EffectSubroutine::SubroutineType& GetType() const;
 
     std::string name;
     EffectSubroutine::SubroutineType type;

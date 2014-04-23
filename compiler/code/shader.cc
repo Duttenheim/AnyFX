@@ -20,6 +20,8 @@
 #include "varbuffer.h"
 #include "subroutine.h"
 
+#define max(x, y) x > y ? x : y
+
 namespace AnyFX
 {
 
@@ -629,6 +631,13 @@ Shader::Compile( BinWriter& writer )
 	writer.WriteInt(this->shaderType);
 	writer.WriteString(this->name);
 	writer.WriteString(this->formattedCode);
+
+    if (this->shaderType == ProgramRow::ComputeShader)
+    {
+        writer.WriteInt(max(1, this->func.GetIntFlag(FunctionAttribute::LocalSizeX)));
+        writer.WriteInt(max(1, this->func.GetIntFlag(FunctionAttribute::LocalSizeY)));
+        writer.WriteInt(max(1, this->func.GetIntFlag(FunctionAttribute::LocalSizeZ)));
+    }
 }
 
 //------------------------------------------------------------------------------

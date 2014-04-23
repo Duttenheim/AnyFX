@@ -141,14 +141,14 @@ TypeChecker::GetStatus() const
 	{
 		return Failed;
 	}
-	else if (this->warningCount > 0)
-	{
-        	return Warnings;
-	}
-	else
-	{
-        	return Success;
-	}
+    else if (this->warningCount > 0)
+    {
+        return Warnings;
+    }
+    else
+    {
+        return Success;
+    }
 }
 
 } // namespace AnyFX
