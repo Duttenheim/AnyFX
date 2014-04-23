@@ -38,6 +38,8 @@ The ANYFX_BUILD_GRAMMAR will detect any changes in the AnyFX.g ANTLR grammar fil
 
 The ANYFX_TRANSPOSE_MATRICES is deprecated and will be removed soon. 
 
+If you wish to put AnyFX in any folder like structure in your project, just set the ANYFX_FOLDER variable to your folder name. 
+
 Features
 ====
 
