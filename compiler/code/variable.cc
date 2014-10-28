@@ -120,25 +120,7 @@ Variable::TypeCheck( TypeChecker& typechecker )
 	// evaluate array size
 	if (this->isArray)
 	{
-		if (this->sizeExpression)
-		{
-			// evaluate constant array size
-			this->arraySize = this->sizeExpression->EvalInt(typechecker);
-			delete this->sizeExpression;
-		}
-		else if (this->arrayType == SimpleArray)
-		{
-			this->arraySize = this->valueTable[0].second.GetNumValues();
-		}
-		else if (this->arrayType == TypedArray)
-		{
-			this->arraySize = this->valueTable.size();
-		}
-        else if (this->arrayType == UnsizedArray)
-        {
-            // an unsized array should count as a single type when determining the size, since it's practically undecided.
-            this->arraySize = 1;
-        }
+        this->EvaluateArraySize(typechecker);
 	}
 	
 	unsigned i, j;
@@ -205,6 +187,7 @@ Variable::TypeCheck( TypeChecker& typechecker )
 		else if (qualifier == "write")			this->accessMode = Variable::Write;
 		else if (qualifier == "readwrite")		this->accessMode = Variable::ReadWrite;
         else if (qualifier == "groupshared")    this->qualifierFlags |= Variable::GroupShared;
+        else if (qualifier == "shared")         this->qualifierFlags |= Variable::Shared;
 		else
 		{
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -343,7 +326,9 @@ Variable::TypeCheck( TypeChecker& typechecker )
 void 
 Variable::Compile( BinWriter& writer )
 {
+    bool shared = (this->qualifierFlags & Variable::Shared) == 0 ? false : true;
 	writer.WriteString(this->name);
+    writer.WriteBool(shared);
 	writer.WriteInt(this->type.GetType());
 
 	// if this is a compute variable, write the format and access mode to stream
@@ -567,4 +552,31 @@ Variable::FormatImageAccess( const Header& header ) const
 	return "";
 }
 
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+Variable::EvaluateArraySize(TypeChecker& typechecker)
+{
+    if (this->sizeExpression)
+    {
+        // evaluate constant array size
+        this->arraySize = this->sizeExpression->EvalInt(typechecker);
+        delete this->sizeExpression;
+        this->sizeExpression = 0;
+    }
+    else if (this->arrayType == SimpleArray)
+    {
+        this->arraySize = this->valueTable[0].second.GetNumValues();
+    }
+    else if (this->arrayType == TypedArray)
+    {
+        this->arraySize = this->valueTable.size();
+    }
+    else if (this->arrayType == UnsizedArray)
+    {
+        // an unsized array should count as a single type when determining the size, since it's practically undecided.
+        this->arraySize = 1;
+    }
+}
 } // namespace AnyFX

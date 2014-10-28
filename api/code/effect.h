@@ -10,7 +10,7 @@
 */
 //------------------------------------------------------------------------------
 #include <map>
-#include <vector>
+#include "EASTL/vector.h"
 #include <string>
 namespace AnyFX
 {

@@ -52,4 +52,23 @@ EffectVarblock::Discard()
 	this->internalVarblock->Release();
 	this->internalVarblock = 0;
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+EffectVarblock::SetFlushManually(bool b)
+{
+	this->internalVarblock->SetFlushManually(b);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+EffectVarblock::FlushBuffer()
+{
+	this->internalVarblock->FlushBuffer();
+}
+
 } // namespace AnyFX

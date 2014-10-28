@@ -42,6 +42,7 @@ public:
 		MinMagLinearMipPoint,
 		Anisotropic,
 		Point,
+		Linear,
 
 		NumFilterModes
 	};

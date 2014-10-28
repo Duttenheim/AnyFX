@@ -44,15 +44,8 @@ public:
 		MinMipLinearMagPoint,
 		MinMagLinearMipPoint,
 		Anisotropic,
-		ComparisonMinMagMipPoint,
-		ComparisonMinMagMipLinear,
-		ComparisonMinMagPointMipLinear,
-		ComparisonMinMipPointMagLinear,
-		ComparisonMinPointMipMagLinear,
-		ComparisonMinLinearMipMagPoint,
-		ComparisonMinMipLinearMagPoint,
-		ComparisonMinMagLinearMipPoint,
-		ComparisonAnisotropic,
+		Point,
+		Linear,
 
 		NumFilterModes
 	};

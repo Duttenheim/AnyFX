@@ -13,7 +13,7 @@
 #endif
 
 #include <string>
-#include <vector>
+#include "EASTL/vector.h"
 #include "annotable.h"
 namespace AnyFX
 {
@@ -35,10 +35,14 @@ public:
 	void Apply();
 	/// commits changes to shader variables, call this before rendering
 	void Commit();
+    /// performs pre-draw stuff
+    void PreDraw();
+    /// performs post-draw stuff
+    void PostDraw();
 	/// returns name of program
 	const std::string& GetName() const;
 	/// returns array to list of shaders, this is list is always a constant size of 6
-	std::vector<EffectShader*> GetShaders() const;
+	eastl::vector<EffectShader*> GetShaders() const;
 	/// returns render state
 	EffectRenderState* GetRenderState() const;
 
@@ -77,28 +81,10 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline std::vector<EffectShader*> 
-EffectProgram::GetShaders() const
-{
-	std::vector<EffectShader*> shaderList;
-	shaderList.resize(6);
-	shaderList[0] = this->shaderBlock.vs;
-	shaderList[1] = this->shaderBlock.ps;
-	shaderList[2] = this->shaderBlock.hs;
-	shaderList[3] = this->shaderBlock.ds;
-	shaderList[4] = this->shaderBlock.gs;
-	shaderList[5] = this->shaderBlock.cs;
-	return shaderList;
-}
 
 //------------------------------------------------------------------------------
 /**
 */
-inline EffectRenderState* 
-EffectProgram::GetRenderState() const
-{
-	return this->renderState;
-}
 
 
 } // namespace AnyFX

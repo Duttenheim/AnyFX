@@ -36,6 +36,16 @@ EffectRenderState::Discard()
 
 //------------------------------------------------------------------------------
 /**
+    This function resets the state to be like it was when the file was loaded.
+*/
+void 
+EffectRenderState::Reset()
+{
+    this->internalRenderState->Reset();
+}
+
+//------------------------------------------------------------------------------
+/**
 */
 void 
 EffectRenderState::Apply()

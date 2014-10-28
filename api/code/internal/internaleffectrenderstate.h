@@ -29,6 +29,8 @@ protected:
 
 	/// applies render state, override in implementation
 	virtual void Apply();
+    /// resets render state
+    void Reset();
 
 	/// gets name of render state
 	const std::string& GetName() const;
@@ -64,12 +66,13 @@ protected:
 
 		bool depthEnabled;
 		bool depthWriteEnabled;
+		bool depthClampEnabled;
 		bool separateBlendEnabled;
 		bool scissorEnabled;
 		bool stencilEnabled;
 		bool alphaToCoverageEnabled;
 		bool multisampleEnabled;
-	} renderSettings;
+	} renderSettings, defaultRenderSettings;
 
 	std::string name;
 }; 

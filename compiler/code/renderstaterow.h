@@ -78,6 +78,7 @@ public:
 	{
 		DepthEnabled,
 		DepthWrite,
+		DepthClamp,
 		SeparateBlend,
 		ScissorEnabled,
 		StencilEnabled,

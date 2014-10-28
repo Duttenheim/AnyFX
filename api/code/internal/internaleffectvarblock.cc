@@ -19,10 +19,10 @@ InternalEffectVarblock::InternalEffectVarblock() :
 	isShared(false),
 	isDirty(true),
 	isSlave(false),
-	masterBlock(NULL),
-	refCount(1)
+	manualFlushing(false),
+	masterBlock(NULL)
 {
-	// empty
+	this->Retain();
 }
 
 //------------------------------------------------------------------------------
@@ -30,17 +30,21 @@ InternalEffectVarblock::InternalEffectVarblock() :
 */
 InternalEffectVarblock::~InternalEffectVarblock()
 {
-	// empty
+	this->childBlocks.clear();
+	this->masterBlock = 0;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 void 
-InternalEffectVarblock::Setup( std::vector<InternalEffectProgram*> programs )
+InternalEffectVarblock::Setup( eastl::vector<InternalEffectProgram*> programs )
 {
 	// create new datablock if and only if we are the master varblock
 	this->dataBlock = new InternalVarblockData;
+
+	// point our master block to ourselves, this way we can always locate the master block of any varblock
+	this->masterBlock = this;
 
 	// set size to 0
 	this->dataBlock->size = 0;
@@ -69,7 +73,7 @@ InternalEffectVarblock::Setup( std::vector<InternalEffectProgram*> programs )
 /**
 */
 void 
-InternalEffectVarblock::SetupSlave( std::vector<InternalEffectProgram*> programs, InternalEffectVarblock* master )
+InternalEffectVarblock::SetupSlave( eastl::vector<InternalEffectProgram*> programs, InternalEffectVarblock* master )
 {
 	assert(!this->isSlave);
 
@@ -78,6 +82,7 @@ InternalEffectVarblock::SetupSlave( std::vector<InternalEffectProgram*> programs
 
 	// set master pointer
 	this->masterBlock = master;
+	this->masterBlock->childBlocks.push_back(this);
 
 	// set slave flag
 	this->isSlave = true;
@@ -115,6 +120,24 @@ InternalEffectVarblock::Commit()
 
 //------------------------------------------------------------------------------
 /**
+*/
+void 
+InternalEffectVarblock::PreDraw()
+{
+    // override me!
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVarblock::PostDraw()
+{
+    // override me!
+}
+
+//------------------------------------------------------------------------------
+/**
 	Run this when varblock is properly setup
 */
 void 
@@ -136,19 +159,32 @@ InternalEffectVarblock::SetupSignature()
 void 
 InternalEffectVarblock::SetVariable( InternalEffectVariable* var, void* value )
 {
-	memcpy((void*)(this->dataBlock->data + var->byteOffset), value, var->byteSize);
+    char* data = this->dataBlock->data + var->byteOffset;
+	memcpy(data, value, var->byteSize);
 	this->isDirty = true;
 }
 
 //------------------------------------------------------------------------------
 /**
-	Since arrays can be incrementally updated
 */
 void 
 InternalEffectVarblock::SetVariableArray( InternalEffectVariable* var, void* value, size_t size )
 {
-	memcpy((void*)(this->dataBlock->data + var->byteOffset), value, size);
+    char* data = this->dataBlock->data + var->byteOffset;
+	memcpy(data, value, size);
 	this->isDirty = true;	
+}
+
+//------------------------------------------------------------------------------
+/**
+    Basically the same as SetVariable, however it assumes the variable is an array, and sets the variable at a certain index.
+    This would be equivalent to arr[i] = value;
+*/
+void 
+InternalEffectVarblock::SetVariableIndexed( InternalEffectVariable* var, void* value, unsigned i )
+{
+    char* data = this->dataBlock->data + var->byteOffset + i * var->byteSize;
+    memcpy(data, value, var->byteSize);
 }
 
 //------------------------------------------------------------------------------
@@ -158,6 +194,30 @@ void
 InternalEffectVarblock::Activate( InternalEffectProgram* program )
 {
 	// override me!
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+InternalEffectVarblock::FlushBuffer()
+{
+	// override me!
+}
+
+//------------------------------------------------------------------------------
+/**
+	Sets the block to flush manually, this applies to ALL blocks
+*/
+void
+InternalEffectVarblock::SetFlushManually(bool b)
+{
+	this->masterBlock->manualFlushing = b;
+	unsigned i;
+	for (i = 0; i < this->masterBlock->childBlocks.size(); i++)
+	{
+		this->masterBlock->childBlocks[i]->manualFlushing = b;
+	}
 }
 
 } // namespace AnyFX

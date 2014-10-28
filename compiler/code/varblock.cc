@@ -14,6 +14,8 @@ namespace AnyFX
 /**
 */
 VarBlock::VarBlock() :
+    bufferExpression(NULL),
+    bufferCount(1),
 	hasAnnotation(false)
 {
 	this->symbolType = Symbol::VarblockType;
@@ -51,17 +53,34 @@ VarBlock::TypeCheck( TypeChecker& typechecker )
 		this->annotation.TypeCheck(typechecker);
 	}
 
+    // evaluate buffer expression
+    if (0 != this->bufferExpression)
+    {
+        DataType bufferExpressionType = this->bufferExpression->EvalType(typechecker);
+        if (bufferExpressionType != DataType::Integer)
+        {
+            std::string message = AnyFX::Format("Varblock buffer size must be an integer, %s\n", this->ErrorSuffix().c_str());
+            typechecker.Error(message);
+        }
+        else
+        {
+            this->bufferCount = this->bufferExpression->EvalInt(typechecker);
+        }
+    }
+
 	unsigned i;
 	for (i = 0; i < this->variables.size(); i++)
 	{
-        Variable var = this->variables[i];
+        Variable& var = this->variables[i];
         if (var.GetArrayType() == Variable::UnsizedArray)
         {
             std::string message = AnyFX::Format("Varblocks cannot contain variables of unsized type! (%s), %s\n", var.GetName().c_str(), this->ErrorSuffix().c_str());
             typechecker.Error(message);
         }
 
+        // since TypeCheck might modify the variable, we must replace the old one. 
 		var.TypeCheck(typechecker);
+        //this->variables[i] = var;
 	}
 
 	const Header& header = typechecker.GetHeader();
@@ -102,10 +121,9 @@ VarBlock::Format( const Header& header ) const
     else
     {
         // varblocks of this type are only available in GLSL3-4 and HLSL4-5
-        if (header.GetType() == Header::GLSL) formattedCode.append("uniform ");
+        if (header.GetType() == Header::GLSL) formattedCode.append("layout(shared) uniform ");
         else if (header.GetType() == Header::HLSL) formattedCode.append("cbuffer ");
     }
-	
 	
 	formattedCode.append(this->GetName());
 	formattedCode.append("\n{\n");
@@ -132,6 +150,7 @@ VarBlock::Compile( BinWriter& writer )
 {
 	writer.WriteString(this->name);
 	writer.WriteBool(this->isShared);
+    writer.WriteUInt(this->bufferCount);
 
 	// write if annotation is used
 	writer.WriteBool(this->hasAnnotation);

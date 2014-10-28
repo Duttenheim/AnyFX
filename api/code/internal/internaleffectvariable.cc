@@ -40,7 +40,7 @@ InternalEffectVariable::InternalEffectVariable() :
 	format(NoFormat),
 	access(NoAccess)
 {
-	// empty
+	this->Retain();
 }
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ InternalEffectVariable::~InternalEffectVariable()
 	Call this from subclass
 */
 void 
-InternalEffectVariable::Setup( std::vector<InternalEffectProgram*> program, const std::string& defaultValue )
+InternalEffectVariable::Setup( eastl::vector<InternalEffectProgram*> program, const std::string& defaultValue )
 {
 	std::string typeString = EffectVariable::TypeToString(this->type);
 	this->signature = typeString + ":" + this->name;
@@ -78,6 +78,15 @@ InternalEffectVariable::Setup( std::vector<InternalEffectProgram*> program, cons
 			this->SetupDefaultValue(defaultValue);
 		}
 	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetupSlave(eastl::vector<InternalEffectProgram*> program)
+{
+    // empty, override in subclass
 }
 
 //------------------------------------------------------------------------------
@@ -152,13 +161,18 @@ InternalEffectVariable::SetupDefaultValue( const std::string& string )
 		case UInteger2:
 		case UInteger3:
 		case UInteger4:
+            {
+                int value = atoi(str);
+                memcpy((void*)(this->currentValue + numValues * sizeof(int)), (void*)&value, sizeof(int));
+                break;
+            }	
 		case Bool:
 		case Bool2:
 		case Bool3:
 		case Bool4:
 			{
 				int value = atoi(str);
-				memcpy((void*)(this->currentValue + numValues * sizeof(int)), (void*)&value, sizeof(int));
+				memcpy((void*)(this->currentValue + numValues * sizeof(bool)), (void*)&value, sizeof(bool));
 				break;
 			}			
 		}
@@ -218,7 +232,7 @@ InternalEffectVariable::SetFloat( float f )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)&f);
 	}
-	else
+	else if (memcmp(this->currentValue, &f, sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)&f, sizeof(float));
 		this->isDirty = true;
@@ -236,7 +250,7 @@ InternalEffectVariable::SetFloat2( const float* vec )
 	{
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 2 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 2 * sizeof(float));
 		this->isDirty = true;
@@ -254,7 +268,7 @@ InternalEffectVariable::SetFloat3( const float* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 3 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 3 * sizeof(float));
 		this->isDirty = true;
@@ -273,7 +287,7 @@ InternalEffectVariable::SetFloat4( const float* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 4 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 4 * sizeof(float));
 		this->isDirty = true;
@@ -293,7 +307,7 @@ InternalEffectVariable::SetFloatArray( const float* f, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)f, count * sizeof(float));
 	}
-	else
+	else if (memcmp(this->currentValue, f, count * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)f, count * sizeof(float));
 		this->commitSize = count;
@@ -313,7 +327,7 @@ InternalEffectVariable::SetFloat2Array( const float* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 2 * sizeof(float));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 2 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 2 * sizeof(float));
 		this->commitSize = count;
@@ -333,7 +347,7 @@ InternalEffectVariable::SetFloat3Array( const float* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 3 * sizeof(float));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 3 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 3 * sizeof(float));
 		this->commitSize = count;
@@ -353,7 +367,7 @@ InternalEffectVariable::SetFloat4Array( const float* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 4 * sizeof(float));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 4 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 4 * sizeof(float));
 		this->commitSize = count;
@@ -373,7 +387,7 @@ InternalEffectVariable::SetInt( int i )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)&i);
 	}
-	else
+	else if (memcmp(this->currentValue, &i, sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)&i, sizeof(int));
 		this->isDirty = true;
@@ -392,7 +406,7 @@ InternalEffectVariable::SetInt2( const int* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 2 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 2 * sizeof(int));
 		this->isDirty = true;
@@ -410,7 +424,7 @@ InternalEffectVariable::SetInt3( const int* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 3 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 3 * sizeof(int));
 		this->isDirty = true;
@@ -429,7 +443,7 @@ InternalEffectVariable::SetInt4( const int* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 4 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 4 * sizeof(int));
 		this->isDirty = true;
@@ -448,7 +462,7 @@ InternalEffectVariable::SetIntArray( const int* i, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)i, count * sizeof(int));
 	}
-	else
+	else if (memcmp(this->currentValue, i, count * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)i, count * sizeof(int));
 		this->commitSize = count;
@@ -468,7 +482,7 @@ InternalEffectVariable::SetInt2Array( const int* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 2 * sizeof(int));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 2 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 2 * sizeof(int));
 		this->commitSize = count;
@@ -488,7 +502,7 @@ InternalEffectVariable::SetInt3Array( const int* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 3 * sizeof(int));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 3 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 3 * sizeof(int));
 		this->commitSize = count;
@@ -508,7 +522,7 @@ InternalEffectVariable::SetInt4Array( const int* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 4 * sizeof(int));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 4 * sizeof(int)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 4 * sizeof(int));
 		this->commitSize = count;
@@ -528,7 +542,7 @@ InternalEffectVariable::SetBool( bool b )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)&b);
 	}
-	else
+	else if (memcmp(this->currentValue, &b, sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)&b, sizeof(bool));
 		this->isDirty = true;
@@ -547,7 +561,7 @@ InternalEffectVariable::SetBool2( const bool* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 2 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 2 * sizeof(bool));
 		this->isDirty = true;
@@ -565,7 +579,7 @@ InternalEffectVariable::SetBool3( const bool* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 3 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 3 * sizeof(bool));
 		this->isDirty = true;
@@ -584,7 +598,7 @@ InternalEffectVariable::SetBool4( const bool* vec )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)vec);
 	}
-	else
+	else if (memcmp(this->currentValue, vec, 4 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, 4 * sizeof(bool));
 		this->isDirty = true;
@@ -603,7 +617,7 @@ InternalEffectVariable::SetBoolArray( const bool* b, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)b, count * sizeof(bool));
 	}
-	else
+	else  if (memcmp(this->currentValue, b, count * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)b, count * sizeof(bool));
 		this->commitSize = count;
@@ -623,7 +637,7 @@ InternalEffectVariable::SetBool2Array( const bool* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 2 * sizeof(bool));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 2 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 2 * sizeof(bool));
 		this->commitSize = count;
@@ -643,7 +657,7 @@ InternalEffectVariable::SetBool3Array( const bool* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 3 * sizeof(bool));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 3 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 3 * sizeof(bool));
 		this->commitSize = count;
@@ -663,7 +677,7 @@ InternalEffectVariable::SetBool4Array( const bool* vec, size_t count )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariableArray(this, (void*)vec, count * 4 * sizeof(bool));
 	}
-	else
+	else if (memcmp(this->currentValue, vec, count * 4 * sizeof(bool)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)vec, count * 4 * sizeof(bool));
 		this->commitSize = count;
@@ -683,7 +697,7 @@ InternalEffectVariable::SetMatrix( const float* mat )
 		assert(0 != this->parentBlock);
 		this->parentBlock->SetVariable(this, (void*)mat);
 	}
-	else
+	else if (memcmp(this->currentValue, mat, 16 * sizeof(float)) != 0)
 	{
 		memcpy((void*)this->currentValue, (void*)mat, 16 * sizeof(float));
 		this->isDirty = true;
@@ -699,11 +713,11 @@ InternalEffectVariable::SetMatrixArray( const float* mat, size_t count )
 	if (this->isInVarblock)
 	{
 		assert(0 != this->parentBlock);
-		this->parentBlock->SetVariableArray(this, (void*)mat, 16 * count * sizeof(float));
+		this->parentBlock->SetVariableArray(this, (void*)mat, count * 16 * sizeof(float));
 	}
-	else
+	else if (memcmp(this->currentValue, mat, count * 16 * sizeof(float)) != 0)
 	{
-		memcpy((void*)this->currentValue, (void*)mat, 16 * count * sizeof(float));
+		memcpy((void*)this->currentValue, (void*)mat, count * 16 * sizeof(float));
 		this->commitSize = count;
 		this->isDirty = true;
 	}
@@ -726,6 +740,132 @@ InternalEffectVariable::SetTexture( void* handle )
 		this->currentValue = (char*)handle;
 		this->isDirty = true;
 	}	
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetFloatIndexed(float f, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetFloat2Indexed(const float* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetFloat3Indexed(const float* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetFloat4Indexed(const float* vec, unsigned index)
+{
+    assert(this->isArray);
+}  
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetIntIndexed(int i, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetInt2Indexed(const int* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetInt3Indexed(const int* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetInt4Indexed(const int* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetBoolIndexed(bool b, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetBool2Indexed(const bool* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetBool3Indexed(const bool* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetBool4Indexed(const bool* vec, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetMatrixIndexed(const float* mat, unsigned index)
+{
+    assert(this->isArray);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectVariable::SetTextureIndexed(void* handle, unsigned index)
+{
+    assert(this->isArray);
 }
 
 } // namespace AnyFX

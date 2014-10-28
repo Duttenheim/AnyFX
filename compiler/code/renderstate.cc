@@ -23,7 +23,7 @@ RenderState::RenderState() :
 	this->drawEnumFlags[RenderStateRow::StencilFrontDepthFailOp] = this->drawEnumFlags[RenderStateRow::StencilBackDepthFailOp] = RenderStateRow::Keep;
 	this->drawEnumFlags[RenderStateRow::StencilFrontPassOp] = this->drawEnumFlags[RenderStateRow::StencilBackPassOp] = RenderStateRow::Keep;
 	this->drawEnumFlags[RenderStateRow::StencilFrontFailOp] = this->drawEnumFlags[RenderStateRow::StencilBackFailOp] = RenderStateRow::Keep;
-	this->drawEnumFlags[RenderStateRow::DepthFunc] = RenderStateRow::LEqual;
+	this->drawEnumFlags[RenderStateRow::DepthFunc] = RenderStateRow::Less;
 	this->drawEnumFlags[RenderStateRow::CullMode] = RenderStateRow::Back;
 	this->drawEnumFlags[RenderStateRow::RasterizerMode] = RenderStateRow::Fill;
 	
@@ -44,6 +44,7 @@ RenderState::RenderState() :
 	// set default render settings
 	this->drawBoolFlags[RenderStateRow::DepthEnabled] = true;
 	this->drawBoolFlags[RenderStateRow::DepthWrite] = true;
+	this->drawBoolFlags[RenderStateRow::DepthClamp] = true;
 	this->drawBoolFlags[RenderStateRow::SeparateBlend] = false;
 	this->drawBoolFlags[RenderStateRow::ScissorEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::StencilEnabled] = false;
@@ -270,28 +271,6 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 
 			this->drawEnumFlags[RenderStateRow::StencilBackDepthFailOp] = flagVal;
 		}
-		else if (row.GetFlag() == "StencilBackFailOp")
-		{
-			const std::string& flag = row.GetString();
-			unsigned flagVal = -1;
-
-			if (flag == "Keep")					flagVal = RenderStateRow::Keep;
-			else if (flag == "Zero")			flagVal = RenderStateRow::Zero;
-			else if (flag == "Replace")			flagVal = RenderStateRow::Replace;
-			else if (flag == "Increase")		flagVal = RenderStateRow::Increase;
-			else if (flag == "IncreaseWrap")	flagVal = RenderStateRow::IncreaseWrap;
-			else if (flag == "Decrease")		flagVal = RenderStateRow::Decrease;
-			else if (flag == "DecreaseWrap")	flagVal = RenderStateRow::DecreaseWrap;
-			else if (flag == "Invert")			flagVal = RenderStateRow::Invert;
-			else
-			{
-				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
-				this->invalidValues.push_back(foo);
-				return;
-			}
-
-			this->drawEnumFlags[RenderStateRow::StencilBackFailOp] = flagVal;
-		}
 		else if (row.GetFlag() == "StencilFrontFunc")
 		{
 			const std::string& flag = row.GetString();
@@ -345,6 +324,7 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 		else if (row.GetFlag() == "StencilWriteMask")		this->drawIntExpressions[RenderStateRow::StencilWriteMask] = row.GetExpression();
 		else if (row.GetFlag() == "DepthEnabled")			this->drawBoolExpressions[RenderStateRow::DepthEnabled] = row.GetExpression();
 		else if (row.GetFlag() == "DepthWrite")				this->drawBoolExpressions[RenderStateRow::DepthWrite] = row.GetExpression();
+		else if (row.GetFlag() == "DepthClamp")				this->drawBoolExpressions[RenderStateRow::DepthClamp] = row.GetExpression();
 		else if (row.GetFlag() == "SeparateBlend")			this->drawBoolExpressions[RenderStateRow::SeparateBlend] = row.GetExpression();
 		else if (row.GetFlag() == "ScissorEnabled")			this->drawBoolExpressions[RenderStateRow::ScissorEnabled] = row.GetExpression();
 		else if (row.GetFlag() == "StencilEnabled")			this->drawBoolExpressions[RenderStateRow::StencilEnabled] = row.GetExpression();
@@ -372,7 +352,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
 			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSourceColor;
+			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSourceColor;
 			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
 			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
 			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;
@@ -401,7 +381,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
 			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSourceColor;
+			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSourceColor;
 			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
 			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
 			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;

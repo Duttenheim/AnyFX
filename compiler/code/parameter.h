@@ -66,6 +66,16 @@ public:
 		InvalidAttribute
 	};
 
+	enum Interpolation
+	{
+		Smooth,
+		Flat,
+		NoPerspective,
+		Centroid,
+
+		NumInterpolations
+	};
+
 	/// constructor
 	Parameter();
 	/// destructor
@@ -140,6 +150,7 @@ private:
 	unsigned arraySize;
 	bool patchParam;
 	IO ioMode;
+	Interpolation interpolation;
 	Attribute attribute;
 	Shader* parentShader;
 	std::string name;

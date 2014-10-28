@@ -38,7 +38,7 @@ EffectVarblockStreamLoader::~EffectVarblockStreamLoader()
 /**
 */
 EffectVarblock* 
-EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, std::vector<EffectVariable*>& vars )
+EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, eastl::vector<EffectVariable*>& vars )
 {
 	InternalEffectVarblock* internalVarblock = 0;
 
@@ -51,7 +51,9 @@ EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, std::vector
 
 	std::string name = reader->ReadString();
 	bool shared = reader->ReadBool();
+    unsigned bufferCount = reader->ReadUInt();
 
+    // load annotations
 	bool hasAnnotation = reader->ReadBool();
 	if (hasAnnotation)
 	{
@@ -59,6 +61,7 @@ EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, std::vector
 		loader.Load(reader, varblock);
 	}
 
+    // load variables
 	unsigned numVars = reader->ReadInt();
 	EffectVariableStreamLoader variableLoader;
 	unsigned i;
@@ -74,7 +77,7 @@ EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, std::vector
 
 	size_t numPrograms = effect->GetNumPrograms();
 	EffectProgram** programs = effect->GetPrograms();
-	std::vector<InternalEffectProgram*> internalPrograms;
+	eastl::vector<InternalEffectProgram*> internalPrograms;
 	internalPrograms.reserve(numPrograms);
 
 	for (i = 0; i < numPrograms; i++)
@@ -82,12 +85,12 @@ EffectVarblockStreamLoader::Load( BinReader* reader, Effect* effect, std::vector
 		internalPrograms.push_back(programs[i]->internalProgram);
 	}
 
+    // set internal variables
 	internalVarblock->name = name;
 	internalVarblock->isShared = shared;
+    internalVarblock->numBackingBuffers = bufferCount;
 	internalVarblock->SetupSignature();
 
-	//sharedBlocks.clear();
-	// if this 
 	if (internalVarblock->isShared)
 	{
 		if (sharedBlocks.find(internalVarblock->GetSignature()) != sharedBlocks.end())

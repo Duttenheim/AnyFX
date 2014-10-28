@@ -10,8 +10,10 @@
 //------------------------------------------------------------------------------
 #include "effectvariable.h"
 #include "types.h"
+#include "autoref.h"
 #include <string>
-#include <vector>
+#include "EASTL/vector.h"
+#include "EASTL/hash_map.h"
 namespace AnyFX
 {
 
@@ -19,7 +21,7 @@ class Effect;
 class InternalEffectProgram;
 class InternalEffectVarblock;
 class InternalEffectSampler;
-class InternalEffectVariable
+class InternalEffectVariable : public AutoRef
 {
 public:
 
@@ -102,7 +104,9 @@ protected:
 	friend class EffectVarblockStreamLoader;	
 
 	/// sets up variable from program, override in subclass
-	virtual void Setup(std::vector<InternalEffectProgram*> program, const std::string& defaultValue);
+	virtual void Setup(eastl::vector<InternalEffectProgram*> program, const std::string& defaultValue);
+    /// sets up variable from another variable
+    virtual void SetupSlave(eastl::vector<InternalEffectProgram*> program);
 	/// sets up texture-specific stuff
 	virtual void MakeTexture();
 	/// sets up default value
@@ -179,10 +183,40 @@ protected:
 	/// set texture, override in back-end implementation
 	void SetTexture(void* handle);
 
+    /// set float value indexed, override in back-end implementation
+    void SetFloatIndexed(float f, unsigned index);
+    /// set float2 vector indexed, override in back-end implementation
+    void SetFloat2Indexed(const float* vec, unsigned index);
+    /// set float3 vector indexed, override in back-end implementation
+    void SetFloat3Indexed(const float* vec, unsigned index);
+    /// set float4 vector indexed, override in back-end implementation
+    void SetFloat4Indexed(const float* vec, unsigned index);
+    /// set int value indexed, override in back-end implementation
+    void SetIntIndexed(int i, unsigned index);
+    /// set int2 vector indexed, override in back-end implementation
+    void SetInt2Indexed(const int* vec, unsigned index);
+    /// set int3 vector indexed, override in back-end implementation
+    void SetInt3Indexed(const int* vec, unsigned index);
+    /// set int4 vector indexed, override in back-end implementation
+    void SetInt4Indexed(const int* vec, unsigned index);
+    /// set bool indexed, override in back-end implementation
+    void SetBoolIndexed(bool b, unsigned index);
+    /// set bool2 vector indexed, override in back-end implementation
+    void SetBool2Indexed(const bool* vec, unsigned index);
+    /// set bool3 vector indexed, override in back-end implementation
+    void SetBool3Indexed(const bool* vec, unsigned index);
+    /// set bool4 vector indexed, override in back-end implementation
+    void SetBool4Indexed(const bool* vec, unsigned index);
+    /// set matrix indexed, override in back-end implementation
+    void SetMatrixIndexed(const float* mat, unsigned index);
+    /// set texture indexed, override in back-end implementation
+    void SetTextureIndexed(void* handle, unsigned index);
+
 	InternalEffectVarblock* parentBlock;
 	bool isInVarblock;
-	unsigned byteOffset;					// byte offset from beginning of parent block
-	unsigned byteSize;						// byte size
+	eastl::hash_map<unsigned, unsigned> blockOffsets;	// byte offset for the parent block indexed as program/offset
+	unsigned byteOffset;									// byte offset from beginning of parent block
+	unsigned byteSize;										// byte size
 
 	VariableType type;
 	ImageFormat format;

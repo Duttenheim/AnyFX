@@ -23,10 +23,12 @@ public:
 	virtual ~InternalEffectSampler();
 
 		/// setup using texture variable
-	virtual void Setup(const std::vector<InternalEffectVariable*>& texture);
+	virtual void Setup(const eastl::vector<InternalEffectVariable*>& texture);
 
 	/// get name of variable
 	const std::string& GetName() const;
+
+    static const unsigned MaxNumSamplerBinds = 256;
 
 protected:
 	friend class EffectSampler;
@@ -55,7 +57,7 @@ protected:
 
 	} samplerSettings;
 
-	std::vector<InternalEffectVariable*> textureVariables;
+	eastl::vector<InternalEffectVariable*> textureVariables;
 	InternalEffectVariable* textureVariable;
 
 	std::string name;

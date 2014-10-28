@@ -21,7 +21,7 @@ public:
 	virtual ~GLSL4EffectSampler();
 
 	/// setup using texture variable
-	void Setup(const std::vector<InternalEffectVariable*>& texture);
+	void Setup(const eastl::vector<InternalEffectVariable*>& texture);
 
 private:
 
@@ -33,5 +33,12 @@ private:
 	GLuint* textures;
 	unsigned numTextures;
 }; 
+
+struct GLSL4GlobalSamplerState
+{
+    static unsigned     samplerBinds[InternalEffectSampler::MaxNumSamplerBinds];
+};
+
+
 } // namespace AnyFX
 //------------------------------------------------------------------------------

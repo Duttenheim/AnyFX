@@ -32,30 +32,35 @@ static const GLenum opengl4ComparisonTable[] =
 
 static const GLenum opengl4MinMipTable[] = 
 {
-	GL_NEAREST_MIPMAP_NEAREST,
-	GL_LINEAR_MIPMAP_LINEAR,
-	GL_NEAREST_MIPMAP_LINEAR,
-	GL_NEAREST_MIPMAP_NEAREST,
-	GL_NEAREST_MIPMAP_LINEAR,
-	GL_LINEAR_MIPMAP_LINEAR,
-	GL_LINEAR_MIPMAP_NEAREST,
-	GL_LINEAR,
-	GL_NEAREST
-};
+	GL_NEAREST_MIPMAP_NEAREST,					// MinMagMipPoint
+	GL_LINEAR_MIPMAP_LINEAR,					// MinMagMipLinear
+	GL_NEAREST_MIPMAP_LINEAR,					// MinMagPointMipLinear
+	GL_NEAREST_MIPMAP_NEAREST,					// MinMipPointMagLinear
+	GL_NEAREST_MIPMAP_LINEAR,					// MinPointMipMagLinear
+	GL_LINEAR_MIPMAP_NEAREST,					// MinLinearMipMagPoint
+	GL_LINEAR_MIPMAP_LINEAR,					// MinMipLinearMagPoint
+	GL_LINEAR_MIPMAP_NEAREST,					// MinMagLinearMipPoint
+	GL_LINEAR_MIPMAP_LINEAR,					// Anisotropic
+	GL_NEAREST,									// Point
+	GL_LINEAR                                   // Linear
+};							
 
 static const GLenum opengl4MagTable[] = 
 {
-	GL_NEAREST,
-	GL_LINEAR,
-	GL_NEAREST,
-	GL_LINEAR,
-	GL_LINEAR,
-	GL_NEAREST,
-	GL_NEAREST,
-	GL_LINEAR,
-	GL_LINEAR,
-	GL_NEAREST,
+	GL_NEAREST,									// MinMagMipPoint
+	GL_LINEAR,									// MinMagMipLinear
+	GL_NEAREST,									// MinMagPointMipLinear
+	GL_LINEAR,									// MinMipPointMagLinear
+	GL_LINEAR,									// MinPointMipMagLinear
+	GL_NEAREST,									// MinLinearMipMagPoint
+	GL_NEAREST,									// MinMipLinearMagPoint
+	GL_LINEAR,									// MinMagLinearMipPoint
+	GL_LINEAR,									// Anisotropic
+	GL_NEAREST,									// Point
+	GL_LINEAR,									// Linear
 };
+
+unsigned GLSL4GlobalSamplerState::samplerBinds[InternalEffectSampler::MaxNumSamplerBinds] = {0};
 
 //------------------------------------------------------------------------------
 /**
@@ -80,7 +85,7 @@ GLSL4EffectSampler::~GLSL4EffectSampler()
 /**
 */
 void 
-GLSL4EffectSampler::Setup( const std::vector<InternalEffectVariable*>& textures )
+GLSL4EffectSampler::Setup( const eastl::vector<InternalEffectVariable*>& textures )
 {
 	InternalEffectSampler::Setup(textures);
 
@@ -137,8 +142,14 @@ GLSL4EffectSampler::Apply()
 	unsigned i;
 	for (i = 0; i < this->numTextures; i++)
 	{
-		// bind sampler
-		glBindSampler(this->textures[i], this->sampler);
+        if (GLSL4GlobalSamplerState::samplerBinds[this->textures[i]] != this->sampler)
+        {
+            // update global state
+            GLSL4GlobalSamplerState::samplerBinds[this->textures[i]] = this->sampler;
+
+			// bind sampler
+			glBindSampler(this->textures[i], this->sampler);
+        } 
 	}	
 }
 } // namespace AnyFX

@@ -94,7 +94,8 @@ public:
     enum QualifierFlags
     {
         NoQualifiers = 0,
-        GroupShared = 1 << 0,
+        GroupShared = 1 << 0,   // group shared means shared within a shader compute group
+        Shared = 1 << 1         // ordinary shared means shared during the application execution
 
     };
 
@@ -157,6 +158,10 @@ public:
 	std::string Format(const Header& header, bool inVarblock = false) const;
 
 private:
+    friend class VarBlock;
+
+    /// evaluates array size
+    void EvaluateArraySize(TypeChecker& typechecker);
 
 	/// converts image format to string based on header
 	std::string FormatImageFormat(const Header& header) const;

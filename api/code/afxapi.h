@@ -14,7 +14,6 @@
 #endif
 
 #include <string>
-#include <vector>
 #include "vartypes.h"
 #include "effectfactory.h"
 namespace AnyFX
@@ -187,6 +186,8 @@ public:
 
 	/// applies render state
 	void Apply();
+    /// resets render state
+    void Reset();
 	/// gets name of render state
 	const std::string& GetName() const;
 
@@ -285,6 +286,11 @@ public:
 	void Commit();
 	/// returns name of varblock
 	const std::string& GetName() const;	
+
+	/// set buffer to be manually flushed, this requires explicit calls to FlushBuffer in order to perform updates
+	void SetFlushManually(bool b);
+	/// flush buffer, this only works on buffers which are tagged to be flushed manually
+	void FlushBuffer();
 };
 
 class EffectVariable : public Annotable
@@ -368,10 +374,12 @@ public:
 	void Apply();
 	/// commits changes to shader variables, call this before rendering
 	void Commit();
+    /// performs pre-draw stuff
+    void PreDraw();
+    /// performs post-draw stuff
+    void PostDraw();
 	/// returns name of program
 	const std::string& GetName() const;
-	/// returns array to list of shaders, this is list is always a constant size of 6
-	std::vector<EffectShader*> GetShaders() const;
 	/// returns render state
 	EffectRenderState* GetRenderState() const;	
 

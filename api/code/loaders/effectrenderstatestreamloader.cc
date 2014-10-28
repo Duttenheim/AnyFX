@@ -8,6 +8,7 @@
 #include "internal/glsl4/glsl4effectrenderstate.h"
 #include "effect.h"
 #include "effectannotationstreamloader.h"
+#include <string.h>
 
 namespace AnyFX
 {
@@ -77,6 +78,7 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 
 	bool depthEnabled = reader->ReadBool();
 	bool depthWrite = reader->ReadBool();
+	bool depthClamp = reader->ReadBool();
 	bool separateBlend = reader->ReadBool();
 	bool scissorEnabled = reader->ReadBool();
 	bool stencilEnabled = reader->ReadBool();
@@ -85,6 +87,7 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 
 	internalRenderState->renderSettings.depthEnabled			= depthEnabled;
 	internalRenderState->renderSettings.depthWriteEnabled		= depthWrite;
+	internalRenderState->renderSettings.depthClampEnabled		= depthClamp;
 	internalRenderState->renderSettings.separateBlendEnabled	= separateBlend;
 	internalRenderState->renderSettings.scissorEnabled			= scissorEnabled;
 	internalRenderState->renderSettings.stencilEnabled			= stencilEnabled;
@@ -124,6 +127,9 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 	internalRenderState->renderSettings.backRef				= stencilBackRef;
 	internalRenderState->renderSettings.stencilReadMask		= stencilReadMask;
 	internalRenderState->renderSettings.stencilWriteMask	= stencilWriteMask;
+
+    // memcpy default values loaded from file to interface
+    memcpy(&internalRenderState->defaultRenderSettings, &internalRenderState->renderSettings, sizeof(InternalEffectRenderState::RenderStateSettings));
 
 	renderState->internalRenderState = internalRenderState;
 	return renderState;

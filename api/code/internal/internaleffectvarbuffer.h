@@ -8,7 +8,7 @@
     (C) 2014 Gustav Sterbrant
 */
 //------------------------------------------------------------------------------
-#include <vector>
+#include "EASTL/vector.h"
 #include <string>
 namespace AnyFX
 {
@@ -43,7 +43,7 @@ protected:
     /// activates variable, this makes the uniform location be the one found in the given program
     virtual void Activate(InternalEffectProgram* program);
 
-    std::vector<InternalEffectVariable*> variables;
+    eastl::vector<InternalEffectVariable*> variables;
     InternalEffectVarbuffer* masterBuffer;
     std::string name;
 }; 

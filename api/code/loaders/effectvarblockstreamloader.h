@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 //------------------------------------------------------------------------------
 /**
     @class AnyFX::EffectVarblockStreamLoader
@@ -10,7 +10,7 @@
 //------------------------------------------------------------------------------
 #include "binreader.h"
 #include "internal/internaleffectvarblock.h"
-#include <vector>
+#include "EASTL/vector.h"
 #include <map>
 namespace AnyFX
 {
@@ -28,7 +28,7 @@ public:
 private:
 	friend class EffectStreamLoader;
 
-	EffectVarblock* Load(BinReader* reader, Effect* effect, std::vector<EffectVariable*>& vars);
+	EffectVarblock* Load(BinReader* reader, Effect* effect, eastl::vector<EffectVariable*>& vars);
 	static std::map<std::string, InternalEffectVarblock*> sharedBlocks;
 }; 
 } // namespace AnyFX

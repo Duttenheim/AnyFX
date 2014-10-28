@@ -2,8 +2,10 @@
 # anyfx api
 #-------------------------------------------------------------------------------
 
-INCLUDE_DIRECTORIES(${ANYFX_SOURCE_DIR}/util/code
+INCLUDE_DIRECTORIES(${ANYFX_SOURCE_DIR}
+					${ANYFX_SOURCE_DIR}/util/code
 					${ANYFX_SOURCE_DIR}/exts/glew
+					${ANYFX_SOURCE_DIR}/exts/eastl/include
 					${ANYFX_SOURCE_DIR}/api/code)
 					
 

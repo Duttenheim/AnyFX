@@ -10,7 +10,8 @@
 //------------------------------------------------------------------------------
 #include "internal/internaleffectvariable.h"
 #include "GL/glew.h"
-#include <map>
+#include <unordered_map>
+#include "EASTL/hash_map.h"
 namespace AnyFX
 {
 class InternalEffectProgram;
@@ -26,7 +27,9 @@ private:
 	friend class GLSL4EffectSampler;
 
 	/// sets up variable from program, override in subclass
-	void Setup(std::vector<InternalEffectProgram*> programs, const std::string& defaultValue);
+	void Setup(eastl::vector<InternalEffectProgram*> programs, const std::string& defaultValue);
+    /// sets up variable from program as slave, this basically just adds program-uniform pairs
+    void SetupSlave(eastl::vector<InternalEffectProgram*> programs);
 	/// sets up texture-specific stuff
 	void MakeTexture();
 	/// activates variable, this makes the uniform location be the one found in the given program
@@ -37,7 +40,7 @@ private:
 	/// commits variable to glsl shader
 	void Commit();
 
-	std::map<GLint, GLint> uniformProgramMap;
+	eastl::hash_map<GLint, GLint> uniformProgramMap;
 	GLuint activeProgram;
 	GLint uniformLocation;
 	GLint textureUnit;

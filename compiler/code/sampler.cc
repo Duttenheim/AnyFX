@@ -42,7 +42,7 @@ Sampler::Sampler() :
 	}
 
 	// set all values to default
-	intFlags[SamplerRow::Filter] = SamplerRow::MinMagLinearMipPoint;
+	intFlags[SamplerRow::Filter] = SamplerRow::Linear;
 	intFlags[SamplerRow::AddressU] = SamplerRow::Wrap;
 	intFlags[SamplerRow::AddressV] = SamplerRow::Wrap;
 	intFlags[SamplerRow::AddressW] = SamplerRow::Wrap;
@@ -94,6 +94,7 @@ Sampler::ConsumeRow( const SamplerRow& row )
 			else if (value == "MinMagLinearMipPoint")	flagVal = SamplerRow::MinMagLinearMipPoint;
 			else if (value == "Anisotropic")			flagVal = SamplerRow::Anisotropic;
 			else if (value == "Point")					flagVal = SamplerRow::Point;
+			else if (value == "Linear")					flagVal = SamplerRow::Linear;
 			else
 			{
 				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), value };

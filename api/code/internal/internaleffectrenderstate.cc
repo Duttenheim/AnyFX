@@ -31,4 +31,13 @@ InternalEffectRenderState::Apply()
 {
 	// override me
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectRenderState::Reset()
+{
+    this->renderSettings = this->defaultRenderSettings;
+}
 } // namespace AnyFX

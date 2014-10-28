@@ -13,6 +13,15 @@
 namespace AnyFX
 {
 
+unsigned GLSL4GlobalProgramState::program = -1;
+unsigned GLSL4GlobalProgramState::patchSize = -1;
+unsigned* GLSL4GlobalProgramState::vsSubroutines = 0;
+unsigned* GLSL4GlobalProgramState::hsSubroutines = 0;
+unsigned* GLSL4GlobalProgramState::dsSubroutines = 0;
+unsigned* GLSL4GlobalProgramState::gsSubroutines = 0;
+unsigned* GLSL4GlobalProgramState::psSubroutines = 0;
+unsigned* GLSL4GlobalProgramState::csSubroutines = 0;
+
 //------------------------------------------------------------------------------
 /**
 */
@@ -38,8 +47,13 @@ GLSL4EffectProgram::~GLSL4EffectProgram()
 void 
 GLSL4EffectProgram::Apply()
 {
-	// activate GL program
-	glUseProgram(this->programHandle);
+    if (GLSL4GlobalProgramState::program != this->programHandle)
+    {
+        GLSL4GlobalProgramState::program = this->programHandle;
+
+        // activate GL program
+        glUseProgram(this->programHandle);
+    }	
 
     // first time, we must apply all subroutines since
     this->ApplySubroutines();
@@ -47,8 +61,15 @@ GLSL4EffectProgram::Apply()
 	// if we support tessellation, then set the patch vertices parameter also
 	if (this->supportsTessellation)
 	{
-		glPatchParameteri(GL_PATCH_VERTICES, this->patchSize);
+        if (GLSL4GlobalProgramState::patchSize != this->patchSize)
+        {
+            GLSL4GlobalProgramState::patchSize = this->patchSize;
+            glPatchParameteri(GL_PATCH_VERTICES, this->patchSize);
+        }		
 	}
+
+	// unbind all samplers
+	//glBindSamplers(0, 64, NULL);
 
 	// apply internal program
 	InternalEffectProgram::Apply();
@@ -61,12 +82,41 @@ void
 GLSL4EffectProgram::ApplySubroutines()
 {
     // apply subroutines
-    if (this->numVsSubroutines > 0) glUniformSubroutinesuiv(GL_VERTEX_SHADER,           this->numVsSubroutines, this->vsSubroutineBindings);
-    if (this->numHsSubroutines > 0) glUniformSubroutinesuiv(GL_TESS_CONTROL_SHADER,     this->numHsSubroutines, this->hsSubroutineBindings);
-    if (this->numDsSubroutines > 0) glUniformSubroutinesuiv(GL_TESS_EVALUATION_SHADER,  this->numDsSubroutines, this->dsSubroutineBindings);
-    if (this->numGsSubroutines > 0) glUniformSubroutinesuiv(GL_GEOMETRY_SHADER,         this->numGsSubroutines, this->gsSubroutineBindings);
-    if (this->numPsSubroutines > 0) glUniformSubroutinesuiv(GL_FRAGMENT_SHADER,         this->numPsSubroutines, this->psSubroutineBindings);
-    if (this->numCsSubroutines > 0) glUniformSubroutinesuiv(GL_COMPUTE_SHADER,          this->numCsSubroutines, this->csSubroutineBindings);
+    if (GLSL4GlobalProgramState::vsSubroutines != this->vsSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::vsSubroutines = this->vsSubroutineBindings;
+        if (this->numVsSubroutines > 0) glUniformSubroutinesuiv(GL_VERTEX_SHADER,           this->numVsSubroutines, this->vsSubroutineBindings);
+    }
+
+    if (GLSL4GlobalProgramState::hsSubroutines != this->hsSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::hsSubroutines = this->hsSubroutineBindings;
+        if (this->numHsSubroutines > 0) glUniformSubroutinesuiv(GL_TESS_CONTROL_SHADER,     this->numHsSubroutines, this->hsSubroutineBindings);
+    }
+
+    if (GLSL4GlobalProgramState::dsSubroutines != this->dsSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::dsSubroutines = this->dsSubroutineBindings;
+        if (this->numDsSubroutines > 0) glUniformSubroutinesuiv(GL_TESS_EVALUATION_SHADER,  this->numDsSubroutines, this->dsSubroutineBindings);
+    }
+
+    if (GLSL4GlobalProgramState::gsSubroutines != this->gsSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::gsSubroutines = this->gsSubroutineBindings;
+        if (this->numGsSubroutines > 0) glUniformSubroutinesuiv(GL_GEOMETRY_SHADER,         this->numGsSubroutines, this->gsSubroutineBindings);
+    }
+
+    if (GLSL4GlobalProgramState::psSubroutines != this->psSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::psSubroutines = this->psSubroutineBindings;
+        if (this->numPsSubroutines > 0) glUniformSubroutinesuiv(GL_FRAGMENT_SHADER,         this->numPsSubroutines, this->psSubroutineBindings);
+    }
+
+    if (GLSL4GlobalProgramState::csSubroutines != this->csSubroutineBindings)
+    {
+        GLSL4GlobalProgramState::csSubroutines = this->csSubroutineBindings;
+        if (this->numCsSubroutines > 0) glUniformSubroutinesuiv(GL_COMPUTE_SHADER,          this->numCsSubroutines, this->csSubroutineBindings);
+    }    
 }
 
 //------------------------------------------------------------------------------
@@ -186,11 +236,11 @@ GLSL4EffectProgram::SetupSubroutines()
 /**
 */
 void 
-GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLuint& numBindings, GLuint** bindingArray, const std::map<std::string, InternalEffectSubroutine*>& bindings )
+GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLsizei& numBindings, GLuint** bindingArray, const std::map<std::string, InternalEffectSubroutine*>& bindings )
 {
     std::map<std::string, InternalEffectSubroutine*>::const_iterator it;
 
-    std::vector<std::pair<GLuint, GLuint> > intermediateMap;
+    eastl::vector<std::pair<GLuint, GLuint> > intermediateMap;
     unsigned numActiveSubroutines = 0;
     for (it = bindings.begin(); it != bindings.end(); it++)
     {
@@ -200,12 +250,16 @@ GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLuint& numBinding
         GLint subroutineIndex = glGetSubroutineIndex(this->programHandle, shaderType, imp->GetName().c_str());
         GLint uniformIndex = glGetSubroutineUniformLocation(this->programHandle, shaderType, var.c_str());
 
-        if (uniformIndex != -1)
+        if (uniformIndex != -1 && subroutineIndex != -1)
         {
             intermediateMap.push_back(std::pair<GLuint, GLuint>(uniformIndex, subroutineIndex));
             numActiveSubroutines++;
         }
     }
+
+    GLint numRoutines;
+    glGetProgramStageiv(this->programHandle, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &numRoutines);
+    assert(numActiveSubroutines == numRoutines);
 
     (*bindingArray) = new GLuint[numActiveSubroutines];
     std::sort(intermediateMap.begin(), intermediateMap.end(), SubroutineBindingCompare);

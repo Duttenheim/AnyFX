@@ -34,22 +34,35 @@ private:
     /// sets up subroutine mappings
     void SetupSubroutines();
     /// helper function for subroutine setup
-    void SetupSubroutineHelper(GLenum shaderType, GLuint& numBindings, GLuint** bindingArray, const std::map<std::string, InternalEffectSubroutine*>& bindings);
+    void SetupSubroutineHelper(GLenum shaderType, GLsizei& numBindings, GLuint** bindingArray, const std::map<std::string, InternalEffectSubroutine*>& bindings);
 
 	GLuint programHandle;
 
     GLuint* vsSubroutineBindings;
-    GLuint numVsSubroutines;
+    GLsizei numVsSubroutines;
     GLuint* hsSubroutineBindings;
-    GLuint numHsSubroutines;
+    GLsizei numHsSubroutines;
     GLuint* dsSubroutineBindings;
-    GLuint numDsSubroutines;
+    GLsizei numDsSubroutines;
     GLuint* gsSubroutineBindings;
-    GLuint numGsSubroutines;
+    GLsizei numGsSubroutines;
     GLuint* psSubroutineBindings;
-    GLuint numPsSubroutines;
+    GLsizei numPsSubroutines;
     GLuint* csSubroutineBindings;
-    GLuint numCsSubroutines;
+    GLsizei numCsSubroutines;
 }; 
+
+struct GLSL4GlobalProgramState
+{
+    static unsigned program;
+    static unsigned patchSize;
+    static unsigned* vsSubroutines;
+    static unsigned* hsSubroutines;
+    static unsigned* dsSubroutines;
+    static unsigned* gsSubroutines;
+    static unsigned* psSubroutines;
+    static unsigned* csSubroutines;    
+};
+
 } // namespace AnyFX
 //------------------------------------------------------------------------------

@@ -162,6 +162,7 @@ LOGICEQ:		'==';
 NOTEQ:			'!=';
 LOGICAND:		'&&';
 LOGICOR:		'||';
+MOD:			'%';
 	
 ADD: 			'+';
 SUB: 			'-';
@@ -372,16 +373,21 @@ structure	returns [ Structure structure ]
 	;
 
 // a varblock denotes a block within which we can find variables, using this structure, we can feed variables in chunks instead of individually, which may improve performance
-// this is equal to DirectX constant buffers or OpenGL UniformBlock
+// this is equal to DirectX constant buffers or OpenGL uniform block
 // since this is just a special way of denoting a structure, we give it some extra attributes such as shared, which means this will structure will go in a shared dictionary, and be EQUAL to every shader utilizing this block
 varblock	returns [ VarBlock block ]
 	: 	
-	( LL qualifier = IDENTIFIER RR
+	( qualifier = IDENTIFIER
 	{
 		std::string qualifierString((const char*)$qualifier.text->chars);
 		if (qualifierString == "shared") { $block.SetShared(true); }
 	}
 	)?	
+	( 'buffers' EQ expression
+	{
+		{ $block.SetBufferExpression($expression.tree); }
+	}
+	)?
 	'varblock' name = IDENTIFIER { $block.SetLine(LT(-2)->line ); $block.SetPosition(LT(-2)->charPosition); $block.SetFile((const char*)LT(-2)->custom);} LB ( variable { $block.AddVariable($variable.variable); } )* RB SC { $block.SetName((const char*)$name.text->chars); }
 	;
 	
@@ -390,7 +396,7 @@ varblock	returns [ VarBlock block ]
 // in OpenGL this is known as a shader storage block.
 varbuffer	returns [ VarBuffer buffer ]
 	:
-	( LL qualifier = IDENTIFIER RR
+	( qualifier = IDENTIFIER
 	{
 		std::string qualifierString((const char*)$qualifier.text->chars);
 		if (qualifierString == "shared") { $buffer.SetShared(true); }

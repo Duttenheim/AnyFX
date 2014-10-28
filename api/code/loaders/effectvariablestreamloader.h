@@ -9,11 +9,13 @@
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"
+#include <map>
 namespace AnyFX
 {
 class Effect;
 class EffectVariable;
 class InternalEffectVarblock;
+class InternalEffectVariable;
 class EffectVariableStreamLoader
 {
 public:
@@ -27,6 +29,7 @@ private:
 	friend class EffectVarblockStreamLoader;
 
 	EffectVariable* Load(BinReader* reader, Effect* effect, InternalEffectVarblock* varblock = 0);
+    static std::map<std::string, InternalEffectVariable*> sharedVariables;
 }; 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

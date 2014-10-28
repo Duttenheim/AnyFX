@@ -48,24 +48,23 @@ InternalEffectProgram::Apply()
 	// signal our variables and varblocks that this program is active so that they may select their correct internal handle
 	unsigned i;
 	size_t num = this->effect->numVariables;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num; ++i)
 	{
 		this->effect->variablesByIndex[i]->internalVariable->Activate(this);
 		this->effect->variablesByIndex[i]->internalVariable->Apply();
 	}
 
 	num = this->effect->numVarblocks;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num; ++i)
 	{
 		this->effect->varblocksByIndex[i]->internalVarblock->Activate(this);
 		this->effect->varblocksByIndex[i]->internalVarblock->Apply();
 	}
 
 	num = this->effect->numSamplers;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num; ++i)
 	{
-		EffectSampler* sampler = this->effect->samplersByIndex[i];
-		sampler->internalSampler->Apply();
+		this->effect->samplersByIndex[i]->internalSampler->Apply();
 	}
 }
 
@@ -78,18 +77,46 @@ InternalEffectProgram::Commit()
 	// signal our variables and varblocks to apply their variables
 	unsigned i;
 	size_t num = this->effect->numVariables;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num; ++i)
 	{
-		EffectVariable* var = this->effect->variablesByIndex[i];
-		var->internalVariable->Commit();
+		this->effect->variablesByIndex[i]->internalVariable->Commit();
 	}
 
 	num = this->effect->numVarblocks;
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num; ++i)
 	{
-		EffectVarblock* block = this->effect->varblocksByIndex[i];
-		block->internalVarblock->Commit();
+		this->effect->varblocksByIndex[i]->internalVarblock->Commit();
 	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectProgram::PreDraw()
+{
+    // signal our variables and varblocks to apply their variables
+    unsigned i;
+    size_t num = this->effect->numVarblocks;
+    for (i = 0; i < num; ++i)
+    {
+        this->effect->varblocksByIndex[i]->internalVarblock->PreDraw();
+    }
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+InternalEffectProgram::PostDraw()
+{
+    // signal our variables and varblocks to apply their variables
+    unsigned i;
+    size_t num = this->effect->numVarblocks;
+    for (i = 0; i < num; ++i)
+    {
+        this->effect->varblocksByIndex[i]->internalVarblock->PostDraw();
+    }
 }
 
 //------------------------------------------------------------------------------

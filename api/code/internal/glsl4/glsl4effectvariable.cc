@@ -93,7 +93,7 @@ GLSL4EffectVariable::~GLSL4EffectVariable()
 /**
 */
 void 
-GLSL4EffectVariable::Setup( std::vector<InternalEffectProgram*> programs, const std::string& defaultValue )
+GLSL4EffectVariable::Setup( eastl::vector<InternalEffectProgram*> programs, const std::string& defaultValue )
 {
 	InternalEffectVariable::Setup(programs, defaultValue);
 
@@ -102,16 +102,20 @@ GLSL4EffectVariable::Setup( std::vector<InternalEffectProgram*> programs, const 
 		unsigned i;
 		for (i = 0; i < programs.size(); i++)
 		{
-			GLSL4EffectProgram* opengl4Program = dynamic_cast<GLSL4EffectProgram*>(programs[i]);
-			assert(0 != opengl4Program);
+            GLSL4EffectProgram* opengl4Program = dynamic_cast<GLSL4EffectProgram*>(programs[i]);
+            assert(0 != opengl4Program);
+            this->blockOffsets[opengl4Program->programHandle] = 0;
 
-			GLint location = glGetUniformLocation(opengl4Program->programHandle, this->name.c_str());
-			this->uniformProgramMap[opengl4Program->programHandle] = location;
+            if (this->uniformProgramMap.find(opengl4Program->programHandle) == this->uniformProgramMap.end())
+            {
+			    GLint location = glGetUniformLocation(opengl4Program->programHandle, this->name.c_str());
+			    this->uniformProgramMap[opengl4Program->programHandle] = location;
 
-			if (location != -1)
-			{
-				this->active = true;
-			}
+                if (location != -1)
+                {
+                    this->active = true;
+                }
+            }
 		}
 	}
 	else
@@ -119,6 +123,30 @@ GLSL4EffectVariable::Setup( std::vector<InternalEffectProgram*> programs, const 
 		// unfortunately, we cannot know if a variable inside a variable block is used...
 		this->active = true;
 	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+GLSL4EffectVariable::SetupSlave(eastl::vector<InternalEffectProgram*> programs)
+{
+    InternalEffectVariable::SetupSlave(programs);
+
+    if (!this->isInVarblock)
+    {
+        unsigned i;
+        for (i = 0; i < programs.size(); i++)
+        {
+            GLSL4EffectProgram* opengl4Program = dynamic_cast<GLSL4EffectProgram*>(programs[i]);
+            assert(0 != opengl4Program);
+            if (this->uniformProgramMap.find(opengl4Program->programHandle) == this->uniformProgramMap.end())
+            {
+                GLint location = glGetUniformLocation(opengl4Program->programHandle, this->name.c_str());
+                this->uniformProgramMap[opengl4Program->programHandle] = location;
+            }            
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -206,6 +234,7 @@ GLSL4EffectVariable::Activate( InternalEffectProgram* program )
 	else
 	{
 		this->uniformLocation = -1;
+        this->byteOffset = this->blockOffsets[opengl4Program->programHandle];
 	}
 }
 
@@ -216,7 +245,7 @@ GLSL4EffectVariable::Activate( InternalEffectProgram* program )
 void 
 GLSL4EffectVariable::Apply()
 {
-	if (this->type >= Sampler1D && this->type <= ImageCubeArray)
+	if (this->type >= Sampler1D && this->type <= ImageCubeArray && this->uniformLocation != -1)
 	{
 		// first bind variable name to texture unit
 		glUniform1i(this->uniformLocation, this->textureUnit);
@@ -340,11 +369,27 @@ GLSL4EffectVariable::Commit()
 				break;
 			}
 		case Image1D:
-		case Image1DArray:
 		case Image2D:
-		case Image2DArray:
 		case Image2DMS:
-		case Image2DMSArray:
+            {
+                // unpack data
+                EffectVariable::OpenGLTexture* obj = (EffectVariable::OpenGLTexture*)this->currentValue;
+
+                if (obj && obj->textureType == this->textureType)
+                {
+                    // bind the texture to the image unit, this is a bit sensitive since if the texture object doesn't match the image format, the GL will output an error.
+                    glBindImageTexture(this->textureUnit, obj->texture, 0, GL_FALSE, 0, this->glAccessMode, this->glImageFormat);
+                }
+                else
+                {
+                    glBindImageTexture(this->textureUnit, 0, 0, GL_FALSE, 0, this->glAccessMode, this->glImageFormat);
+                }
+
+                break;
+            }
+        case Image1DArray:
+        case Image2DArray:
+        case Image2DMSArray:
 		case Image3D:
 		case ImageCube:
 		case ImageCubeArray:
@@ -361,7 +406,6 @@ GLSL4EffectVariable::Commit()
                 {
                     glBindImageTexture(this->textureUnit, 0, 0, GL_TRUE, 0, this->glAccessMode, this->glImageFormat);
                 }
-
 				
 				break;
 			}

@@ -27,7 +27,7 @@ InternalEffectSampler::~InternalEffectSampler()
 /**
 */
 void
-InternalEffectSampler::Setup(const std::vector<InternalEffectVariable*>& textures)
+InternalEffectSampler::Setup(const eastl::vector<InternalEffectVariable*>& textures)
 {
 	this->textureVariables = textures;
 }

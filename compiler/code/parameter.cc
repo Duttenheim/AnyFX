@@ -17,6 +17,7 @@ namespace AnyFX
 */
 Parameter::Parameter() :
 	ioMode(NoIO),
+	interpolation(Smooth),
 	attribute(NoAttribute),
 	patchParam(false),
 	isConst(false),
@@ -82,6 +83,8 @@ Parameter::Format( const Header& header, unsigned& input, unsigned& output ) con
 
 			if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
 			{
+				if (this->interpolation == Flat)					formattedCode.append("flat ");
+				else if (this->interpolation == NoPerspective)		formattedCode.append("noperspective ");
 				formattedCode.append("layout(location = ");
 				formattedCode.append(AnyFX::Format("%d", input++));
 				formattedCode.append(") in ");
@@ -217,11 +220,18 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 	{
 		const std::string& qualifier = this->qualifiers[i];
 
-		if (qualifier == "const")		this->isConst = true;
-		else if (qualifier == "patch")	this->patchParam = true;
-		else if (qualifier == "in")		this->ioMode = Input;
-		else if (qualifier == "out")	this->ioMode = Output;
-		else if (qualifier == "inout")	this->ioMode = InputOutput;
+		if (qualifier == "const")					this->isConst = true;
+		else if (qualifier == "patch")				this->patchParam = true;
+		else if (qualifier == "flat")				this->interpolation = Flat;
+		else if (qualifier == "noperspective")		this->interpolation = NoPerspective;
+		else if (qualifier == "in")					this->ioMode = Input;
+		else if (qualifier == "out")				this->ioMode = Output;
+		else if (qualifier == "inout")				this->ioMode = InputOutput;
+		else
+		{
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
 	}
 
 	if (this->sizeExpression)

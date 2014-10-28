@@ -32,7 +32,7 @@ EffectVariable::~EffectVariable()
 void 
 EffectVariable::Discard()
 {
-	delete this->internalVariable;
+    this->internalVariable->Release();
 	this->internalVariable = 0;
 }
 
@@ -134,6 +134,7 @@ EffectVariable::SetFloat4Array( const float* f, size_t count )
 {
 	this->internalVariable->SetFloat4Array(f, count);
 }
+
 //------------------------------------------------------------------------------
 /**
 */

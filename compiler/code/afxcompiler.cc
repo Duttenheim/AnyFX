@@ -90,15 +90,15 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     unsigned lastSlash = curDir.rfind("/");
     curDir = curDir.substr(0, lastSlash);
 
-    const unsigned numargs = 4 + defines.size();
+    const unsigned numargs = 3 + defines.size();
     std::string* args = new std::string[numargs];
     args[0] = "-C";
     args[1] = "-W 0";
-    args[2] = "-I" + curDir;
+    //args[2] = "-I" + curDir;
     unsigned i;
     for (i = 0; i < defines.size(); i++)
     {
-        args[3 + i] = defines[i].c_str();
+        args[2 + i] = defines[i].c_str();
     }
     args[numargs-1] = file;
 
@@ -108,7 +108,6 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     {
         arguments[i] = args[i].c_str();
     }
-
 
     // run preprocessing
     mcpp_use_mem_buffers(1);

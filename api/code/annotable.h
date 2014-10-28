@@ -11,7 +11,7 @@
 #include "vartypes.h"
 #include <string>
 #include <map>
-#include <vector>
+#include "EASTL/vector.h"
 namespace AnyFX
 {
 class Annotable
@@ -50,7 +50,7 @@ private:
 		VariableType type;
 	};
 
-	std::vector<VariableType> annotationTypes;
+	eastl::vector<VariableType> annotationTypes;
 	std::map<std::string, AnnotationVariant> annotationMap;
 }; 
 } // namespace AnyFX

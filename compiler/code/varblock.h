@@ -34,6 +34,9 @@ public:
 	void SetShared(bool b);
 	/// get if varblock is shared
 	bool IsShared() const;
+    
+    /// set backing buffer expression
+    void SetBufferExpression(Expression* expr);
 
 	/// sorts variables in varblock
 	void SortVariables();
@@ -48,9 +51,11 @@ public:
 private:
 	std::vector<Variable> variables;
 	bool isShared;
+    unsigned bufferCount;
 
 	bool hasAnnotation;
 	Annotation annotation;
+    Expression* bufferExpression;
 }; 
 
 //------------------------------------------------------------------------------
@@ -60,6 +65,15 @@ inline void
 VarBlock::SetShared( bool b )
 {
 	this->isShared = b;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void 
+VarBlock::SetBufferExpression(Expression* expr)
+{
+    this->bufferExpression = expr;
 }
 
 //------------------------------------------------------------------------------

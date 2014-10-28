@@ -12,7 +12,7 @@ namespace AnyFX
 */
 InternalEffectShader::InternalEffectShader()
 {
-	memset(this->localSizes, 1, 3);
+	memset(this->localSizes, 1, 3 * sizeof(unsigned int));
 }
 
 //------------------------------------------------------------------------------

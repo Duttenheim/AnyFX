@@ -176,6 +176,8 @@ public:
 
 	/// discard program
 	void Discard();
+    /// resets render state to the default one
+    void Reset();
 
 	/// applies render state
 	void Apply();

@@ -64,7 +64,7 @@ EffectSamplerStreamLoader::Load( BinReader* reader, Effect* effect )
 	
 	// read textures
 	unsigned numTextures = reader->ReadInt();
-	std::vector<InternalEffectVariable*> textureVars;
+	eastl::vector<InternalEffectVariable*> textureVars;
 	unsigned i;
 	for (i = 0; i < numTextures; i++)
 	{

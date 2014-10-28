@@ -74,7 +74,7 @@ ELSE()
 ENDIF()
 
 	ADD_DEPENDENCIES(compiler
-		GenerateParser
+		#GenerateParser
 		util
 		antlr
 		mcpp)

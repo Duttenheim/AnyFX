@@ -12,7 +12,7 @@
 
 namespace AnyFX
 {
-
+std::map<std::string, InternalEffectVariable*> EffectVariableStreamLoader::sharedVariables;
 //------------------------------------------------------------------------------
 /**
 */
@@ -45,7 +45,20 @@ EffectVariableStreamLoader::Load( BinReader* reader, Effect* effect, InternalEff
 	EffectVariable* var = new EffectVariable;
 
 	std::string name = reader->ReadString();
-	VariableType type = (VariableType)reader->ReadInt();
+    bool shared = reader->ReadBool();                                   
+    VariableType type = (VariableType)reader->ReadInt();
+
+    size_t numPrograms = effect->GetNumPrograms();
+    EffectProgram** programs = effect->GetPrograms();
+    eastl::vector<InternalEffectProgram*> internalPrograms;
+    internalPrograms.reserve(numPrograms);
+
+    unsigned i;
+    for (i = 0; i < numPrograms; i++)
+    {
+        internalPrograms.push_back(programs[i]->internalProgram);
+    }
+	
 	internalVar->type = type;
 
 	// if this is a compute shader variable, read format and access modes
@@ -83,25 +96,39 @@ EffectVariableStreamLoader::Load( BinReader* reader, Effect* effect, InternalEff
 		internalVar->hasDefaultValue = true;
 	}	
 
-	size_t numPrograms = effect->GetNumPrograms();
-	EffectProgram** programs = effect->GetPrograms();
-	std::vector<InternalEffectProgram*> internalPrograms;
-	internalPrograms.reserve(numPrograms);
-
-	unsigned i;
-	for (i = 0; i < numPrograms; i++)
-	{
-		internalPrograms.push_back(programs[i]->internalProgram);
-	}
-
 	internalVar->name = name;
 	if (varblock)
 	{
 		internalVar->isInVarblock = true;
 		internalVar->parentBlock = varblock;
 	}
-	
-	internalVar->Setup(internalPrograms, defaultValue);
+
+    // handle shared variables, basically tears the variable apart if its already defined
+    if (shared)
+    {
+        const std::string key = EffectVariable::TypeToString(type) + ":" + name;
+        if (this->sharedVariables.find(key) != this->sharedVariables.end())
+        {
+            // release previously allocated variable
+            internalVar->Release();
+
+            internalVar = this->sharedVariables[key];
+            internalVar->SetupSlave(internalPrograms);
+            internalVar->Retain();
+
+            var->internalVariable = internalVar;
+            return var;
+        }
+        else
+        {
+            this->sharedVariables[key] = internalVar;
+            internalVar->Setup(internalPrograms, defaultValue);
+        }
+    }
+    else
+    {
+	    internalVar->Setup(internalPrograms, defaultValue);
+    }
 
 	var->internalVariable = internalVar;
 	return var;

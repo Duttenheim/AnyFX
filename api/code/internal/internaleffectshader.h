@@ -10,6 +10,7 @@
 //------------------------------------------------------------------------------
 #include "effectshader.h"
 #include <string>
+#include <string.h>
 namespace AnyFX
 {
 class Effect;

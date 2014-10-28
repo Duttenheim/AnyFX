@@ -8,14 +8,17 @@
     (C) 2013 Gustav Sterbrant
 */
 //------------------------------------------------------------------------------
+#include <string.h>
 #include <string>
-#include <vector>
+#include "EASTL/vector.h"
+#include "autoref.h"
+#include "settings.h"
 namespace AnyFX
 {
 class Effect;
 class InternalEffectVariable;
 class InternalEffectProgram;
-class InternalEffectVarblock 
+class InternalEffectVarblock : public AutoRef
 {
 public:
 	/// constructor
@@ -33,11 +36,6 @@ private:
 	/// returns signature
 	const std::string& GetSignature() const;
 
-	/// decrease reference count, delete if 0
-	void Release();
-	/// increase reference count
-	void Retain();
-
 protected:
 	friend class EffectVarblock;
 	friend class EffectStreamLoader;
@@ -46,29 +44,43 @@ protected:
 	friend class EffectVarblockStreamLoader;	
 
 	/// sets up varblock from program, override in subclass
-	virtual void Setup(std::vector<InternalEffectProgram*> programs);
+	virtual void Setup(eastl::vector<InternalEffectProgram*> programs);
 	/// sets up varblock from programs using a pre-existing varblock
-	virtual void SetupSlave(std::vector<InternalEffectProgram*> programs, InternalEffectVarblock* master);
+	virtual void SetupSlave(eastl::vector<InternalEffectProgram*> programs, InternalEffectVarblock* master);
 
 	/// binds varblocks prior to updating
 	virtual void Apply();
 	/// updates varblocks back-end buffer
 	virtual void Commit();
+    /// performs synchronization so as to not overwrite data
+    virtual void PreDraw();
+    /// puts a sync barrier post drawing
+    virtual void PostDraw();
+
+	/// sets if buffer should flush manually
+	virtual void SetFlushManually(bool b);
+	/// flushes buffer
+	virtual void FlushBuffer();
 	
 	/// updates single variable
-	void SetVariable(InternalEffectVariable* var, void* value);
+	virtual void SetVariable(InternalEffectVariable* var, void* value);
 	/// updates variable array
-	void SetVariableArray(InternalEffectVariable* var, void* value, size_t size);
+	virtual void SetVariableArray(InternalEffectVariable* var, void* value, size_t size);
+    /// set variable in array at index
+    virtual void SetVariableIndexed(InternalEffectVariable* var, void* value, unsigned i);
 	/// activates variable, this makes the uniform location be the one found in the given program
 	virtual void Activate(InternalEffectProgram* program);
 
 	std::string name;
 	std::string signature;
-	std::vector<InternalEffectVariable*> variables;
+	eastl::vector<InternalEffectVariable*> variables;
+	eastl::vector<InternalEffectVarblock*> childBlocks;
 	InternalEffectVarblock* masterBlock;
 	bool isShared;
 	bool isSlave;
 	bool active;
+    bool manualFlushing;
+    unsigned numBackingBuffers;
 	int refCount;
 
 	static unsigned globalUniformBlockBinding;
@@ -110,27 +122,6 @@ InternalEffectVarblock::GetData()
 	return this->dataBlock;
 }
 
-//------------------------------------------------------------------------------
-/**
-*/
-inline void 
-InternalEffectVarblock::Release()
-{
-	this->refCount--;
-	if (this->refCount == 0)
-	{
-		delete this;
-	}
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline void 
-InternalEffectVarblock::Retain()
-{
-	this->refCount++;
-}
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

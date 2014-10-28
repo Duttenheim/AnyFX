@@ -69,6 +69,26 @@ EffectProgram::Commit()
 //------------------------------------------------------------------------------
 /**
 */
+void 
+EffectProgram::PreDraw()
+{
+    assert(0 != this->internalProgram);
+    this->internalProgram->PreDraw();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void 
+EffectProgram::PostDraw()
+{
+    assert(0 != this->internalProgram);
+    this->internalProgram->PostDraw();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 const std::string& 
 EffectProgram::GetName() const
 {
@@ -111,5 +131,31 @@ EffectProgram::GetLocalSizes() const
 {
     assert(0 != this->shaderBlock.cs);
     return this->shaderBlock.cs->GetLocalSizes();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+eastl::vector<EffectShader*> 
+EffectProgram::GetShaders() const
+{
+    eastl::vector<EffectShader*> shaderList;
+    shaderList.resize(6);
+    shaderList[0] = this->shaderBlock.vs;
+    shaderList[1] = this->shaderBlock.ps;
+    shaderList[2] = this->shaderBlock.hs;
+    shaderList[3] = this->shaderBlock.ds;
+    shaderList[4] = this->shaderBlock.gs;
+    shaderList[5] = this->shaderBlock.cs;
+    return shaderList;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+EffectRenderState* 
+EffectProgram::GetRenderState() const
+{
+    return this->renderState;
 }
 } // namespace AnyFX
