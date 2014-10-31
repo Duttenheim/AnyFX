@@ -43,7 +43,7 @@ If you wish to put AnyFX in any folder like structure in your project, just set 
 Features
 ====
 
-AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no backwards compatibility with earlier versions of OpenGL or GLSL.
+AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no (as of yet) backwards compatibility with earlier versions of OpenGL or GLSL.
 
 AnyFX supports the following GLSL features:
 - Vertex and fragment shaders.
@@ -60,3 +60,7 @@ And the following OpenGL features:
 - Program assembly.
 - Per-program variable usage.
 - Application global uniform block sharing.
+- Persistently mapped uniform buffers.
+- Incremental state update.
+
+AnyFX is completely incremental. This means AnyFX will never perform a state change unless it actually changes the OpenGL state (by always keeping a copy of the state in memory, not by calling glGet* each frame). This ensures redundant state changes never happen, although AnyFX cannot optimize the order in which state switches occur. 
