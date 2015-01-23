@@ -5,6 +5,9 @@ AnyFX is an effects library which uses unified programming API for handling shad
 
 AnyFX is a programming language, but also not that it's not a shading language by itself. AnyFX operates by defining what one could call a padding, around which actual HLSL/GLSL shader code is written. The language specification can be found in the repository and is called 'anyfx spec.pdf'.
 
+In its current state, AnyFX is designed as an OpenGL alternative to the Microsoft Effects library used for DirectX, using the same principles of defining multiple shaders, render states, variables and program objects in a single file, which is then compiled and easily accessed in an application. 
+
+
 AnyFX also uses CMake to setup the project, and is fully implemented in C/C++. 
 
 AnyFX uses the following libraries (all of which are included), all of which follows either the BSD or GNU lesser general license:
@@ -19,6 +22,11 @@ DevIL
 glm
 
 AnyFX is split into two major parts, the compiler and the API. The compiler will take one AnyFX formatted effect file and output a binary blob which can then be read by the API. The API then provides a simple interface to use the resources generated from the effect. 
+
+OpenGL 4
+=====
+AnyFX is extremely high performant using OpenGL4, using the latest APIs which enables variable updates to be done without glUniform* and thus asynchronously with the draw calls. It also enables a state switch system which guarantees no state gets changed to its current state without using glGet*. It also enables shader program variations without the extensive use of glUseProgram through the functionality of subroutines.
+
 
 Setup
 ====
@@ -43,7 +51,7 @@ If you wish to put AnyFX in any folder like structure in your project, just set 
 Features
 ====
 
-AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no (as of yet) backwards compatibility with earlier versions of OpenGL or GLSL.
+AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no direct (as of yet) backwards compatibility with earlier versions of OpenGL, OpenGLES or GLSL. The language specification is defined in the _anyfx\_spec.pdf_ file included in the repository.
 
 AnyFX supports the following GLSL features:
 - Vertex and fragment shaders.
@@ -59,8 +67,11 @@ And the following OpenGL features:
 - Render states.
 - Program assembly.
 - Per-program variable usage.
-- Application global uniform block sharing.
-- Persistently mapped uniform buffers.
+- Uniform buffers:
+  - Persistently mapped uniform buffers.  
+  - Explicitly synced or implicitly synced dependent on need.
+  - Multiple buffering to avoid stalls.
+  - Application global uniform block sharing.
 - Incremental state update.
 
 AnyFX is completely incremental. This means AnyFX will never perform a state change unless it actually changes the OpenGL state (by always keeping a copy of the state in memory, not by calling glGet* each frame). This ensures redundant state changes never happen, although AnyFX cannot optimize the order in which state switches occur. 
