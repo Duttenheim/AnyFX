@@ -1,7 +1,7 @@
 AnyFX
 =====
 
-AnyFX is an effects library which will use a unified programming API for handling shaders implemented in any underlying shading language.
+AnyFX is an effects library which uses unified programming API for handling shaders implemented in any underlying shading language.
 
 AnyFX is a programming language, but also not that it's not a shading language by itself. AnyFX operates by defining what one could call a padding, around which actual HLSL/GLSL shader code is written. The language specification can be found in the repository and is called 'anyfx spec.pdf'.
 
