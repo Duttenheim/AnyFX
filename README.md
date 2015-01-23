@@ -7,7 +7,7 @@ AnyFX is a programming language, but also not that it's not a shading language b
 
 AnyFX also uses CMake to setup the project, and is fully implemented in C/C++. 
 
-AnyFX uses the following libraries, all of which follows either the BSD or GNU lesser general license:
+AnyFX uses the following libraries (all of which are included), all of which follows either the BSD or GNU lesser general license:
 
 mcpp
 antlr3c
