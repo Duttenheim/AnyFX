@@ -79,13 +79,15 @@ GLSL4EffectSampler::GLSL4EffectSampler() :
 GLSL4EffectSampler::~GLSL4EffectSampler()
 {
 	// empty
+	glDeleteSamplers(1, &this->sampler);
+	this->sampler = 0;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-void 
-GLSL4EffectSampler::Setup( const eastl::vector<InternalEffectVariable*>& textures )
+void
+GLSL4EffectSampler::Setup(const eastl::vector<InternalEffectVariable*>& textures)
 {
 	InternalEffectSampler::Setup(textures);
 
@@ -100,7 +102,7 @@ GLSL4EffectSampler::Setup( const eastl::vector<InternalEffectVariable*>& texture
 		assert(0 != texVar);
 
 		// get texture slot from variable
-		this->textures[i] = texVar->textureUnit;
+		this->textures[i] = texVar->bindingUnit;
 	}	
 
 	// generate sampler object

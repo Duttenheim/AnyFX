@@ -41,11 +41,12 @@ Shader::~Shader()
 {
 	// empty
 }
+
 //------------------------------------------------------------------------------
 /**
 */
 void
-Shader::SetHeader( const Header& header )
+Shader::SetHeader(const Header& header)
 {
     int major = header.GetMajor();
     Header::Type type = header.GetType();
@@ -140,7 +141,7 @@ Shader::Generate(
 				 const std::vector<VarBlock>& blocks,
                  const std::vector<VarBuffer>& buffers,
                  const std::vector<Subroutine>& subroutines,
-				 const std::vector<Function>& functions )
+				 const std::vector<Function>& functions)
 {
 	// clear formatted code
 	this->preamble.clear();
@@ -154,38 +155,73 @@ Shader::Generate(
 		this->preamble.append(version);
 	}
 
-	unsigned i;
-    for (i = 0; i < subroutines.size(); i++)
+    this->preamble.append("#extension GL_ARB_bindless_texture : require\n");
+
+	// this list holds a couple of defines which are inserted into the preamble of the code in order to be able to separate functions depending on shader type
+	const std::string shaderDefines[] =
+	{
+		"#define VERTEX_SHADER\n\n",
+		"#define FRAGMENT_SHADER\n\n",
+		"#define GEOMETRY_SHADER\n\n",
+		"#define HULL_SHADER\n\n",
+		"#define DOMAIN_SHADER\n\n",
+		"#define COMPUTE_SHADER\n\n"
+	};
+	this->preamble.append(shaderDefines[this->shaderType]);
+
+    // add compile flags
+    std::string tempFlags = this->compileFlags;
+    if (tempFlags.length() > 0)
     {
-        const Subroutine& subroutine = subroutines[i];
-        this->preamble.append(subroutine.Format(header));
-        this->indexToFileMap[subroutine.GetFileIndex()] = std::pair<std::string, std::string>(subroutine.GetName(), subroutine.GetFile());
+        std::string token;
+        size_t index = 0;
+        while ((index = tempFlags.find("|")) != std::string::npos)
+        {
+            token = tempFlags.substr(0, index);
+            tempFlags.erase(0, index + 1);
+            this->preamble.append("#define " + token + "\n");
+        }
+
+        // fugly solution, but adds the last define
+        this->preamble.append("#define " + tempFlags + "\n");
     }
 
-	for (i = 0; i < vars.size(); i++)
+	// undefine functions which GL will complain about when compiling for certain shader targets (likely they won't be used at all)
+	if (this->shaderType != ProgramRow::PixelShader)
 	{
-		const Variable& var = vars[i];
-
-		// variable is formatted by resolving the internal type to the target type
-		this->preamble.append(var.Format(header));
+		this->preamble.append("#define dFdx(val) val\n");
+		this->preamble.append("#define dFdy(val) val\n");
+		this->preamble.append("#define fwidth(val) val\n");
 	}
 
+	unsigned i;
 	for (i = 0; i < structures.size(); i++)
 	{
 		const Structure& structure = structures[i];
 		this->preamble.append(structure.Format(header));
 	}
 
+	for (i = 0; i < vars.size(); i++)
+	{
+		const Variable& var = vars[i];
+
+		if (!var.IsSubroutine())
+		{
+			// variable is formatted by resolving the internal type to the target type
+			this->preamble.append(var.Format(header));
+		}		
+	}
+
 	for (i = 0; i < blocks.size(); i++)
 	{
 		const VarBlock& block = blocks[i];
-		this->preamble.append(block.Format(header));
+		this->preamble.append(block.Format(header, i));
 	}
 
     for (i = 0; i < buffers.size(); i++)
     {
         const VarBuffer& buffer = buffers[i];
-        this->preamble.append(buffer.Format(header));
+        this->preamble.append(buffer.Format(header, i));
     }
 
 	for (i = 0; i < constants.size(); i++)
@@ -201,16 +237,34 @@ Shader::Generate(
         this->indexToFileMap[func.GetFileIndex()] = std::pair<std::string, std::string>(func.GetName(), func.GetFile());
 	}
 
+	for (i = 0; i < subroutines.size(); i++)
+	{
+		const Subroutine& subroutine = subroutines[i];
+		this->preamble.append(subroutine.Format(header));
+		this->indexToFileMap[subroutine.GetFileIndex()] = std::pair<std::string, std::string>(subroutine.GetName(), subroutine.GetFile());
+	}
+
+	for (i = 0; i < vars.size(); i++)
+	{
+		const Variable& var = vars[i];
+
+		if (var.IsSubroutine())
+		{
+			// generate subroutine vars
+			this->preamble.append(var.Format(header));
+		}
+	}
+
 	// now generate target language specifics
 	switch (this->target)
 	{
-	case GLSL4:
-		this->GenerateGLSL4(generator);
-		break;
 	case GLSL1:
 	case GLSL2:
 	case GLSL3:
 		this->GenerateGLSL3(generator);
+		break;
+	case GLSL4:
+		this->GenerateGLSL4(generator);
 		break;
 	case HLSL3:
 		this->GenerateHLSL3(generator);
@@ -227,8 +281,8 @@ Shader::Generate(
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Shader::GenerateGLSL4( Generator& generator )
+void
+Shader::GenerateGLSL4(Generator& generator)
 {
 	std::string code;
 
@@ -484,88 +538,107 @@ Shader::GenerateGLSL4( Generator& generator )
 	code.append(line);
 	code.append(func.GetCode());
 	code.append("\n}\n");
+
+	// if we don't have subroutines, find and replace names of subroutines with generated functions
+	if (header.GetFlags() & Header::NoSubroutines)
+	{
+		std::map<std::string, std::string>::const_iterator it;
+		for (it = this->subroutineMappings.begin(); it != this->subroutineMappings.end(); it++)
+		{
+			const std::string& find = (*it).first;
+			const std::string& replace = (*it).second;
+			while (code.find(find) != std::string::npos)
+			{
+				size_t start = code.find(find);
+				code.replace(start, find.length(), replace);
+			}
+		}
+	}
+
+	// set formatted code as the code we just generated
 	this->formattedCode = code;
 	
-	// now, compile
+	// start compilation
 	bool compilationSuccess = false;
 
 	// this seems a bit weird, we attempt to compile when we perform type checking
 	// however, we only perform a test compilation just to see if the formatted GLSL code is syntactically correct
-	if (header.GetType() == Header::GLSL)
+	const GLenum shaderTable[] = 
 	{
-		const GLenum shaderTable[] = 
-		{
-			GL_VERTEX_SHADER,
-			GL_FRAGMENT_SHADER,
-			GL_GEOMETRY_SHADER,			// only accepted in GLSL3+
-			GL_TESS_CONTROL_SHADER,		// only accepted in GLSL4+
-			GL_TESS_EVALUATION_SHADER,	// only accepted in GLSL4+
-			GL_COMPUTE_SHADER
-		};
+		GL_VERTEX_SHADER,
+		GL_FRAGMENT_SHADER,
+		GL_GEOMETRY_SHADER,			// only accepted in GLSL3+
+		GL_TESS_CONTROL_SHADER,		// only accepted in GLSL4+
+		GL_TESS_EVALUATION_SHADER,	// only accepted in GLSL4+
+		GL_COMPUTE_SHADER			// only accepted in GLSL4.3+
+	};
 
-		// create temporary shader object
-		GLenum shader = glCreateShader(shaderTable[this->shaderType]);
+	// create temporary shader object
+	GLenum shader = glCreateShader(shaderTable[this->shaderType]);
 
-		// create array of strings
-		GLint* lengths = new GLint[2];
-		const GLchar** sources = new const GLchar*[2];
+	// create array of strings
+	GLint* lengths = new GLint[2];
+	const GLchar** sources = new const GLchar*[2];
 
-		// the preamble part of the code should be the responsibility of AnyFX to ALWAYS get right
-		// the rest of the code patches are up to the programmer
-		sources[0] = this->preamble.c_str();
-		lengths[0] = this->preamble.length();
+	// the preamble part of the code should be the responsibility of AnyFX to ALWAYS get right
+	// the rest of the code patches are up to the programmer
+	sources[0] = this->preamble.c_str();
+	lengths[0] = this->preamble.length();
 		
-		// add the shader source lastly, as such, everything before should be already defined
-		sources[1] = this->formattedCode.c_str();
-		lengths[1] = this->formattedCode.length();
+	// add the shader source lastly, as such, everything before should be already defined
+	sources[1] = this->formattedCode.c_str();
+	lengths[1] = this->formattedCode.length();
 
-		// put source in shader
-		glShaderSource(shader, 2, sources, lengths);
+	// put source in shader
+	glShaderSource(shader, 2, sources, lengths);
 
-		// now compile
-		glCompileShader(shader);
+	// now compile
+	glCompileShader(shader);
 
-		// if there was an error, get it
-		GLint status;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-		GLint errorSize;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errorSize);
+	// if there was an error, get it
+	GLint status;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	GLint errorSize;
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errorSize);
 
-		if (status == GL_FALSE)
+	if (errorSize > 0 && status != GL_TRUE)
+	{
+		// get error log
+		GLchar* errorLog = new GLchar[errorSize];
+		glGetShaderInfoLog(shader, errorSize, NULL, errorLog);
+
+		// create string from error log
+		std::string errorString(errorLog, errorSize);
+
+		// now format errors and warnings to have correct line positions
+		std::stringstream stream(errorString);
+
+		// get vendor string
+		std::string vendor = (const char*)glGetString(GL_VENDOR);
+
+		// since different compilers handle error reporting differently, test for common strings and attempt to decode and output message accordingly
+		if (vendor.find("ATI") != vendor.npos ||
+			vendor.find("Intel") != vendor.npos)
 		{
-			// get error log
-			GLchar* errorLog = new GLchar[errorSize];
-			glGetShaderInfoLog(shader, errorSize, NULL, errorLog);
-
-			// create string from error log
-			std::string errorString(errorLog, errorSize);
-
-			// now format errors and warnings to have correct line positions
-			std::stringstream stream(errorString);
-
-			// get vendor string
-			std::string vendor = (const char*)glGetString(GL_VENDOR);
-
-			// since different compilers handle error reporting differently, test for common strings and attempt to decode and output message accordingly
-			if (vendor.find("ATI") != vendor.npos ||
-				vendor.find("Intel") != vendor.npos)
-			{
-				this->GLSLProblemIntelATI(generator, stream);
-			}
-			else if (vendor.find("NVIDIA") != vendor.npos)
-			{
-				this->GLSLProblemNvidia(generator, stream);
-			}
-			else
-			{
-				// no known GPU vendor, just output raw string
-				Emit(errorString.c_str());
-			}
+			this->GLSLProblemIntelATI(generator, stream);
 		}
-
-		// delete shader, we don't want it hogging any more memory now do we!
-		glDeleteShader(shader);
+		else if (vendor.find("NVIDIA") != vendor.npos)
+		{
+			this->GLSLProblemNvidia(generator, stream);
+		}
+		else
+		{
+			// no known GPU vendor, just output raw string
+			Emit(errorString.c_str());
+		}
+		delete[] errorLog;
 	}
+
+	delete[] lengths;
+	delete[] sources;
+
+	// delete shader, we don't want it hogging any more memory now do we!
+	glDeleteShader(shader);
 
 	// merge code
 	this->formattedCode = this->preamble + this->formattedCode;
@@ -576,7 +649,7 @@ Shader::GenerateGLSL4( Generator& generator )
 	Generates GLSL3 target language code
 */
 void 
-Shader::GenerateGLSL3( Generator& generator )
+Shader::GenerateGLSL3(Generator& generator)
 {
 	std::string message = Format("GLSL3 code generator is not implemented yet!\n");
 	generator.Error(message);
@@ -588,7 +661,7 @@ Shader::GenerateGLSL3( Generator& generator )
 	Generates HLSL5 target language code
 */
 void 
-Shader::GenerateHLSL5( Generator& generator )
+Shader::GenerateHLSL5(Generator& generator)
 {
 	std::string message = Format("HLSL5 code generator is not implemented yet!\n");
 	generator.Error(message);
@@ -601,7 +674,7 @@ Shader::GenerateHLSL5( Generator& generator )
 	Generates HLSL4 target language code
 */
 void 
-Shader::GenerateHLSL4( Generator& generator )
+Shader::GenerateHLSL4(Generator& generator)
 {
 	std::string message = Format("HLSL4 code generator is not implemented yet!\n");
 	generator.Error(message);
@@ -614,7 +687,7 @@ Shader::GenerateHLSL4( Generator& generator )
 	Generates HLSL3 target language code
 */
 void 
-Shader::GenerateHLSL3( Generator& generator )
+Shader::GenerateHLSL3(Generator& generator)
 {
 	std::string message = Format("HLSL3 code generator is not implemented yet!\n");
 	generator.Error(message);
@@ -625,8 +698,8 @@ Shader::GenerateHLSL3( Generator& generator )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Shader::Compile( BinWriter& writer )
+void
+Shader::Compile(BinWriter& writer)
 {
 	writer.WriteInt(this->shaderType);
 	writer.WriteString(this->name);
@@ -643,8 +716,8 @@ Shader::Compile( BinWriter& writer )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Shader::TypeCheck( TypeChecker& typechecker )
+void
+Shader::TypeCheck(TypeChecker& typechecker)
 {
 	// type check function, this will make sure the function is properly formatted
 	this->func.TypeCheck(typechecker);
@@ -721,8 +794,8 @@ Shader::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Shader::GLSLProblemIntelATI( Generator& generator, std::stringstream& stream )
+void
+Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
 {
 	while (!stream.eof())
 	{
@@ -814,8 +887,8 @@ Shader::GLSLProblemIntelATI( Generator& generator, std::stringstream& stream )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Shader::GLSLProblemNvidia( Generator& generator, std::stringstream& stream )
+void
+Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
 {
 	while (!stream.eof())
 	{

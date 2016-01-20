@@ -138,6 +138,55 @@ BinaryExpression::EvalInt( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
+unsigned
+BinaryExpression::EvalUInt(TypeChecker& typechecker)
+{
+	unsigned lVal = this->left->EvalUInt(typechecker);
+	unsigned rVal = this->right->EvalUInt(typechecker);
+
+	if (this->op == "+")
+	{
+		return lVal + rVal;
+	}
+	else if (this->op == "-")
+	{
+		return lVal - rVal;
+	}
+	else if (this->op == "*")
+	{
+		return lVal * rVal;
+	}
+	else if (this->op == "/")
+	{
+		return lVal / rVal;
+	}
+	else if (this->op == "<")
+	{
+		return (unsigned)(lVal < rVal);
+	}
+	else if (this->op == ">")
+	{
+		return (unsigned)(lVal > rVal);
+	}
+	else if (this->op == "<=")
+	{
+		return (unsigned)(lVal <= rVal);
+	}
+	else if (this->op == ">=")
+	{
+		return (unsigned)(lVal >= rVal);
+	}
+	else
+	{
+		std::string msg = Format("Invalid operator '%s' with int, %s\n", this->op.c_str(), this->ErrorSuffix().c_str());
+		typechecker.Error(msg);
+		return -1;
+	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 float 
 BinaryExpression::EvalFloat( TypeChecker& typechecker )
 {

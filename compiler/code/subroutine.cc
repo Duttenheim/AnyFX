@@ -28,8 +28,8 @@ Subroutine::~Subroutine()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Subroutine::TypeCheck( TypeChecker& typechecker )
+void
+Subroutine::TypeCheck(TypeChecker& typechecker)
 {
     // add variable, if failed we must have a redefinition
     if (!typechecker.AddSymbol(this)) return;
@@ -114,13 +114,19 @@ Subroutine::TypeCheck( TypeChecker& typechecker )
     {
         this->parameters[i].TypeCheck(typechecker);		
     }
+
+	// type check function
+	for (i = 0; i < this->func.parameters.size(); i++)
+	{
+		this->func.parameters[i].TypeCheck(typechecker);
+	}	
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Subroutine::Compile( BinWriter& writer )
+void
+Subroutine::Compile(BinWriter& writer)
 {
     writer.WriteString(this->name);
     writer.WriteInt(this->subroutineType);
@@ -129,8 +135,8 @@ Subroutine::Compile( BinWriter& writer )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Subroutine::CheckForOptimization( TypeChecker& typeChecker )
+void
+Subroutine::CheckForOptimization(TypeChecker& typeChecker)
 {
     if (this->subroutineType == Subroutine::Signature)
     {
@@ -149,50 +155,63 @@ Subroutine::CheckForOptimization( TypeChecker& typeChecker )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-Subroutine::Format( const Header& header ) const
+std::string
+Subroutine::Format(const Header& header) const
 {
     std::string formattedCode;
 
+#pragma region GLSL
     if (header.GetType() == Header::GLSL)
     {
-        if (this->subroutineType == Subroutine::Signature)
-        {
-            formattedCode.append("subroutine ");
-            formattedCode.append(DataType::ToProfileType(this->returnType, header.GetType()));
-            formattedCode.append(" ");
-            formattedCode.append(this->name);
-            formattedCode.append("(");
+		if (header.GetFlags() & Header::NoSubroutines)
+		{
+			// having no subroutines means the just become functions
+			if (this->subroutineType == Subroutine::Implementation)
+			{
+				formattedCode.append(this->func.GetCode());
+			}
+		}
+		else
+		{
+			if (this->subroutineType == Subroutine::Signature)
+			{
+				formattedCode.append("subroutine ");
+				formattedCode.append(DataType::ToProfileType(this->returnType, header.GetType()));
+				formattedCode.append(" ");
+				formattedCode.append(this->name);
+				formattedCode.append("(");
 
-            unsigned i;
-            for (i = 0; i < this->parameters.size(); i++)
-            {
-                const Parameter& param = this->parameters[i];
-                if (param.GetIO() == Parameter::Input) formattedCode.append("in ");
-                else if (param.GetIO() == Parameter::Output) formattedCode.append("out ");
-                formattedCode.append(DataType::ToProfileType(param.GetDataType(), header.GetType()));
-                formattedCode.append(" ");
-                formattedCode.append(param.GetName());
+				unsigned i;
+				for (i = 0; i < this->parameters.size(); i++)
+				{
+					const Parameter& param = this->parameters[i];
+					if (param.GetIO() == Parameter::Input) formattedCode.append("in ");
+					else if (param.GetIO() == Parameter::Output) formattedCode.append("out ");
+					else if (param.GetIO() == Parameter::InputOutput) formattedCode.append("inout ");
+					formattedCode.append(DataType::ToProfileType(param.GetDataType(), header.GetType()));
+					formattedCode.append(" ");
+					formattedCode.append(param.GetName());
 
-                if (i < this->parameters.size()-1)
-                {
-                    formattedCode.append(", ");
-                }
-            }
+					if (i < this->parameters.size() - 1)
+					{
+						formattedCode.append(", ");
+					}
+				}
 
-            formattedCode.append(");\n");
-        }
-        else if (this->subroutineType == Subroutine::Implementation)
-        {
-            formattedCode.append(AnyFX::Format("#line %d %d\n", this->GetLine(), this->fileIndex));
-            formattedCode.append("subroutine");
-            formattedCode.append(" (");
-            formattedCode.append(this->signature);
-            formattedCode.append(") ");
-            formattedCode.append(this->func.GetCode());
-        }
+				formattedCode.append(");\n");
+			}
+			else if (this->subroutineType == Subroutine::Implementation)
+			{
+				formattedCode.append(AnyFX::Format("#line %d %d\n", this->GetLine(), this->fileIndex));
+				formattedCode.append("subroutine");
+				formattedCode.append(" (");
+				formattedCode.append(this->signature);
+				formattedCode.append(") ");
+				formattedCode.append(this->func.GetCode());
+			}
+		}
     }
-    
+#pragma endregion
 
     return formattedCode;
 }
@@ -200,8 +219,8 @@ Subroutine::Format( const Header& header ) const
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Subroutine::UpdateCode( const Header& header, unsigned fileIndex )
+void
+Subroutine::UpdateCode(const Header& header, unsigned fileIndex)
 {
     // format function code with file index as input
     this->fileIndex = fileIndex;
@@ -211,8 +230,8 @@ Subroutine::UpdateCode( const Header& header, unsigned fileIndex )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Subroutine::ParameterUsed( unsigned i )
+void
+Subroutine::ParameterUsed(unsigned i)
 {
     if (i < this->optimizationList.size())
     {

@@ -118,6 +118,8 @@ public:
 
     /// returns byte size for specific type
     static unsigned ToByteSize(const DataType& type);
+	/// returns the primitive type of a data type
+	static DataType ToPrimitiveType(const DataType& type);
 
 	/// formats type to signature
 	static std::string ToSignature(const DataType& type);

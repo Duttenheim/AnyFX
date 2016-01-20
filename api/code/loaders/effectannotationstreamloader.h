@@ -24,7 +24,9 @@ private:
 	friend class EffectProgramStreamLoader;
 	friend class EffectRenderStateStreamLoader;
 	friend class EffectVarblockStreamLoader;
+	friend class EffectVarbufferStreamLoader;
 	friend class EffectVariableStreamLoader;
+	
 
 	// load annotation and save into object
 	void Load(BinReader* reader, Annotable* object);

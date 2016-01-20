@@ -31,10 +31,16 @@ public:
 	void AddVariable(const Variable& var);
 	/// get variables
 	const std::vector<Variable>& GetVariables() const;
-	/// set if varblock is shared by several shaders
-	void SetShared(bool b);
+
 	/// get if varblock is shared
 	bool IsShared() const;
+
+	/// add qualifier to varbuffer
+	void AddQualifier(const std::string& qualifier);
+	/// get number of qualifiers
+	const unsigned GetNumQualifiers() const;
+	/// get qualifier by index
+	const std::string& GetQualifier(unsigned i) const;
 
 	/// sorts variables in varblock
 	void SortVariables();
@@ -45,10 +51,12 @@ public:
 	void Compile(BinWriter& writer);
 
 	/// format variable to fit target language
-	std::string Format(const Header& header) const;
+	std::string Format(const Header& header, const int index) const;
 private:
 	std::vector<Variable> variables;
-	bool isShared;
+	std::vector<std::string> qualifiers;
+	bool shared;
+	unsigned size;
 
 	bool hasAnnotation;
 	Annotation annotation;
@@ -57,10 +65,38 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-VarBuffer::SetShared( bool b )
+inline void
+VarBuffer::SetAnnotation(const Annotation& annotation)
 {
-	this->isShared = b;
+    this->annotation = annotation;
+    this->hasAnnotation = true;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+VarBuffer::AddQualifier(const std::string& qualifier)
+{
+	this->qualifiers.push_back(qualifier);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+VarBuffer::GetNumQualifiers() const
+{
+	return this->qualifiers.size();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+VarBuffer::GetQualifier(unsigned i) const
+{
+	return this->qualifiers[i];
 }
 
 //------------------------------------------------------------------------------
@@ -69,7 +105,7 @@ VarBuffer::SetShared( bool b )
 inline bool 
 VarBuffer::IsShared() const
 {
-	return this->isShared;
+	return this->shared;
 }
 
 //------------------------------------------------------------------------------

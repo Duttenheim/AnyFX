@@ -62,8 +62,10 @@ PrintParserException(pANTLR3_EXCEPTION ex, pANTLR3_UINT8* tokenNames)
 	tokenMap["NOT"] = "!";
 	tokenMap["EQ"] = "=";
 	tokenMap["QO"] = "\"";
+	tokenMap["QU"] = "?";	
 	tokenMap["Q"] = "'";
 	tokenMap["NU"] = "#";
+	tokenMap["NL"] = "newline";
 	tokenMap["FORWARDSLASH"] = "\\";
 	tokenMap["LESS"] = "<";
 	tokenMap["LESSEQ"] = "<=";
@@ -92,7 +94,7 @@ PrintParserException(pANTLR3_EXCEPTION ex, pANTLR3_UINT8* tokenNames)
 	int row = ex->charPositionInLine;
 
 	// get line where the exception occurred
-	int line = token->line;
+	int line = ex->line;
 	
 	// get the token as a string
 	std::string tokenString = tokenMap[(const char*)tokenNames[token->type]];
@@ -161,8 +163,7 @@ PrintParserException(pANTLR3_EXCEPTION ex, pANTLR3_UINT8* tokenNames)
 	}
 
 	// remove the quotes surrounding the file name
-	std::string fileString((const char*)token->custom);
-	fileString = fileString.substr(1, fileString.size()-2);
+	std::string fileString(*(std::string*)token->custom);
 
 	// format error and save to buffer
 	std::string errorMessage = Format("Syntax error: %s at %d:%d in file '%s'.\n", exceptionAsString.c_str(), line, row, fileString.c_str());

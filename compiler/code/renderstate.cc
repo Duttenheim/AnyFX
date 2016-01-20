@@ -27,17 +27,16 @@ RenderState::RenderState() :
 	this->drawEnumFlags[RenderStateRow::CullMode] = RenderStateRow::Back;
 	this->drawEnumFlags[RenderStateRow::RasterizerMode] = RenderStateRow::Fill;
 	
-
 	// set default blend flags
 	unsigned i;
 	for (i = 0; i < MaxNumRenderTargets; i++)
 	{
 		this->blendBoolFlags[i][BlendStateRow::BlendEnabled] = false;
-		this->blendEnumFlags[i][BlendStateRow::SourceBlend] = BlendStateRow::One;
-		this->blendEnumFlags[i][BlendStateRow::DestinationBlend] = BlendStateRow::Zero;
+		this->blendEnumFlags[i][BlendStateRow::SrcBlend] = BlendStateRow::One;
+		this->blendEnumFlags[i][BlendStateRow::DstBlend] = BlendStateRow::Zero;
 		this->blendEnumFlags[i][BlendStateRow::BlendOp] = BlendStateRow::Add;
-		this->blendEnumFlags[i][BlendStateRow::SourceBlendAlpha] = BlendStateRow::One;
-		this->blendEnumFlags[i][BlendStateRow::DestinationBlendAlpha] = BlendStateRow::Zero;
+		this->blendEnumFlags[i][BlendStateRow::SrcBlendAlpha] = BlendStateRow::One;
+		this->blendEnumFlags[i][BlendStateRow::DstBlendAlpha] = BlendStateRow::Zero;
 		this->blendEnumFlags[i][BlendStateRow::BlendOpAlpha] = BlendStateRow::Add;	
 	}
 
@@ -50,19 +49,32 @@ RenderState::RenderState() :
 	this->drawBoolFlags[RenderStateRow::StencilEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::MultisampleEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::AlphaToCoverageEnabled] = false;
-	this->drawIntFlags[RenderStateRow::StencilReadMask] = 255;
-	this->drawIntFlags[RenderStateRow::StencilWriteMask] = 255;
+	this->drawBoolFlags[RenderStateRow::PolygonOffsetEnabled] = false;
 	this->drawIntFlags[RenderStateRow::StencilFrontRef] = 0;
-	this->drawIntFlags[RenderStateRow::StencilBackRef] = 0;	
+	this->drawIntFlags[RenderStateRow::StencilBackRef] = 0;
+	this->drawUintFlags[RenderStateRow::StencilReadMask] = 1;
+	this->drawUintFlags[RenderStateRow::StencilWriteMask] = 1;
+	this->drawFloatFlags[RenderStateRow::PolygonOffsetFactor] = 0.0f;
+	this->drawFloatFlags[RenderStateRow::PolygonOffsetUnits] = 0.0f;
 
 	for (i = 0; i < RenderStateRow::NumIntFlags; i++)
 	{
 		this->drawIntExpressions[i] = NULL;
 	}
 
+	for (i = 0; i < RenderStateRow::NumUintFlags; i++)
+	{
+		this->drawUintExpressions[i] = NULL;
+	}
+
 	for (i = 0; i < RenderStateRow::NumBoolFlags; i++)
 	{
 		this->drawBoolExpressions[i] = NULL;
+	}
+
+	for (i = 0; i < RenderStateRow::NumFloatFlags; i++)
+	{
+		this->drawFloatExpressions[i] = NULL;
 	}
 }
 
@@ -276,14 +288,14 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 			const std::string& flag = row.GetString();
 			unsigned flagVal = -1;
 
-			if (flag == "Keep")					flagVal = RenderStateRow::Keep;
-			else if (flag == "Zero")			flagVal = RenderStateRow::Zero;
-			else if (flag == "Replace")			flagVal = RenderStateRow::Replace;
-			else if (flag == "Increase")		flagVal = RenderStateRow::Increase;
-			else if (flag == "IncreaseWrap")	flagVal = RenderStateRow::IncreaseWrap;
-			else if (flag == "Decrease")		flagVal = RenderStateRow::Decrease;
-			else if (flag == "DecreaseWrap")	flagVal = RenderStateRow::DecreaseWrap;
-			else if (flag == "Invert")			flagVal = RenderStateRow::Invert;
+			if (flag == "Never")						flagVal = RenderStateRow::Never;
+			else if (flag == "Less")					flagVal = RenderStateRow::Less;
+			else if (flag == "Lequal")					flagVal = RenderStateRow::LEqual;
+			else if (flag == "Greater")					flagVal = RenderStateRow::Greater;
+			else if (flag == "Gequal")					flagVal = RenderStateRow::GEqual;
+			else if (flag == "Equal")					flagVal = RenderStateRow::Equal;
+			else if (flag == "Nequal")					flagVal = RenderStateRow::NEqual;
+			else if (flag == "Always")					flagVal = RenderStateRow::Always;
 			else
 			{
 				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
@@ -294,6 +306,28 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 			this->drawEnumFlags[RenderStateRow::StencilFrontFunc] = flagVal;
 		}
 		else if (row.GetFlag() == "StencilBackFunc")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Never")						flagVal = RenderStateRow::Never;
+			else if (flag == "Less")					flagVal = RenderStateRow::Less;
+			else if (flag == "Lequal")					flagVal = RenderStateRow::LEqual;
+			else if (flag == "Greater")					flagVal = RenderStateRow::Greater;
+			else if (flag == "Gequal")					flagVal = RenderStateRow::GEqual;
+			else if (flag == "Equal")					flagVal = RenderStateRow::Equal;
+			else if (flag == "Nequal")					flagVal = RenderStateRow::NEqual;
+			else if (flag == "Always")					flagVal = RenderStateRow::Always;
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::StencilBackFunc] = flagVal;
+		}
+		else if (row.GetFlag() == "StencilFailOp")
 		{
 			const std::string& flag = row.GetString();
 			unsigned flagVal = -1;
@@ -313,15 +347,88 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 				return;
 			}
 
-			this->drawEnumFlags[RenderStateRow::StencilBackFunc] = flagVal;
+			this->drawEnumFlags[RenderStateRow::StencilFrontFailOp] = flagVal;
+			this->drawEnumFlags[RenderStateRow::StencilBackFailOp] = flagVal;
 		}
-		else												this->invalidStringFlags.push_back(row.GetFlag());
+		else if (row.GetFlag() == "StencilPassOp")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Keep")					flagVal = RenderStateRow::Keep;
+			else if (flag == "Zero")			flagVal = RenderStateRow::Zero;
+			else if (flag == "Replace")			flagVal = RenderStateRow::Replace;
+			else if (flag == "Increase")		flagVal = RenderStateRow::Increase;
+			else if (flag == "IncreaseWrap")	flagVal = RenderStateRow::IncreaseWrap;
+			else if (flag == "Decrease")		flagVal = RenderStateRow::Decrease;
+			else if (flag == "DecreaseWrap")	flagVal = RenderStateRow::DecreaseWrap;
+			else if (flag == "Invert")			flagVal = RenderStateRow::Invert;
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::StencilFrontPassOp] = flagVal;
+			this->drawEnumFlags[RenderStateRow::StencilBackPassOp] = flagVal;
+		}
+		else if (row.GetFlag() == "StencilDepthFailOp")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Keep")					flagVal = RenderStateRow::Keep;
+			else if (flag == "Zero")			flagVal = RenderStateRow::Zero;
+			else if (flag == "Replace")			flagVal = RenderStateRow::Replace;
+			else if (flag == "Increase")		flagVal = RenderStateRow::Increase;
+			else if (flag == "IncreaseWrap")	flagVal = RenderStateRow::IncreaseWrap;
+			else if (flag == "Decrease")		flagVal = RenderStateRow::Decrease;
+			else if (flag == "DecreaseWrap")	flagVal = RenderStateRow::DecreaseWrap;
+			else if (flag == "Invert")			flagVal = RenderStateRow::Invert;
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::StencilFrontDepthFailOp] = flagVal;
+			this->drawEnumFlags[RenderStateRow::StencilBackDepthFailOp] = flagVal;
+		}
+		else if (row.GetFlag() == "StencilFunc")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Never")						flagVal = RenderStateRow::Never;
+			else if (flag == "Less")					flagVal = RenderStateRow::Less;
+			else if (flag == "Lequal")					flagVal = RenderStateRow::LEqual;
+			else if (flag == "Greater")					flagVal = RenderStateRow::Greater;
+			else if (flag == "Gequal")					flagVal = RenderStateRow::GEqual;
+			else if (flag == "Equal")					flagVal = RenderStateRow::Equal;
+			else if (flag == "Nequal")					flagVal = RenderStateRow::NEqual;
+			else if (flag == "Always")					flagVal = RenderStateRow::Always;
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::StencilFrontFunc] = flagVal;
+			this->drawEnumFlags[RenderStateRow::StencilBackFunc] = flagVal;			
+		}
+		else
+		{
+			this->invalidStringFlags.push_back(row.GetFlag());
+		}
 		break;
 	case RenderStateRow::ExpressionFlagType:
 		if (row.GetFlag() == "StencilFrontRef")				this->drawIntExpressions[RenderStateRow::StencilFrontRef] = row.GetExpression();
 		else if (row.GetFlag() == "StencilBackRef")			this->drawIntExpressions[RenderStateRow::StencilBackRef] = row.GetExpression();
-		else if (row.GetFlag() == "StencilReadMask")		this->drawIntExpressions[RenderStateRow::StencilReadMask] = row.GetExpression();
-		else if (row.GetFlag() == "StencilWriteMask")		this->drawIntExpressions[RenderStateRow::StencilWriteMask] = row.GetExpression();
+		else if (row.GetFlag() == "StencilReadMask")		this->drawUintExpressions[RenderStateRow::StencilReadMask] = row.GetExpression();
+		else if (row.GetFlag() == "StencilWriteMask")		this->drawUintExpressions[RenderStateRow::StencilWriteMask] = row.GetExpression();
 		else if (row.GetFlag() == "DepthEnabled")			this->drawBoolExpressions[RenderStateRow::DepthEnabled] = row.GetExpression();
 		else if (row.GetFlag() == "DepthWrite")				this->drawBoolExpressions[RenderStateRow::DepthWrite] = row.GetExpression();
 		else if (row.GetFlag() == "DepthClamp")				this->drawBoolExpressions[RenderStateRow::DepthClamp] = row.GetExpression();
@@ -330,6 +437,9 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 		else if (row.GetFlag() == "StencilEnabled")			this->drawBoolExpressions[RenderStateRow::StencilEnabled] = row.GetExpression();
 		else if (row.GetFlag() == "AlphaToCoverageEnabled") this->drawBoolExpressions[RenderStateRow::AlphaToCoverageEnabled] = row.GetExpression();
 		else if (row.GetFlag() == "MultisampleEnabled")		this->drawBoolExpressions[RenderStateRow::MultisampleEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetEnabled")	this->drawBoolExpressions[RenderStateRow::PolygonOffsetEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetFactor")	this->drawFloatExpressions[RenderStateRow::PolygonOffsetFactor] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetUnits")		this->drawFloatExpressions[RenderStateRow::PolygonOffsetUnits] = row.GetExpression();
 		else this->invalidExpressionFlags.push_back(row.GetFlag());
 		break;
 	}
@@ -351,15 +461,15 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			unsigned flagVal;
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
-			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSourceColor;
-			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
-			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
-			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;
-			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSourceAlpha;
-			else if (value == "DstAlpha")				flagVal = BlendStateRow::DestinationAlpha;
-			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDestinationAlpha;
-			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SourceAlphaSaturate;
+			else if (value == "SrcColor")				flagVal = BlendStateRow::SrcColor;
+			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSrcColor;
+			else if (value == "DstColor")				flagVal = BlendStateRow::DstColor;
+			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDstColor;
+			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SrcAlpha;
+			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSrcAlpha;
+			else if (value == "DstAlpha")				flagVal = BlendStateRow::DstAlpha;
+			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDstAlpha;
+			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SrcAlphaSaturate;
 			else if (value == "ConstantColor")			flagVal = BlendStateRow::ConstantColor;
 			else if (value == "OneMinusConstantColor")	flagVal = BlendStateRow::OneMinusConstantColor;
 			else if (value == "ConstantAlpha")			flagVal = BlendStateRow::ConstantAlpha;
@@ -372,7 +482,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			}
 
 			this->blendEnumIndexExpressions.push_back(row.GetRenderTarget());
-			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::SourceBlend));
+			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::SrcBlend));
 		}
 		else if (row.GetFlag() == "DstBlend")
 		{
@@ -380,15 +490,15 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			unsigned flagVal;
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
-			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSourceColor;
-			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
-			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
-			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;
-			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSourceAlpha;
-			else if (value == "DstAlpha")				flagVal = BlendStateRow::DestinationAlpha;
-			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDestinationAlpha;
-			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SourceAlphaSaturate;
+			else if (value == "SrcColor")				flagVal = BlendStateRow::SrcColor;
+			else if (value == "OneMinusSrcColor")		flagVal = BlendStateRow::OneMinusSrcColor;
+			else if (value == "DstColor")				flagVal = BlendStateRow::DstColor;
+			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDstColor;
+			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SrcAlpha;
+			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSrcAlpha;
+			else if (value == "DstAlpha")				flagVal = BlendStateRow::DstAlpha;
+			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDstAlpha;
+			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SrcAlphaSaturate;
 			else if (value == "ConstantColor")			flagVal = BlendStateRow::ConstantColor;
 			else if (value == "OneMinusConstantColor")	flagVal = BlendStateRow::OneMinusConstantColor;
 			else if (value == "ConstantAlpha")			flagVal = BlendStateRow::ConstantAlpha;
@@ -401,7 +511,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			}
 
 			this->blendEnumIndexExpressions.push_back(row.GetRenderTarget());
-			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::DestinationBlend));
+			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::DstBlend));
 		}
 		else if (row.GetFlag() == "SrcBlendAlpha")
 		{
@@ -409,15 +519,15 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			unsigned flagVal;
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
-			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSourceColor;
-			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
-			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
-			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;
-			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSourceAlpha;
-			else if (value == "DstAlpha")				flagVal = BlendStateRow::DestinationAlpha;
-			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDestinationAlpha;
-			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SourceAlphaSaturate;
+			else if (value == "SrcColor")				flagVal = BlendStateRow::SrcColor;
+			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSrcColor;
+			else if (value == "DstColor")				flagVal = BlendStateRow::DstColor;
+			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDstColor;
+			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SrcAlpha;
+			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSrcAlpha;
+			else if (value == "DstAlpha")				flagVal = BlendStateRow::DstAlpha;
+			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDstAlpha;
+			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SrcAlphaSaturate;
 			else if (value == "ConstantColor")			flagVal = BlendStateRow::ConstantColor;
 			else if (value == "OneMinusConstantColor")	flagVal = BlendStateRow::OneMinusConstantColor;
 			else if (value == "ConstantAlpha")			flagVal = BlendStateRow::ConstantAlpha;
@@ -430,7 +540,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			}
 
 			this->blendEnumIndexExpressions.push_back(row.GetRenderTarget());
-			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::SourceBlendAlpha));
+			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::SrcBlendAlpha));
 		}
 		else if (row.GetFlag() == "DstBlendAlpha")
 		{
@@ -438,15 +548,15 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			unsigned flagVal;
 			if (value == "Zero")						flagVal = BlendStateRow::Zero;
 			else if (value == "One")					flagVal = BlendStateRow::One;
-			else if (value == "SrcColor")				flagVal = BlendStateRow::SourceColor;
-			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSourceColor;
-			else if (value == "DstColor")				flagVal = BlendStateRow::DestinationColor;
-			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDestinationColor;
-			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SourceAlpha;
-			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSourceAlpha;
-			else if (value == "DstAlpha")				flagVal = BlendStateRow::DestinationAlpha;
-			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDestinationAlpha;
-			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SourceAlphaSaturate;
+			else if (value == "SrcColor")				flagVal = BlendStateRow::SrcColor;
+			else if (value == "OneMinus")				flagVal = BlendStateRow::OneMinusSrcColor;
+			else if (value == "DstColor")				flagVal = BlendStateRow::DstColor;
+			else if (value == "OneMinusDstColor")		flagVal = BlendStateRow::OneMinusDstColor;
+			else if (value == "SrcAlpha")				flagVal = BlendStateRow::SrcAlpha;
+			else if (value == "OneMinusSrcAlpha")		flagVal = BlendStateRow::OneMinusSrcAlpha;
+			else if (value == "DstAlpha")				flagVal = BlendStateRow::DstAlpha;
+			else if (value == "OneMinusDstAlpha")		flagVal = BlendStateRow::OneMinusDstAlpha;
+			else if (value == "SrcAlphaSaturate")		flagVal = BlendStateRow::SrcAlphaSaturate;
 			else if (value == "ConstantColor")			flagVal = BlendStateRow::ConstantColor;
 			else if (value == "OneMinusConstantColor")	flagVal = BlendStateRow::OneMinusConstantColor;
 			else if (value == "ConstantAlpha")			flagVal = BlendStateRow::ConstantAlpha;
@@ -459,7 +569,7 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 			}
 
 			this->blendEnumIndexExpressions.push_back(row.GetRenderTarget());
-			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::DestinationBlendAlpha));
+			this->blendEnumPairs.push_back(std::pair<int, BlendStateRow::EnumFlag>(flagVal, BlendStateRow::DstBlendAlpha));
 		}
 		else if (row.GetFlag() == "BlendOp")
 		{
@@ -522,8 +632,8 @@ RenderState::ConsumeBlendRow( const BlendStateRow& row )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-RenderState::TypeCheck( TypeChecker& typechecker )
+void
+RenderState::TypeCheck(TypeChecker& typechecker)
 {
 	// add render state, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
@@ -532,13 +642,13 @@ RenderState::TypeCheck( TypeChecker& typechecker )
 	unsigned i;
 	for (i = 0; i < this->invalidExpressionFlags.size(); i++)
 	{
-		std::string msg = Format("Render state field '%s' cannot be an expression, must be enum, %s\n", this->invalidExpressionFlags[i].c_str(), this->ErrorSuffix().c_str());
+		std::string msg = Format("Render state field '%s' is invalid, %s\n", this->invalidExpressionFlags[i].c_str(), this->ErrorSuffix().c_str());
 		typechecker.Error(msg);
 	}
 
 	for (i = 0; i < this->invalidStringFlags.size(); i++)
 	{
-		std::string msg = Format("Render state field '%s' cannot be an enum, must be expression, %s\n", this->invalidStringFlags[i].c_str(), this->ErrorSuffix().c_str());
+		std::string msg = Format("Render state field '%s' is invalid, %s\n", this->invalidStringFlags[i].c_str(), this->ErrorSuffix().c_str());
 		typechecker.Error(msg);
 	}
 
@@ -592,6 +702,17 @@ RenderState::TypeCheck( TypeChecker& typechecker )
 		{
 			this->drawIntFlags[i] = this->drawIntExpressions[i]->EvalInt(typechecker);
 			delete this->drawIntExpressions[i];
+			this->drawIntExpressions[i] = NULL;
+		}
+	}
+
+	for (i = 0; i < RenderStateRow::NumUintFlags; i++)
+	{
+		if (this->drawUintExpressions[i])
+		{
+			this->drawUintFlags[i] = this->drawUintExpressions[i]->EvalUInt(typechecker);
+			delete this->drawUintExpressions[i];
+			this->drawUintExpressions[i] = NULL;
 		}
 	}
 
@@ -601,6 +722,17 @@ RenderState::TypeCheck( TypeChecker& typechecker )
 		{
 			this->drawBoolFlags[i] = this->drawBoolExpressions[i]->EvalBool(typechecker);
 			delete this->drawBoolExpressions[i];
+			this->drawBoolExpressions[i] = NULL;
+		}
+	}
+
+	for (i = 0; i < RenderStateRow::NumFloatFlags; i++)
+	{
+		if (this->drawFloatExpressions[i])
+		{
+			this->drawFloatFlags[i] = this->drawFloatExpressions[i]->EvalFloat(typechecker);
+			delete this->drawFloatExpressions[i];
+			this->drawFloatExpressions[i] = NULL;
 		}
 	}
 
@@ -624,7 +756,6 @@ RenderState::TypeCheck( TypeChecker& typechecker )
 void 
 RenderState::Compile( BinWriter& writer )
 {
-
 	// write name
 	writer.WriteString(this->name);
 
@@ -673,6 +804,18 @@ RenderState::Compile( BinWriter& writer )
 	for (i = 0; i < RenderStateRow::NumIntFlags; i++)
 	{
 		writer.WriteInt(drawIntFlags[i]);
+	}
+
+	// write draw uint flags
+	for (i = 0; i < RenderStateRow::NumUintFlags; i++)
+	{
+		writer.WriteUInt(drawUintFlags[i]);
+	}
+
+	// write draw float flags
+	for (i = 0; i < RenderStateRow::NumFloatFlags; i++)
+	{
+		writer.WriteFloat(drawFloatFlags[i]);
 	}
 }
 

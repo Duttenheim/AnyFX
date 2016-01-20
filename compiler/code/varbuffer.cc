@@ -14,6 +14,7 @@ namespace AnyFX
 /**
 */
 VarBuffer::VarBuffer() :
+	size(0),
 	hasAnnotation(false)
 {
 	this->symbolType = Symbol::VarbufferType;
@@ -30,8 +31,8 @@ VarBuffer::~VarBuffer()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBuffer::AddVariable( const Variable& var )
+void
+VarBuffer::AddVariable(const Variable& var)
 {
 	this->variables.push_back(var);
 }
@@ -39,8 +40,8 @@ VarBuffer::AddVariable( const Variable& var )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBuffer::TypeCheck( TypeChecker& typechecker )
+void
+VarBuffer::TypeCheck(TypeChecker& typechecker)
 {
 	// add varblock, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
@@ -51,6 +52,18 @@ VarBuffer::TypeCheck( TypeChecker& typechecker )
 		this->annotation.TypeCheck(typechecker);
 	}
 
+	// evaluate qualifiers
+	for (unsigned i = 0; i < this->qualifiers.size(); i++)
+	{
+		const std::string& qualifier = this->qualifiers[i];
+		if (qualifier == "shared") this->shared = true;
+		else
+		{
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
+	}
+
     const Header& header = typechecker.GetHeader();
     if (header.GetType() != Header::GLSL)
     {
@@ -59,7 +72,7 @@ VarBuffer::TypeCheck( TypeChecker& typechecker )
     }
     else
     {
-        if (header.GetMajor() != 4 && header.GetMinor() != 3)
+        if (header.GetMajor() < 4 && header.GetMinor() < 3)
         {
             std::string message = AnyFX::Format("Varbuffers are only supported in OpenGL 4.3+, %s\n", this->ErrorSuffix().c_str());
             typechecker.Error(message);
@@ -70,22 +83,23 @@ VarBuffer::TypeCheck( TypeChecker& typechecker )
 	for (i = 0; i < this->variables.size(); i++)
 	{
         Variable var = this->variables[i];
-        if (var.GetArrayType() == Variable::UnsizedArray)
+        if (var.GetArrayType() == Variable::UnsizedArray && i < this->variables.size() - 1)
         {
-            std::string message = AnyFX::Format("Varbuffers cannot contain variables of unsized type! (%s), %s\n", var.GetName().c_str(), this->ErrorSuffix().c_str());
+            std::string message = AnyFX::Format("Varbuffers can only have its last member as an unsized array, %s\n", var.GetName().c_str(), this->ErrorSuffix().c_str());
             typechecker.Error(message);
         }
 
 		var.TypeCheck(typechecker);
+		this->size += var.GetByteSize() * var.GetArraySize();
 	}
 
 	Header::Type type = header.GetType();
 	int major = header.GetMajor();
 	if (type == Header::GLSL)
 	{
-		if (major < 3)
+		if (major < 4)
 		{
-			std::string message = AnyFX::Format("Varbuffers are only supported in GLSL versions 3+, %s\n", this->ErrorSuffix().c_str());
+			std::string message = AnyFX::Format("Varbuffers are only supported in GLSL versions 4+, %s\n", this->ErrorSuffix().c_str());
 			typechecker.Error(message);
 		}
 	}
@@ -102,21 +116,17 @@ VarBuffer::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-VarBuffer::Format( const Header& header ) const
+std::string
+VarBuffer::Format(const Header& header, const int index) const
 {
 	std::string formattedCode;
 
-    if (this->isShared)
-    {
-        // varblocks of this type are only available in GLSL4+
-        if (header.GetType() == Header::GLSL) formattedCode.append("layout(std430, shared) buffer ");
-    }
-    else
-    {
-        // varblocks of this type are only available in GLSL4+
-        if (header.GetType() == Header::GLSL) formattedCode.append("layout(std430) buffer ");
-    }	
+    // varbuffers of this type are only available in GLSL4+
+	if (header.GetType() == Header::GLSL)
+	{
+		std::string layout = AnyFX::Format("layout(std430, binding=%d) buffer ", index);
+		formattedCode.append(layout);
+	}
 	
 	formattedCode.append(this->GetName());
 	formattedCode.append("\n{\n");
@@ -138,11 +148,11 @@ VarBuffer::Format( const Header& header ) const
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBuffer::Compile( BinWriter& writer )
+void
+VarBuffer::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
-	writer.WriteBool(this->isShared);
+	writer.WriteBool(this->shared);
 
 	// write if annotation is used
 	writer.WriteBool(this->hasAnnotation);
@@ -153,15 +163,8 @@ VarBuffer::Compile( BinWriter& writer )
 		this->annotation.Compile(writer);
 	}	
 
-	// write how many variables we have 
-	writer.WriteInt(this->variables.size());
-
-	// compile all variable blocks
-	unsigned i;
-	for (i = 0; i < this->variables.size(); i++)
-	{
-		this->variables[i].Compile(writer);
-	}
+	// compile size
+	writer.WriteUInt(this->size);
 }
 
 //------------------------------------------------------------------------------

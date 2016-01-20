@@ -13,7 +13,7 @@
 #error "afxapi.h included before effectsampler.h"
 #endif
 
-#include <string>
+#include "EASTL/string.h"
 #include "annotable.h"
 namespace AnyFX
 {
@@ -24,7 +24,7 @@ public:
 
 	enum AddressMode
 	{
-		Wrap,
+		Wrap = 0,
 		Mirror,
 		Clamp,
 		Border,
@@ -35,7 +35,7 @@ public:
 
 	enum FilterMode
 	{
-		MinMagMipPoint,
+		MinMagMipPoint = 0,
 		MinMagMipLinear,
 		MinMagPointMipLinear,
 		MinMipPointMagLinear,
@@ -52,7 +52,7 @@ public:
 
 	enum ComparisonFunc
 	{
-		Never,
+		Never = 0,
 		Less,
 		LessEqual,
 		Greater,
@@ -73,7 +73,7 @@ public:
 	void Discard();
 
 	/// get name of variable
-	const std::string& GetName() const;
+    const eastl::string& GetName() const;
 
 private:
 	friend class EffectSamplerStreamLoader;
@@ -81,9 +81,6 @@ private:
 
 	InternalEffectSampler* internalSampler;
 }; 
-
-
-
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

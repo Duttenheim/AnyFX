@@ -58,6 +58,21 @@ Effect::~Effect()
 		this->varBlocks[i].Destroy();
 	}
 
+	for (i = 0; i < this->varBuffers.size(); i++)
+	{
+		this->varBuffers[i].Destroy();
+	}
+
+	for (i = 0; i < this->subroutines.size(); i++)
+	{
+		this->subroutines[i].Destroy();
+	}
+
+	for (i = 0; i < this->samplers.size(); i++)
+	{
+		this->samplers[i].Destroy();
+	}
+
 	// delete shaders
 	std::map<std::string, Shader*>::iterator it;
 	for (it = this->shaders.begin(); it != this->shaders.end(); it++)
@@ -72,13 +87,16 @@ Effect::~Effect()
 	this->functions.clear();
 	this->structures.clear();
 	this->varBlocks.clear();
+	this->varBuffers.clear();
+	this->subroutines.clear();
+	this->samplers.clear();
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddProgram( const Program& program )
+void
+Effect::AddProgram(const Program& program)
 {
 	this->programs.push_back(program);
 }
@@ -86,8 +104,8 @@ Effect::AddProgram( const Program& program )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddVariable( const Variable& var )
+void
+Effect::AddVariable(const Variable& var)
 {
 	this->variables.push_back(var);
 }
@@ -95,8 +113,8 @@ Effect::AddVariable( const Variable& var )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddConstant( const Constant& constant )
+void
+Effect::AddConstant(const Constant& constant)
 {
 	this->constants.push_back(constant);
 }
@@ -104,8 +122,8 @@ Effect::AddConstant( const Constant& constant )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddRenderState( const RenderState& state )
+void
+Effect::AddRenderState(const RenderState& state)
 {
 	this->renderStates.push_back(state);
 }
@@ -113,8 +131,8 @@ Effect::AddRenderState( const RenderState& state )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddFunction( const Function& function )
+void
+Effect::AddFunction(const Function& function)
 {
 	this->functions.push_back(function);
 }
@@ -122,8 +140,8 @@ Effect::AddFunction( const Function& function )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddStructure( const Structure& structure )
+void
+Effect::AddStructure(const Structure& structure)
 {
 	this->structures.push_back(structure);
 }
@@ -131,8 +149,8 @@ Effect::AddStructure( const Structure& structure )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddVarBlock( const VarBlock& varBlock )
+void
+Effect::AddVarBlock(const VarBlock& varBlock)
 {
 	this->varBlocks.push_back(varBlock);
 }
@@ -140,8 +158,8 @@ Effect::AddVarBlock( const VarBlock& varBlock )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddVarBuffer( const VarBuffer& varBuffer )
+void
+Effect::AddVarBuffer(const VarBuffer& varBuffer)
 {
     this->varBuffers.push_back(varBuffer);
 }
@@ -149,8 +167,8 @@ Effect::AddVarBuffer( const VarBuffer& varBuffer )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddSubroutine( const Subroutine& subroutine )
+void
+Effect::AddSubroutine(const Subroutine& subroutine)
 {
     this->subroutines.push_back(subroutine);
 }
@@ -158,8 +176,8 @@ Effect::AddSubroutine( const Subroutine& subroutine )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::AddSampler( const Sampler& sampler )
+void
+Effect::AddSampler(const Sampler& sampler)
 {
 	this->samplers.push_back(sampler);
 }
@@ -193,8 +211,39 @@ Effect::Setup()
 	}
 
 	// create a placeholder render state, which will be used for programs where no render state is explicitly assigned
-	this->placeholderRenderState.SetName("placeholder");
+	this->placeholderRenderState.SetName("PlaceholderState");
+    this->placeholderRenderState.SetReserved(true);
+    this->renderStates.insert(this->renderStates.begin(), this->placeholderRenderState);
 
+	if (header.GetFlags() & Header::PutGlobalVariablesInBlock)
+	{
+		this->placeholderVarBlock.SetName("GlobalBlock");
+		this->placeholderVarBlock.SetReserved(true);
+		this->placeholderVarBlock.AddQualifier("shared");
+
+		for (i = 0; i < this->variables.size(); i++)
+		{
+			AnyFX::Variable& var = this->variables[i];
+			var.Preprocess();
+			if (var.GetVarType().GetType() < DataType::Sampler1D && var.IsUniform())
+			{
+				this->placeholderVarBlock.AddVariable(var);
+				this->variables.erase(this->variables.begin() + i);
+				i--;
+			}
+
+		}
+		this->varBlocks.insert(this->varBlocks.begin(), this->placeholderVarBlock);
+	}
+	else
+	{
+		for (i = 0; i < this->variables.size(); i++)
+		{
+			AnyFX::Variable& var = this->variables[i];
+			var.Preprocess();
+		}
+	}
+    
 	// sort all variables in varblocks
 	for (i = 0; i < this->varBlocks.size(); i++)
 	{
@@ -214,8 +263,8 @@ Effect::Setup()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::TypeCheck( TypeChecker& typechecker )
+void
+Effect::TypeCheck(TypeChecker& typechecker)
 {
 	this->header.TypeCheck(typechecker);
 
@@ -227,11 +276,14 @@ Effect::TypeCheck( TypeChecker& typechecker )
 		shader->TypeCheck(typechecker);
 	}
 
-	// add placeholder render state to type checker
-	typechecker.AddSymbol(&this->placeholderRenderState);
-
 	unsigned i;
     unsigned j = 0;
+
+	for (i = 0; i < this->structures.size(); i++)
+	{
+		this->structures[i].TypeCheck(typechecker);
+	}
+
     for (i = 0; i < this->subroutines.size(); i++)
     {
         this->subroutines[i].TypeCheck(typechecker);
@@ -244,9 +296,12 @@ Effect::TypeCheck( TypeChecker& typechecker )
         this->subroutines[i].CheckForOptimization(typechecker);
     }
 
+	int samplerCount = 0;
+	int imageCount = 0;
 	for (i = 0; i < this->variables.size(); i++)
 	{
 		this->variables[i].TypeCheck(typechecker);
+		this->variables[i].SetBindingUnit(samplerCount, imageCount);
 	}
 
 	for (i = 0; i < this->samplers.size(); i++)
@@ -270,11 +325,6 @@ Effect::TypeCheck( TypeChecker& typechecker )
 		this->constants[i].TypeCheck(typechecker);
 	}
 
-	for (i = 0; i < this->structures.size(); i++)
-	{
-		this->structures[i].TypeCheck(typechecker);
-	}
-
 	for (i = 0; i < this->varBlocks.size(); i++)
 	{
 		this->varBlocks[i].TypeCheck(typechecker);
@@ -294,8 +344,8 @@ Effect::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Effect::Generate( Generator& generator )
+void
+Effect::Generate(Generator& generator)
 {
 	// typecheck all shaders
 	std::map<std::string, Shader*>::iterator it;
@@ -312,7 +362,7 @@ Effect::Generate( Generator& generator )
 /**
 */
 void
-Effect::Compile( BinWriter& writer )
+Effect::Compile(BinWriter& writer)
 {
 	assert(this->header.GetType() != Header::InvalidType);
 
@@ -344,16 +394,13 @@ Effect::Compile( BinWriter& writer )
 	writer.WriteInt('RENS');
 
 	// write amount of render states
-	writer.WriteInt(this->renderStates.size() + 1);
+	writer.WriteInt(this->renderStates.size());
 
 	// compile render states for runtime
 	for (i = 0; i < this->renderStates.size(); i++)
 	{
 		this->renderStates[i].Compile(writer);
 	}
-
-	// compile placeholder render state
-	this->placeholderRenderState.Compile(writer);
 
     // write FourCC code for subroutines
     writer.WriteInt('SUBR');

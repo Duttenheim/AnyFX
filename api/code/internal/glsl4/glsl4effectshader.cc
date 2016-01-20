@@ -68,21 +68,30 @@ GLSL4EffectShader::Compile()
 	// if there is an error, report it, although the compiler should already have done this
 	GLint status;
 	glGetShaderiv(this->shaderHandle, GL_COMPILE_STATUS, &status);
-    GLint errorSize;
-    glGetShaderiv(this->shaderHandle, GL_INFO_LOG_LENGTH, &errorSize);
+    GLint logSize;
+	glGetShaderiv(this->shaderHandle, GL_INFO_LOG_LENGTH, &logSize);
 
-	if (status != GL_TRUE)
+	if (logSize > 0)
 	{
-        GLchar* errorLog = new GLchar[errorSize];
-		glGetShaderInfoLog(this->shaderHandle, errorSize, NULL, errorLog);
+		GLchar* log = new GLchar[logSize];
+		glGetShaderInfoLog(this->shaderHandle, logSize, NULL, log);
+		if (status != GL_TRUE)
+		{
+			// create error string
+            this->error = eastl::string(log, logSize);
+			delete[] log;
 
-		// create error string
-		this->error = std::string(errorLog, errorSize);
-        delete [] errorLog;
-
-		// output error
-		return false;
+			// output error
+			return false;
+		}
+		else
+		{
+			// create warning string
+            this->warning = eastl::string(log, logSize);
+			delete[] log;
+		}
 	}
+
 
 	// everything is fine
 	return true;

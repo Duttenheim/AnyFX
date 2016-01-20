@@ -14,11 +14,13 @@
 #error "afxapi.h included before effectvarbuffer.h"
 #endif
 
-#include <string>
+#include "EASTL/string.h"
+#include "annotable.h"
 namespace AnyFX
 {
+class AutoRef;
 class InternalEffectVarbuffer;
-class EffectVarbuffer
+class EffectVarbuffer : public Annotable
 {
 public:
 	/// constructor
@@ -32,12 +34,20 @@ public:
     /// commits varblock
     void Commit();
     /// returns name of varblock
-    const std::string& GetName() const;
+    const eastl::string& GetName() const;
 
-    /// 
+	/// returns true if variable has any use whatsoever in the underlying structure
+	const bool IsActive() const;
+
+	/// get buffer handle
+	void* GetHandle() const;
+
+    /// set buffer, must be an implementation specific
+	void SetBuffer(void* handle);
 
 private:
     friend class EffectVarbufferStreamLoader;
+	friend class InternalEffectProgram;
 
     InternalEffectVarbuffer* internalVarbuffer;
 }; 

@@ -66,7 +66,9 @@ EffectStreamLoader::Load()
 		// reset global texture counters
 		// reset the global texture counter for texture units, and global uniform block counter for buffer units
 		InternalEffectVariable::globalTextureCounter = 0;
-		InternalEffectVarblock::globalUniformBlockBinding = 0;
+		InternalEffectVariable::globalImageCounter = 0;
+		InternalEffectVarblock::globalVarblockCounter = 0;
+		InternalEffectVarbuffer::globalVarbufferCounter = 0;
 
 		// while we are not at the end of the file, read stuff
 		while (true)
@@ -87,9 +89,10 @@ EffectStreamLoader::Load()
 				effect->numShaders = numShaders;
 				effect->shadersByIndex = NULL;
 
-				if(numShaders > 0)
+				if (numShaders > 0)
 				{
 					effect->shadersByIndex = new EffectShader*[numShaders];
+					memset(effect->shadersByIndex, NULL, numShaders * sizeof(EffectShader*));
 
 					unsigned i;
 					for (i = 0; i < numShaders; i++)
@@ -109,10 +112,10 @@ EffectStreamLoader::Load()
 				effect->numSubroutines = numSubroutines;
 				effect->subroutinesByIndex = NULL;
 
-				if(numSubroutines > 0)
+				if (numSubroutines > 0)
 				{
 					effect->subroutinesByIndex = new EffectSubroutine*[numSubroutines];
-                
+					memset(effect->subroutinesByIndex, NULL, numSubroutines * sizeof(EffectSubroutine*));
 
 					unsigned i;
 					for (i = 0; i < numSubroutines; i++)
@@ -131,9 +134,10 @@ EffectStreamLoader::Load()
 				effect->numPrograms = numProgs;
 				effect->programsByIndex = NULL;
 
-				if(numProgs > 0)
+				if (numProgs > 0)
 				{
 					effect->programsByIndex = new EffectProgram*[numProgs];
+					memset(effect->programsByIndex, NULL, numProgs * sizeof(EffectProgram*));
 
 					unsigned i;
 					for (i = 0; i < numProgs; i++)
@@ -154,10 +158,10 @@ EffectStreamLoader::Load()
 				effect->numRenderStates = numStates;
 				effect->renderStatesByIndex = NULL;
 
-				if(numStates > 0)
+				if (numStates > 0)
 				{
 					effect->renderStatesByIndex = new EffectRenderState*[numStates];
-
+					memset(effect->renderStatesByIndex, NULL, numStates * sizeof(EffectRenderState*));
 
 					unsigned i;
 					for (i = 0; i < numStates; i++)
@@ -175,9 +179,10 @@ EffectStreamLoader::Load()
 				unsigned numVars = this->reader->ReadUInt();
 				effect->numVariables = numVars;
 				effect->variablesByIndex = NULL;
-				if(numVars > 0)
+				if (numVars > 0)
 				{
 					effect->variablesByIndex = new EffectVariable*[numVars];
+					memset(effect->variablesByIndex, NULL, numVars * sizeof(EffectVariable*));
 
 					unsigned i;
 					for (i = 0; i < numVars; i++)
@@ -197,9 +202,10 @@ EffectStreamLoader::Load()
 				effect->numSamplers = numSamplers;
 				effect->samplersByIndex = NULL;
 
-				if(numSamplers > 0)
+				if (numSamplers > 0)
 				{
 					effect->samplersByIndex = new EffectSampler*[numSamplers];
+					memset(effect->samplersByIndex, NULL, numSamplers * sizeof(EffectSampler*));
 
 					unsigned i;
 					for (i = 0; i < numSamplers; i++)
@@ -217,9 +223,10 @@ EffectStreamLoader::Load()
 				unsigned numBlocks = this->reader->ReadUInt();
 				effect->numVarblocks = numBlocks;
 				effect->varblocksByIndex = NULL;
-				if(numBlocks > 0)
+				if (numBlocks > 0)
 				{
 					effect->varblocksByIndex = new EffectVarblock*[numBlocks];
+					memset(effect->varblocksByIndex, NULL, numBlocks * sizeof(EffectVarblock*));
 
 					// load varblock, also 'extract' the variables defined within
 					eastl::vector<EffectVariable*> vars;
@@ -259,9 +266,11 @@ EffectStreamLoader::Load()
                 unsigned numBuffers = this->reader->ReadUInt();
 				effect->varbuffersByIndex = NULL;
 				effect->numVarbuffers = numBuffers;
-				if(numBuffers > 0)
+				if (numBuffers > 0)
 				{
 					effect->varbuffersByIndex = new EffectVarbuffer*[numBuffers];
+					memset(effect->varbuffersByIndex, NULL, numBuffers * sizeof(EffectVarbuffer*));
+
 					unsigned i;
 					for (i = 0; i < numBuffers; i++)
 					{
@@ -282,6 +291,7 @@ EffectStreamLoader::Load()
 		}
 
 		// everything went smooth, so return effect
+		effect->LoadingDone();
 		return effect;
 	}
 	else

@@ -33,7 +33,7 @@ protected:
     void Reset();
 
 	/// gets name of render state
-	const std::string& GetName() const;
+    const eastl::string& GetName() const;
 	
 	Effect* effect;
 
@@ -55,8 +55,8 @@ protected:
 		EffectRenderState::StencilOperation backDepthFailOp;
 		EffectRenderState::ComparisonFunc frontFaceFunc;
 		EffectRenderState::ComparisonFunc backFaceFunc;
-		unsigned frontRef;
-		unsigned backRef;
+		int frontRef;
+		int backRef;
 
 		unsigned stencilReadMask;
 		unsigned stencilWriteMask;
@@ -72,16 +72,19 @@ protected:
 		bool stencilEnabled;
 		bool alphaToCoverageEnabled;
 		bool multisampleEnabled;
+		bool polygonOffsetEnabled;
+		float polygonOffsetFactor;
+		float polygonOffsetUnits;
 	} renderSettings, defaultRenderSettings;
 
-	std::string name;
+    eastl::string name;
 }; 
 
 
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectRenderState::GetName() const
 {
 	return this->name;

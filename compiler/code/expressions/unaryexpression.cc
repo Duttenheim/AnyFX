@@ -28,8 +28,8 @@ UnaryExpression::~UnaryExpression()
 //------------------------------------------------------------------------------
 /**
 */
-AnyFX::DataType 
-UnaryExpression::EvalType( TypeChecker& typechecker )
+AnyFX::DataType
+UnaryExpression::EvalType(TypeChecker& typechecker)
 {
 	return this->expr->EvalType(typechecker);
 }
@@ -37,8 +37,8 @@ UnaryExpression::EvalType( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-int 
-UnaryExpression::EvalInt( TypeChecker& typechecker )
+int
+UnaryExpression::EvalInt(TypeChecker& typechecker)
 {
 	if (this->op == '-')
 	{
@@ -55,8 +55,26 @@ UnaryExpression::EvalInt( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-float 
-UnaryExpression::EvalFloat( TypeChecker& typechecker )
+unsigned
+UnaryExpression::EvalUInt(TypeChecker& typechecker)
+{
+	if (this->op == '-')
+	{
+		return this->expr->EvalUInt(typechecker) * -1;
+	}
+	else
+	{
+		std::string msg = Format("Invalid operator '%c' for unsigned int, %s\n", this->op, this->ErrorSuffix().c_str());
+		typechecker.Error(msg);
+		return -1;
+	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+float
+UnaryExpression::EvalFloat(TypeChecker& typechecker)
 {
 	if (this->op == '-')
 	{
@@ -73,8 +91,8 @@ UnaryExpression::EvalFloat( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-bool 
-UnaryExpression::EvalBool( TypeChecker& typechecker )
+bool
+UnaryExpression::EvalBool(TypeChecker& typechecker)
 {
 	if (this->op == '!')
 	{

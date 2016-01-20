@@ -69,27 +69,7 @@ EffectProgram::Commit()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-EffectProgram::PreDraw()
-{
-    assert(0 != this->internalProgram);
-    this->internalProgram->PreDraw();
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void 
-EffectProgram::PostDraw()
-{
-    assert(0 != this->internalProgram);
-    this->internalProgram->PostDraw();
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-const std::string& 
+const eastl::string&
 EffectProgram::GetName() const
 {
 	assert(0 != this->internalProgram);
@@ -108,10 +88,19 @@ EffectProgram::IsValid()
 //------------------------------------------------------------------------------
 /**
 */
-const std::string& 
+const eastl::string&
 EffectProgram::GetError() const
 {
 	return this->internalProgram->error;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+EffectProgram::LoadingDone()
+{
+	this->internalProgram->LoadingDone();
 }
 
 //------------------------------------------------------------------------------

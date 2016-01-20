@@ -45,9 +45,37 @@ EffectVarbuffer::Commit()
 //------------------------------------------------------------------------------
 /**
 */
-const std::string& 
+const eastl::string&
 EffectVarbuffer::GetName() const
 {
     return this->internalVarbuffer->GetName();
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+const bool
+EffectVarbuffer::IsActive() const
+{
+	return this->internalVarbuffer->masterBuffer->active;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void*
+EffectVarbuffer::GetHandle() const
+{
+	return *this->internalVarbuffer->bufferHandle;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+EffectVarbuffer::SetBuffer(void* handle)
+{
+	this->internalVarbuffer->SetBuffer(handle);
+}
+
 } // namespace AnyFX

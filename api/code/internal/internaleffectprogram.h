@@ -9,8 +9,8 @@
 */
 //------------------------------------------------------------------------------
 #include "EASTL/vector.h"
-#include <string>
-#include <map>
+#include "EASTL/string.h"
+#include "EASTL/map.h"
 namespace AnyFX
 {
 class Effect;
@@ -41,22 +41,26 @@ protected:
 	virtual void Apply();
 	/// commits variables
 	virtual void Commit();
-    /// performs pre-draw stuff
-    virtual void PreDraw();
-    /// performs after-draw stuff
-    virtual void PostDraw();
 	/// links program, override in subclass if needed
 	virtual bool Link();
 	/// returns true if program supports tessellation
 	const bool SupportsTessellation() const;
 
+	/// copy internal handle from other program
+	virtual void SetupSlave(InternalEffectProgram* other);
+
     /// sets up subroutine mappings
     virtual void SetupSubroutines();
 
 	/// returns name of program
-	const std::string& GetName() const;
+    const eastl::string& GetName() const;
 	/// returns error, if any
-	const std::string& GetError() const;
+    const eastl::string& GetError() const;
+	/// returns warning string
+    const eastl::string& GetWarning() const;
+
+	/// notification that loading is done
+	virtual void LoadingDone();
 
 	InternalEffectRenderState* renderState;
 	Effect* effect;
@@ -64,21 +68,22 @@ protected:
 	struct InternalEffectShaderBlock
 	{
 		InternalEffectShader* vs;		                                                // vertex shader
-        std::map<std::string, InternalEffectSubroutine*> vsSubroutines;     // vertex shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> vsSubroutines;     // vertex shader
 		InternalEffectShader* ps;		                                                // pixel shader
-        std::map<std::string, InternalEffectSubroutine*> psSubroutines;     // pixel shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> psSubroutines;     // pixel shader
 		InternalEffectShader* ds;		                                                // domain shader
-        std::map<std::string, InternalEffectSubroutine*> dsSubroutines;     // domain shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> dsSubroutines;     // domain shader
 		InternalEffectShader* hs;		                                                // hull shader
-        std::map<std::string, InternalEffectSubroutine*> hsSubroutines;     // hull shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> hsSubroutines;     // hull shader
 		InternalEffectShader* gs;		                                                // geometry shader
-        std::map<std::string, InternalEffectSubroutine*> gsSubroutines;     // geometry shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> gsSubroutines;     // geometry shader
 		InternalEffectShader* cs;		                                                // compute shader
-        std::map<std::string, InternalEffectSubroutine*> csSubroutines;     // compute shader
+        eastl::map<eastl::string, InternalEffectSubroutine*> csSubroutines;     // compute shader
 	} shaderBlock;
 
-	std::string name;
-	std::string error;
+	eastl::string name;
+	eastl::string error;
+	eastl::string warning;
 
 	LinkState linkState;
 	bool supportsTessellation;
@@ -89,7 +94,7 @@ protected:
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectProgram::GetName() const
 {
 	return this->name;
@@ -98,10 +103,19 @@ InternalEffectProgram::GetName() const
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectProgram::GetError() const
 {
 	return this->error;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const eastl::string&
+InternalEffectProgram::GetWarning() const
+{
+	return this->warning;
 }
 
 //------------------------------------------------------------------------------

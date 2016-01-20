@@ -16,6 +16,7 @@
 #include "glsl4bufferlock.h"
 namespace AnyFX
 {
+class GLSL4EffectProgram;
 class GLSL4EffectVarblock : public InternalEffectVarblock
 {
 public:
@@ -25,53 +26,45 @@ public:
 	virtual ~GLSL4EffectVarblock();
 
 protected:
+	friend class GLSL4EffectProgram;
 
 	/// sets up variable block from program
 	void Setup(eastl::vector<InternalEffectProgram*> programs);
-	/// sets up varblock from programs using a pre-existing varblock
+	/// sets up varblock from programs using a pre-existing variable block
 	void SetupSlave(eastl::vector<InternalEffectProgram*> programs, InternalEffectVarblock* master);
 
-    /// set variable
-    void SetVariable(InternalEffectVariable* var, void* value);
-    /// set variable array
-    void SetVariableArray(InternalEffectVariable* var, void* value, size_t size);
-    /// set variable indexed
-    void SetVariableIndexed(InternalEffectVariable* var, void* value, unsigned i);
+	/// set buffer 
+	void SetBuffer(void* handle);
 
-    /// locks buffer
-    void LockBuffer();
-    /// unlock buffer
-    void UnlockBuffer();
-
-	/// sets if the buffer should flush manually, reallocates the buffer storage with different flags
-	void SetFlushManually(bool b);
-	/// flushes buffer
-	void FlushBuffer();
-
-	/// binds varblock
-	void Apply();
 	/// updates variable block
 	void Commit();
-    /// puts a sync fence in the GL queue
-    void PostDraw();
 	/// activates varblock uniform location
 	void Activate(InternalEffectProgram* program);
 
-	GLSL4BufferLock* bufferLock;
-	GLuint activeProgram;
-	GLuint uniformBlockBinding;
-	GLuint uniformBlockLocation;
+    /// sets up uniform block offsets
+    void SetupUniformOffsets(GLSL4EffectProgram* program, GLuint blockIndex);
 
-	static const unsigned NumAuxBuffers = 6;
-	GLuint buffer;
-	GLuint* auxBuffers;
-    GLuint* ringIndex;
-    GLchar* glBuffer;
-	GLchar* glBackingBuffer;
-    GLuint* glBufferOffset;
+	GLSL4EffectProgram* activeProgram;
+	GLuint activeProgramHandle;
+	GLuint uniformBlockBinding;
+	GLint offsetAlignment;
+
 	GLsizei bufferSize;
-    GLuint alignedSize;
-	bool bufferLocked;
+
+    unsigned* uniformOffsets;
+	GLint currentLocation;
+	eastl::hash_map<GLSL4EffectProgram*, GLint> activeMap;
+	eastl::vector<GLboolean>* ringLocks;
+
+	struct OpenGLBufferBinding
+	{
+		int handle;
+		unsigned offset;
+		unsigned size;
+		bool bindRange;
+
+		OpenGLBufferBinding() : bindRange(false), offset(0), size(0), handle(0) {};		
+	};
 }; 
 
 struct GLSL4VarblockRangeState
@@ -79,12 +72,26 @@ struct GLSL4VarblockRangeState
 	GLuint buffer;
 	GLuint offset;
 	GLsizei length;
-} static GLSL4VarblockRangeStates[256];
+
+	GLSL4VarblockRangeState()
+	{
+		buffer = 0;
+		offset = 0;
+		length = 0;
+	}
+
+} static GLSL4VarblockRangeStates[512];
 
 struct GLSL4VarblockBaseState
 {
 	GLuint buffer;
-} static GLSL4VarblockBaseStates[256];
+
+	GLSL4VarblockBaseState()
+	{
+		buffer = 0;
+	}
+
+} static GLSL4VarblockBaseStates[512];
 
 //------------------------------------------------------------------------------
 /**

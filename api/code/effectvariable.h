@@ -13,11 +13,12 @@
 #error "afxapi.h included before effectvariable.h"
 #endif
 
-#include <string>
+#include "EASTL/string.h"
 #include "vartypes.h"
 #include "annotable.h"
 namespace AnyFX
 {
+class AutoRef;
 class EffectVarblock;
 class InternalEffectVariable;
 class EffectVariable : public Annotable
@@ -33,7 +34,7 @@ public:
 	void Discard();
 
 	/// get name of variable
-	const std::string& GetName() const;
+	const eastl::string& GetName() const;
 	/// get type of variable
 	const VariableType& GetType() const;
 
@@ -87,19 +88,15 @@ public:
 	void SetMatrix(const float* mat);
 	/// set matrix array
 	void SetMatrixArray(const float* mat, size_t count);
-	/// textures must be an object of implementation type, i.e. OpenGLTexture
+	/// set texture, textures must be an object of implementation type, i.e. OpenGLTexture
 	void SetTexture(void* handle);
+	/// set texture handle, using bindless textures, must be an object of implementation type, i.e. OpenGLTextureHandle
+	void SetTextureHandle(void* handle);
 
 	/// converts effect variable type to string
-	static std::string TypeToString(const VariableType& type);
+	static eastl::string TypeToString(const VariableType& type);
 	/// converts effect variable type to byte size
 	static unsigned TypeToByteSize(const VariableType& type);
-
-	struct OpenGLTexture
-	{
-		int textureType;
-		int texture;
-	};
 
 private:
     friend class EffectProgramStreamLoader;

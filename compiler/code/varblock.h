@@ -30,10 +30,16 @@ public:
 	void AddVariable(const Variable& var);
 	/// get variables
 	const std::vector<Variable>& GetVariables() const;
-	/// set if varblock is shared by several shaders
-	void SetShared(bool b);
+
 	/// get if varblock is shared
 	bool IsShared() const;
+
+	/// add qualifier to varblock
+	void AddQualifier(const std::string& qualifier);
+	/// get number of qualifiers
+	const unsigned GetNumQualifiers() const;
+	/// get qualifier by index
+	const std::string& GetQualifier(unsigned i) const;
     
     /// set backing buffer expression
     void SetBufferExpression(Expression* expr);
@@ -47,10 +53,12 @@ public:
 	void Compile(BinWriter& writer);
 
 	/// format variable to fit target language
-	std::string Format(const Header& header) const;
+	std::string Format(const Header& header, const int index) const;
 private:
 	std::vector<Variable> variables;
-	bool isShared;
+	std::vector<std::string> qualifiers;
+	bool shared;
+	bool noSync;
     unsigned bufferCount;
 
 	bool hasAnnotation;
@@ -61,10 +69,11 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-VarBlock::SetShared( bool b )
+inline void
+VarBlock::SetAnnotation(const Annotation& annotation)
 {
-	this->isShared = b;
+    this->annotation = annotation;
+    this->hasAnnotation = true;
 }
 
 //------------------------------------------------------------------------------
@@ -82,7 +91,34 @@ VarBlock::SetBufferExpression(Expression* expr)
 inline bool 
 VarBlock::IsShared() const
 {
-	return this->isShared;
+	return this->shared;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+VarBlock::AddQualifier(const std::string& qualifier)
+{
+	this->qualifiers.push_back(qualifier);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+VarBlock::GetNumQualifiers() const
+{
+	return this->qualifiers.size();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+VarBlock::GetQualifier(unsigned i) const
+{
+	return this->qualifiers[i];
 }
 
 //------------------------------------------------------------------------------

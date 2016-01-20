@@ -43,7 +43,7 @@ public:
 	const std::string& GetError() const;
 
 	/// formats an appropriate error suffix
-	std::string ErrorSuffix();
+	std::string ErrorSuffix() const;
 	
 	/// override to setup necessary information
 	virtual void Setup();
@@ -66,8 +66,8 @@ protected:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Compileable::SetLine( unsigned line )
+inline void
+Compileable::SetLine(unsigned line)
 {
 	this->line = line;
 }
@@ -84,8 +84,8 @@ Compileable::GetLine() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Compileable::SetPosition( unsigned pos )
+inline void
+Compileable::SetPosition(unsigned pos)
 {
 	this->row = pos;
 }
@@ -102,10 +102,10 @@ Compileable::GetPosition() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Compileable::SetFile( const std::string& string )
+inline void
+Compileable::SetFile(const std::string& string)
 {
-	this->file = string.substr(1, string.size()-2);
+	this->file = string;
 }
 
 //------------------------------------------------------------------------------

@@ -46,7 +46,7 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 	EffectRenderState* renderState = new EffectRenderState;
 
 	// get name
-	std::string name = reader->ReadString();
+    eastl::string name = reader->ReadString().c_str();
 	internalRenderState->name = name;
 
 	bool hasAnnotation = reader->ReadBool();
@@ -84,6 +84,7 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 	bool stencilEnabled = reader->ReadBool();
 	bool alphaToCoverageEnabled = reader->ReadBool();
 	bool multisampleEnabled = reader->ReadBool();
+	bool polygonOffsetEnabled = reader->ReadBool();
 
 	internalRenderState->renderSettings.depthEnabled			= depthEnabled;
 	internalRenderState->renderSettings.depthWriteEnabled		= depthWrite;
@@ -93,6 +94,7 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 	internalRenderState->renderSettings.stencilEnabled			= stencilEnabled;
 	internalRenderState->renderSettings.alphaToCoverageEnabled	= alphaToCoverageEnabled;
 	internalRenderState->renderSettings.multisampleEnabled		= multisampleEnabled;
+	internalRenderState->renderSettings.polygonOffsetEnabled	= polygonOffsetEnabled;
 
 	unsigned depthFunc = reader->ReadUInt();
 	unsigned cullMode = reader->ReadUInt();
@@ -118,15 +120,21 @@ EffectRenderStateStreamLoader::Load( BinReader* reader, Effect* effect )
 	internalRenderState->renderSettings.frontFaceFunc		= (EffectRenderState::ComparisonFunc)stencilFrontFunc;
 	internalRenderState->renderSettings.backFaceFunc		= (EffectRenderState::ComparisonFunc)stencilBackFunc;
 
-	int stencilReadMask = reader->ReadInt();
-	int stencilWriteMask = reader->ReadInt();
 	int stencilFrontRef = reader->ReadInt();
 	int stencilBackRef = reader->ReadInt();
+	unsigned stencilReadMask = reader->ReadUInt();
+	unsigned stencilWriteMask = reader->ReadUInt();
 
 	internalRenderState->renderSettings.frontRef			= stencilFrontRef;
 	internalRenderState->renderSettings.backRef				= stencilBackRef;
 	internalRenderState->renderSettings.stencilReadMask		= stencilReadMask;
 	internalRenderState->renderSettings.stencilWriteMask	= stencilWriteMask;
+
+	float polygonOffsetFactor = reader->ReadFloat();
+	float polygonOffsetUnits = reader->ReadFloat();
+
+	internalRenderState->renderSettings.polygonOffsetFactor = polygonOffsetFactor;
+	internalRenderState->renderSettings.polygonOffsetUnits = polygonOffsetUnits;
 
     // memcpy default values loaded from file to interface
     memcpy(&internalRenderState->defaultRenderSettings, &internalRenderState->renderSettings, sizeof(InternalEffectRenderState::RenderStateSettings));

@@ -64,8 +64,12 @@ private:
 
 	Expression* drawIntExpressions[RenderStateRow::NumIntFlags];
 	int drawIntFlags[RenderStateRow::NumIntFlags];
+	Expression* drawUintExpressions[RenderStateRow::NumIntFlags];
+	unsigned drawUintFlags[RenderStateRow::NumUintFlags];
 	Expression* drawBoolExpressions[RenderStateRow::NumBoolFlags];
 	bool drawBoolFlags[RenderStateRow::NumBoolFlags];
+	Expression* drawFloatExpressions[RenderStateRow::NumFloatFlags];
+	float drawFloatFlags[RenderStateRow::NumFloatFlags];
 
 	int drawEnumFlags[RenderStateRow::NumEnumFlags];
 	

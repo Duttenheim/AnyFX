@@ -1,3 +1,0 @@
-[submodule "exts/eastl"]
-	path = exts/eastl
-	url = git@github.com:gscept/EASTL.git

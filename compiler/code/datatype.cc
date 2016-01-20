@@ -700,4 +700,69 @@ DataType::ToByteSize( const DataType& type )
     }
 }
 
+//------------------------------------------------------------------------------
+/**
+*/
+DataType
+DataType::ToPrimitiveType(const DataType& type)
+{
+	DataType ret;
+	switch (type.GetType())
+	{
+	case DataType::Float:
+	case DataType::Float2:
+	case DataType::Float3:
+	case DataType::Float4:
+		ret.type = DataType::Float;
+
+	case DataType::Double:
+	case DataType::Double2:
+	case DataType::Double3:
+	case DataType::Double4:
+		ret.type = DataType::Double;
+
+	case DataType::UInteger:
+	case DataType::UInteger2:
+	case DataType::UInteger3:
+	case DataType::UInteger4:
+		ret.type = DataType::UInteger;
+
+	case DataType::Integer:
+	case DataType::Integer2:
+	case DataType::Integer3:
+	case DataType::Integer4:
+		ret.type = DataType::Integer;
+
+	case DataType::Short:
+	case DataType::Short2:
+	case DataType::Short3:
+	case DataType::Short4:
+		ret.type = DataType::Short;
+
+	case DataType::Bool:
+	case DataType::Bool2:
+	case DataType::Bool3:
+	case DataType::Bool4:
+		ret.type = DataType::Bool;
+
+	case DataType::Matrix2x2:
+	case DataType::Matrix2x3:
+	case DataType::Matrix2x4:
+	case DataType::Matrix3x2:
+	case DataType::Matrix3x3:
+	case DataType::Matrix3x4:
+	case DataType::Matrix4x2:
+	case DataType::Matrix4x3:
+	case DataType::Matrix4x4:
+		ret.type = DataType::Float;
+
+	case DataType::UserType:
+		ret.type = DataType::UserType;
+
+	default:		// this is for all special types, such as texture handles etc.
+		ret.type = DataType::Integer;
+	}
+	return ret;
+}
+
 } // namespace AnyFX

@@ -27,6 +27,8 @@ public:
 
 	/// evaluates expression as an integer
 	virtual int EvalInt(TypeChecker& typechecker);
+	/// evaluates expression as an integer
+	virtual unsigned EvalUInt(TypeChecker& typechecker);
 	/// evaulates expression as a float
 	virtual float EvalFloat(TypeChecker& typechecker);
 	/// evaluates expression as a boolean

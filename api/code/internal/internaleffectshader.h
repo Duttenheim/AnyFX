@@ -44,20 +44,23 @@ protected:
 	virtual bool Compile();
 
 	/// returns name
-	const std::string& GetName() const;
+    const eastl::string& GetName() const;
 	/// returns error string
-	const std::string& GetError() const;
+    const eastl::string& GetError() const;
+	/// returns warning string
+    const eastl::string& GetWarning() const;
 	/// returns code
-	const std::string& GetCode() const;
+    const eastl::string& GetCode() const;
 
     /// returns list of local sizes used for compute shaders
     const unsigned* GetLocalSizes() const;
 
 	Effect* effect;
 	InternalShaderType type;
-	std::string sourceCode;
-	std::string name;
-	std::string error;
+	eastl::string sourceCode;
+	eastl::string name;
+	eastl::string error;
+	eastl::string warning;
     unsigned localSizes[3];
 }; 
 
@@ -65,7 +68,7 @@ protected:
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectShader::GetName() const
 {
 	return this->name;
@@ -74,7 +77,7 @@ InternalEffectShader::GetName() const
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectShader::GetError() const
 {
 	return this->error;
@@ -83,7 +86,16 @@ InternalEffectShader::GetError() const
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
+InternalEffectShader::GetWarning() const
+{
+	return this->warning;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const eastl::string&
 InternalEffectShader::GetCode() const
 {
 	return this->sourceCode;
@@ -97,7 +109,6 @@ InternalEffectShader::GetLocalSizes() const
 {
     return this->localSizes;
 }
-
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

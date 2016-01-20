@@ -24,7 +24,7 @@ Program::Program() :
 	this->slotNames[ProgramRow::DomainShader] = "";
 	this->slotNames[ProgramRow::GeometryShader] = "";
 	this->slotNames[ProgramRow::ComputeShader] = "";
-	this->slotNames[ProgramRow::RenderState] = "placeholder";
+	this->slotNames[ProgramRow::RenderState] = "PlaceholderState";
 
 	this->slotMask[ProgramRow::VertexShader] = false;
 	this->slotMask[ProgramRow::PixelShader] = false;
@@ -56,14 +56,15 @@ Program::ConsumeRow( const ProgramRow& row )
 	else if (row.GetFlag() == "DomainShader")	{ this->slotNames[ProgramRow::DomainShader] = row.GetString();      this->slotMask[ProgramRow::DomainShader] = true;    this->slotSubroutineMappings[ProgramRow::DomainShader] = row.GetSubroutineMappings(); }
 	else if (row.GetFlag() == "ComputeShader")	{ this->slotNames[ProgramRow::ComputeShader] = row.GetString();     this->slotMask[ProgramRow::ComputeShader] = true;   this->slotSubroutineMappings[ProgramRow::ComputeShader] = row.GetSubroutineMappings(); }
 	else if (row.GetFlag() == "RenderState")	{ this->slotNames[ProgramRow::RenderState] = row.GetString();       this->slotMask[ProgramRow::RenderState] = true; }
+    else if (row.GetFlag() == "CompileFlags")   { this->compileFlags = row.GetString(); }
 	else this->invalidFlags.push_back(row.GetFlag());
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Program::TypeCheck( TypeChecker& typechecker )
+void
+Program::TypeCheck(TypeChecker& typechecker)
 {
 	// add program, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
@@ -140,6 +141,12 @@ Program::TypeCheck( TypeChecker& typechecker )
                 }
             }
         }
+    }
+
+    // update shader names with compile flags
+    for (int i = 0; i < ProgramRow::NumProgramRows - 1; i++)
+    {
+        //this->slotNames[i] += "_" + this->compileFlags;
     }
 	
 	// get shaders
@@ -449,8 +456,8 @@ Program::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Program::Compile( BinWriter& writer )
+void
+Program::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
 
@@ -534,7 +541,7 @@ Program::Compile( BinWriter& writer )
 /**
 */
 void
-Program::BuildShaders( const Header& header, const std::vector<Function>& functions, std::map<std::string, Shader*>& shaders )
+Program::BuildShaders(const Header& header, const std::vector<Function>& functions, std::map<std::string, Shader*>& shaders)
 {
 	unsigned i;
 	for (i = 0; i < ProgramRow::NumProgramRows; i++)
@@ -553,19 +560,45 @@ Program::BuildShaders( const Header& header, const std::vector<Function>& functi
 				// ok, we have a matching function
 				if (func.GetName() == functionName && func.IsShader())
 				{
+                    // create string which is the function name merged with its compile flags
+                    std::string functionNameWithDefines = functionName;// +"_" + this->compileFlags;
+
+					std::map<std::string, std::string> subroutineMappings;
+					if (header.GetFlags() & Header::NoSubroutines)
+					{
+						subroutineMappings = this->slotSubroutineMappings[i];
+						std::map<std::string, std::string>::const_iterator it;
+
+						functionNameWithDefines += "(";
+						for (it = subroutineMappings.begin(); it != subroutineMappings.end(); it++)
+						{
+							functionNameWithDefines += AnyFX::Format("%s = %s", (*it).first.c_str(), (*it).second.c_str());
+							if (std::next(it) != subroutineMappings.end())
+							{
+								functionNameWithDefines += ", ";
+							}
+						}
+						functionNameWithDefines += ")";
+
+						// remove subroutines from mappings since they are done now...
+						this->slotNames[i] = functionNameWithDefines;
+						this->slotSubroutineMappings[i].clear();
+					}
+
 					// if the shader has not been created yet, create it
-					if (shaders.find(functionName) == shaders.end())
+                    if (shaders.find(functionNameWithDefines) == shaders.end())
 					{
 						Shader* shader = new Shader;
 						shader->SetFunction(func);
 						shader->SetType(i);
-						shader->SetName(functionName);
+                        shader->SetName(functionNameWithDefines);
 						shader->SetHeader(header);
-						shaders[functionName] = shader;
+                        shader->SetCompileFlags(this->compileFlags);
+						shader->SetSubroutineMappings(subroutineMappings);
+                        shaders[functionNameWithDefines] = shader;
 					}
 				}
 			}
-
 		}
 	}
 }

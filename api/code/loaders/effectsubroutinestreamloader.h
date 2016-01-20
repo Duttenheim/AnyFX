@@ -5,7 +5,7 @@
     
     Loads a subroutine from stream.
     
-    (C) 2014 Individual contributors, see AUTHORS file
+    (C) 2015 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"

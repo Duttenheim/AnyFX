@@ -6,9 +6,13 @@
 #include "internal/internaleffectrenderstate.h"
 #include "internal/internaleffectsubroutine.h"
 #include "internal/internaleffectvariable.h"
+#include "internal/internaleffectprogram.h"
 #include "glsl4effectshader.h"
+#include "glsl4effectvariable.h"
+#include "glsl4effectvarbuffer.h"
+#include "glsl4effectvarblock.h"
 #include <assert.h>
-#include <algorithm>
+#include "EASTL/sort.h"
 
 namespace AnyFX
 {
@@ -27,6 +31,20 @@ unsigned* GLSL4GlobalProgramState::csSubroutines = 0;
 */
 GLSL4EffectProgram::GLSL4EffectProgram() :
 	programHandle(0)
+#if GL4_MULTIBIND
+	, varblockBindsCount(0),
+	varbufferBindsCount(0),
+	textureBindsCount(0),
+	imageBindsCount(0),
+	varblockRangeBindBuffers(NULL),
+	varblockRangeBindOffsets(NULL),
+	varblockRangeBindSizes(NULL),
+	varbufferRangeBindBuffers(NULL),
+	varbufferRangeBindOffsets(NULL),
+	varbufferRangeBindSizes(NULL),
+	textureBinds(NULL),
+	imageBinds(NULL)
+#endif
 {
 	// empty
 }
@@ -36,13 +54,35 @@ GLSL4EffectProgram::GLSL4EffectProgram() :
 */
 GLSL4EffectProgram::~GLSL4EffectProgram()
 {
-	// empty
+	this->glsl4Variables.clear();
+	this->glsl4Varblocks.clear();
+	this->glsl4Varbuffers.clear();
+
+#if GL4_MULTIBIND
+	// delete varblock binds
+	if (this->varblockBindsCount > 0)
+	{
+		delete[] this->varblockRangeBindBuffers;
+		delete[] this->varblockRangeBindOffsets;
+		delete[] this->varblockRangeBindSizes;
+	}
+
+	// delete varbuffer binds		    
+	if (this->varbufferBindsCount > 0)
+	{
+		delete[] this->varbufferRangeBindBuffers;
+		delete[] this->varbufferRangeBindOffsets;
+		delete[] this->varbufferRangeBindSizes;
+	}	
+
+	// delete texture binds			    
+	if (this->textureBindsCount) delete[] this->textureBinds;
+	if (this->imageBindsCount) delete[] this->imageBinds;
+#endif
 }
 
 //------------------------------------------------------------------------------
 /**
-    FIXME! 
-    Make it so we can apply a program without changing the actual OpenGL program, but instead simply change the subroutines!
 */
 void 
 GLSL4EffectProgram::Apply()
@@ -58,6 +98,13 @@ GLSL4EffectProgram::Apply()
     // first time, we must apply all subroutines since
     this->ApplySubroutines();
 
+#if GL4_MULTIBIND
+	this->varblocksDirty = true;
+	this->varbuffersDirty = true;
+	this->texturesDirty = true;
+	this->imagesDirty = true;
+#endif
+
 	// if we support tessellation, then set the patch vertices parameter also
 	if (this->supportsTessellation)
 	{
@@ -67,9 +114,6 @@ GLSL4EffectProgram::Apply()
             glPatchParameteri(GL_PATCH_VERTICES, this->patchSize);
         }		
 	}
-
-	// unbind all samplers
-	//glBindSamplers(0, 64, NULL);
 
 	// apply internal program
 	InternalEffectProgram::Apply();
@@ -117,6 +161,16 @@ GLSL4EffectProgram::ApplySubroutines()
         GLSL4GlobalProgramState::csSubroutines = this->csSubroutineBindings;
         if (this->numCsSubroutines > 0) glUniformSubroutinesuiv(GL_COMPUTE_SHADER,          this->numCsSubroutines, this->csSubroutineBindings);
     }    
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+GLSL4EffectProgram::SetupSlave(InternalEffectProgram* other)
+{
+	GLSL4EffectProgram* otherProgram = static_cast<GLSL4EffectProgram*>(other);
+	this->programHandle = otherProgram->programHandle;
 }
 
 //------------------------------------------------------------------------------
@@ -180,18 +234,41 @@ GLSL4EffectProgram::Link()
 
 		GLint status;
 		glGetProgramiv(this->programHandle, GL_LINK_STATUS, &status);
+		GLint size;
+		glGetProgramiv(this->programHandle, GL_INFO_LOG_LENGTH, &size);
 
-		if (status != GL_TRUE)
+		if (size > 0)
 		{
-			GLchar errorLog[65535];
-			GLsizei length;
-			glGetProgramInfoLog(this->programHandle, 65535, &length, errorLog);
+			GLchar* log = new GLchar[size];
+			glGetProgramInfoLog(this->programHandle, size, NULL, log);
+			if (status != GL_TRUE)
+			{
+				// create error string
+                this->error = eastl::string(log, size);
+				delete[] log;
 
-			// create error string
-			this->error = std::string(errorLog, length);
+				// output false
+				return false;
+			}
+			else
+			{
+				// set warning flag
+                this->warning = eastl::string(log, size);
+				delete[] log;
+			}
+		}
+		else
+		{
+			glValidateProgram(this->programHandle);
 
-			// output false
-			return false;
+			GLint size;
+			glGetProgramiv(this->programHandle, GL_INFO_LOG_LENGTH, &size);
+			if (size > 0)
+			{
+				GLchar* log = new GLchar[size];
+				glGetProgramInfoLog(this->programHandle, size, NULL, log);
+				printf("glValidateProgram produced: %s\n", log);
+			}
 		}
 	}
 	else
@@ -200,18 +277,71 @@ GLSL4EffectProgram::Link()
 		glDeleteProgram(this->programHandle);
 		this->programHandle = 0;
 
+		// destroy shaders
+		this->DestroyShaders();
+
         // return false since the program is empty
         return false;
 	}
 
+	// destroy shaders
+	this->DestroyShaders();
+
 	return true;
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+GLSL4EffectProgram::Commit()
+{
+#if GL4_MULTIBIND
+	// signal our variables and varblocks to apply their variables
+	unsigned i;
+	size_t num = this->glsl4Variables.size();
+	for (i = 0; i < num; ++i)
+	{
+		this->glsl4Variables[i]->Commit();
+	}
+
+	num = this->glsl4Varbuffers.size();
+	for (i = 0; i < num; ++i)
+	{
+		this->glsl4Varbuffers[i]->Commit();
+	}
+
+	num = this->glsl4Varblocks.size();
+	for (i = 0; i < num; ++i)
+	{
+		this->glsl4Varblocks[i]->Commit();
+	}
+
+	if (this->textureBindsCount > 0)
+	{
+		glBindTextures(0, this->textureBindsCount, this->textureBinds);
+		this->texturesDirty = false;
+	}
+	if (this->imageBindsCount > 0)
+	{
+		glBindImageTextures(0, this->imageBindsCount, this->imageBinds);
+		this->imagesDirty = false;
+	}
+	if (this->varbufferBindsCount > 0)
+		glBindBuffersRange(GL_SHADER_STORAGE_BUFFER, 0, this->varbufferBindsCount, this->varbufferRangeBindBuffers, this->varbufferRangeBindOffsets, this->varbufferRangeBindSizes);
+	if (this->varblockBindsCount > 0)
+		glBindBuffersRange(GL_UNIFORM_BUFFER, 0, this->varblockBindsCount, this->varblockRangeBindBuffers, this->varblockRangeBindOffsets, this->varblockRangeBindSizes);
+#else
+	InternalEffectProgram::Commit();
+#endif
+}
+
 //------------------------------------------------------------------------------
 /**
     sort hook for subroutine uniforms
 */
 bool
-SubroutineBindingCompare(const std::pair<GLuint, GLuint>& v1, const std::pair<GLuint, GLuint>& v2)
+SubroutineBindingCompare(const eastl::pair<GLuint, GLuint>& v1, const eastl::pair<GLuint, GLuint>& v2)
 {
 	return v1.first < v2.first;
 }
@@ -236,15 +366,15 @@ GLSL4EffectProgram::SetupSubroutines()
 /**
 */
 void 
-GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLsizei& numBindings, GLuint** bindingArray, const std::map<std::string, InternalEffectSubroutine*>& bindings )
+GLSL4EffectProgram::SetupSubroutineHelper(GLenum shaderType, GLsizei& numBindings, GLuint** bindingArray, const eastl::map<eastl::string, InternalEffectSubroutine*>& bindings)
 {
-    std::map<std::string, InternalEffectSubroutine*>::const_iterator it;
+    eastl::map<eastl::string, InternalEffectSubroutine*>::const_iterator it;
 
-    eastl::vector<std::pair<GLuint, GLuint> > intermediateMap;
+    eastl::vector<eastl::pair<GLuint, GLuint> > intermediateMap;
     unsigned numActiveSubroutines = 0;
     for (it = bindings.begin(); it != bindings.end(); it++)
     {
-        std::string var = (*it).first;
+        eastl::string var = (*it).first;
         InternalEffectSubroutine* imp = (*it).second;
 
         GLint subroutineIndex = glGetSubroutineIndex(this->programHandle, shaderType, imp->GetName().c_str());
@@ -252,7 +382,7 @@ GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLsizei& numBindin
 
         if (uniformIndex != -1 && subroutineIndex != -1)
         {
-            intermediateMap.push_back(std::pair<GLuint, GLuint>(uniformIndex, subroutineIndex));
+            intermediateMap.push_back(eastl::pair<GLuint, GLuint>(uniformIndex, subroutineIndex));
             numActiveSubroutines++;
         }
     }
@@ -262,7 +392,7 @@ GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLsizei& numBindin
     assert(numActiveSubroutines == numRoutines);
 
     (*bindingArray) = new GLuint[numActiveSubroutines];
-    std::sort(intermediateMap.begin(), intermediateMap.end(), SubroutineBindingCompare);
+    eastl::sort(intermediateMap.begin(), intermediateMap.end(), SubroutineBindingCompare);
     unsigned i;
     for (i = 0; i < numActiveSubroutines; i++)
     {
@@ -271,4 +401,89 @@ GLSL4EffectProgram::SetupSubroutineHelper( GLenum shaderType, GLsizei& numBindin
 
     numBindings = numActiveSubroutines;
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+GLSL4EffectProgram::LoadingDone()
+{
+#if GL4_MULTIBIND
+	if (this->varblockBindsCount > 0)
+	{
+		this->varblockRangeBindBuffers = new GLuint[this->varblockBindsCount];
+		this->varblockRangeBindOffsets = new GLint[this->varblockBindsCount];
+		this->varblockRangeBindSizes = new GLint[this->varblockBindsCount];
+		memset(this->varblockRangeBindBuffers, 0, this->varblockBindsCount * sizeof(GLuint));
+		memset(this->varblockRangeBindOffsets, 0, this->varblockBindsCount * sizeof(GLint));
+		memset(this->varblockRangeBindSizes, 1, this->varblockBindsCount * sizeof(GLint));
+	}	
+
+	if (this->varbufferBindsCount > 0)
+	{
+		this->varbufferRangeBindBuffers = new GLuint[this->varbufferBindsCount];
+		this->varbufferRangeBindOffsets = new GLint[this->varbufferBindsCount];
+		this->varbufferRangeBindSizes = new GLint[this->varbufferBindsCount];
+		memset(this->varbufferRangeBindBuffers, 0, this->varbufferBindsCount * sizeof(GLuint));
+		memset(this->varbufferRangeBindOffsets, 0, this->varbufferBindsCount * sizeof(GLint));
+		memset(this->varbufferRangeBindSizes, 1, this->varbufferBindsCount * sizeof(GLint));
+	}
+	
+	if (this->textureBindsCount > 0)
+	{
+		this->textureBinds = new GLuint[this->textureBindsCount];
+		memset(this->textureBinds, 0, this->textureBindsCount * sizeof(GLuint));
+	}	
+
+	if (this->imageBindsCount > 0)
+	{
+		this->imageBinds = new GLuint[this->imageBindsCount];
+		memset(this->imageBinds, 0, this->imageBindsCount * sizeof(GLuint));
+	}	
+#endif
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+GLSL4EffectProgram::DestroyShaders()
+{
+	if (0 != this->shaderBlock.vs)
+	{
+		GLSL4EffectShader* glsl4Shader = static_cast<GLSL4EffectShader*>(this->shaderBlock.vs);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+
+	if (0 != this->shaderBlock.hs)
+	{
+		GLSL4EffectShader* glsl4Shader = static_cast<GLSL4EffectShader*>(this->shaderBlock.hs);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+
+	if (0 != this->shaderBlock.ds)
+	{
+		GLSL4EffectShader* glsl4Shader = static_cast<GLSL4EffectShader*>(this->shaderBlock.ds);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+
+	if (0 != this->shaderBlock.gs)
+	{
+		GLSL4EffectShader* glsl4Shader = dynamic_cast<GLSL4EffectShader*>(this->shaderBlock.gs);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+
+	if (0 != this->shaderBlock.ps)
+	{
+		GLSL4EffectShader* glsl4Shader = static_cast<GLSL4EffectShader*>(this->shaderBlock.ps);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+
+	if (0 != this->shaderBlock.cs)
+	{
+		GLSL4EffectShader* glsl4Shader = static_cast<GLSL4EffectShader*>(this->shaderBlock.cs);
+		glDeleteShader(glsl4Shader->GetShaderHandle());
+	}
+}
+
 } // namespace AnyFX

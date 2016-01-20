@@ -24,6 +24,8 @@ public:
 
 	/// evaluates expression as an integer
 	int EvalInt(TypeChecker& typechecker);
+	/// evaluates expression as an integer
+	unsigned EvalUInt(TypeChecker& typechecker);
 	/// evaulates expression as a float
 	float EvalFloat(TypeChecker& typechecker);
 	/// evaluates expression as a bool

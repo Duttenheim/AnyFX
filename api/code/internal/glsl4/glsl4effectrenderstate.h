@@ -35,10 +35,14 @@ struct GLSL4GlobalRenderState
     static bool          depthEnabled;
     static bool          depthWriteEnabled;
 	static bool			 depthClampEnabled;
+	static bool			 separateBlendEnabled;
     static unsigned      depthFunc;
     static bool          scissorEnabled;
     static bool          multisampleEnabled;
     static bool          alphaToCoverageEnabled;
+	static bool			 polygonOffsetEnabled;
+	static int			 polygonOffsetFactor;
+	static int			 polygonOffsetUnits;
 
     // stencil stuff
     static bool          stencilEnabled;

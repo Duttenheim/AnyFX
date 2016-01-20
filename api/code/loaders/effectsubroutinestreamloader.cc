@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
 //  effectsubroutinestreamloader.cc
-//  (C) 2014 Individual contributors, see AUTHORS file
+//  (C) 2015 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
 #include "effectsubroutinestreamloader.h"
 #include "internal/internaleffectsubroutine.h"
-
+#include "EASTL/string.h"
 namespace AnyFX
 {
 
@@ -28,12 +28,12 @@ EffectSubroutineStreamLoader::~EffectSubroutineStreamLoader()
 /**
 */
 EffectSubroutine*
-EffectSubroutineStreamLoader::Load( BinReader* reader, Effect* effect )
+EffectSubroutineStreamLoader::Load(BinReader* reader, Effect* effect)
 {
     InternalEffectSubroutine* internalSubroutine = new InternalEffectSubroutine;
 
     // read data from string
-    std::string name = reader->ReadString();
+    eastl::string name = reader->ReadString().c_str();
     unsigned type = reader->ReadInt();
 
     // setup internal object

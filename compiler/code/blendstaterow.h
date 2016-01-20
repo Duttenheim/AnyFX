@@ -22,15 +22,15 @@ public:
 		// blend modes
 		Zero,
 		One,
-		SourceColor,
-		OneMinusSourceColor,
-		DestinationColor,
-		OneMinusDestinationColor,
-		SourceAlpha,
-		OneMinusSourceAlpha,
-		DestinationAlpha,
-		OneMinusDestinationAlpha,
-		SourceAlphaSaturate,
+		SrcColor,
+		OneMinusSrcColor,
+		DstColor,
+		OneMinusDstColor,
+		SrcAlpha,
+		OneMinusSrcAlpha,
+		DstAlpha,
+		OneMinusDstAlpha,
+		SrcAlphaSaturate,
 		ConstantColor,
 		OneMinusConstantColor,
 		ConstantAlpha,
@@ -60,11 +60,11 @@ public:
 
 	enum EnumFlag
 	{
-		SourceBlend,
-		DestinationBlend,
+		SrcBlend,
+		DstBlend,
 		BlendOp,
-		SourceBlendAlpha,
-		DestinationBlendAlpha,
+		SrcBlendAlpha,
+		DstBlendAlpha,
 		BlendOpAlpha,
 
 		NumEnumFlags
@@ -106,11 +106,8 @@ private:
 	std::string flag;
 	Expression* renderTarget;
 
-	union
-	{
-		std::string* stringValue;
-		Expression* expr;
-	};
+	std::string stringValue;
+	Expression* expr;
 }; 
 
 //------------------------------------------------------------------------------
@@ -147,7 +144,7 @@ inline const std::string&
 BlendStateRow::GetString() const
 {
 	assert(this->flagType == StringFlagType);
-	return *this->stringValue;
+	return this->stringValue;
 }
 
 //------------------------------------------------------------------------------

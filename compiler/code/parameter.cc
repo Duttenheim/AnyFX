@@ -19,12 +19,19 @@ Parameter::Parameter() :
 	ioMode(NoIO),
 	interpolation(Smooth),
 	attribute(NoAttribute),
+	feedbackBufferExpression(NULL),
+	feedbackOffsetExpression(NULL),
+	feedbackBuffer(-1),
+	feedbackOffset(0),
+    slotExpression(NULL),
+    index(-1),
+    explicitSlot(false),
 	patchParam(false),
 	isConst(false),
 	sizeExpression(NULL),
 	isArray(false),
-	parentShader(NULL),
-	arraySize(0)
+	arraySize(0),
+	parentShader(NULL)
 {
 	// empty
 }
@@ -50,132 +57,99 @@ Parameter::GetRenderTargetIndex() const
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-Parameter::Format( const Header& header, unsigned& input, unsigned& output ) const
+std::string
+Parameter::Format(const Header& header, unsigned& input, unsigned& output) const
 {
 	unsigned shaderType = -1;
 	if (this->parentShader) shaderType = this->parentShader->GetType();
 
 	std::string formattedCode;
+	
 	if (header.GetType() == Header::GLSL)
 	{
-		if (shaderType == ProgramRow::VertexShader)
+		std::string format = "%slayout(%s) %s%s";
+
+		// first, resolve the layout type, for ordinary variables, this is using location, with transform buffer stuff, this is using xfb_buffer and xfb_offset
+		if (this->IsTransformFeedback())
+		{
+			if (shaderType != ProgramRow::PixelShader)
+			{
+				format = AnyFX::Format(format.c_str(), "%s", AnyFX::Format("xfb_buffer = %d, xfb_offset = %d", this->feedbackBuffer, this->feedbackOffset).c_str(), "%s", "out ");
+			}			
+			else
+			{
+				// type checker should throw an error before we get here...
+			}
+		}
+		else
 		{
 			if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
 			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", input++));
-				formattedCode.append(") in ");
+				format = AnyFX::Format(format.c_str(), "%s", AnyFX::Format("location = %d", this->index).c_str(), "%s", "in ");
 			}
 			else if (this->GetIO() == Parameter::Output)
 			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", output++));
-				formattedCode.append(") out ");
+				format = AnyFX::Format(format.c_str(), "%s", AnyFX::Format("location = %d", output++).c_str(), "%s", "out ");
 			}
 			else if (this->GetIO() == Parameter::InputOutput)
 			{
-				// inout is just qualifier free in GLSL
+				// format is empty for inout parameters
+				format = "";
 			}
 		}
-		else if (shaderType == ProgramRow::PixelShader)
-		{
 
+		// first handle qualifiers		
+		if (shaderType == ProgramRow::PixelShader)
+		{
 			if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
 			{
-				if (this->interpolation == Flat)					formattedCode.append("flat ");
-				else if (this->interpolation == NoPerspective)		formattedCode.append("noperspective ");
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", input++));
-				formattedCode.append(") in ");
-			}
-			else if (this->GetIO() == Parameter::Output)
-			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", this->GetRenderTargetIndex()));
-				formattedCode.append(") out ");
+				if (this->interpolation == Flat)					format = AnyFX::Format(format.c_str(), "flat ", "%s");
+				else if (this->interpolation == NoPerspective)		format = AnyFX::Format(format.c_str(), "noperspective ", "%s");
 			}
 		}
 		else if (shaderType == ProgramRow::GeometryShader)
 		{
 			if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
 			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", input++));
-				formattedCode.append(") in ");
-			}
-			else if (this->GetIO() == Parameter::Output)
-			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", output++));
-				formattedCode.append(") out ");
-			}
-			else if (this->GetIO() == Parameter::InputOutput)
-			{
-				// inout is just qualifier free in GLSL
+				if (this->interpolation == Flat)				format = AnyFX::Format(format.c_str(), "flat ", "%s");
 			}
 		}
 		else if (shaderType == ProgramRow::HullShader)
 		{
+			if (this->interpolation == Flat)					format = AnyFX::Format(format.c_str(), "flat ", "%s");
 			if (this->GetIO() == Parameter::Output)
 			{
 				if (this->GetPatchParam())
 				{
-					formattedCode.append("layout(location = ");
-					formattedCode.append(AnyFX::Format("%d", output++));
-					formattedCode.append(") patch out ");
+					format = AnyFX::Format(format.c_str(), "%s", "patch ");
 				}
-				else
-				{
-					formattedCode.append("layout(location = ");
-					formattedCode.append(AnyFX::Format("%d", output++));
-					formattedCode.append(") out ");
-				}
-			}
-			else if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
-			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", input++));
-				formattedCode.append(") in ");
-			}
-			else if (this->GetIO() == Parameter::InputOutput)
-			{
-				// inout is just qualifier free in GLSL
 			}
 		}
 		else if (shaderType == ProgramRow::DomainShader)
 		{
+			if (this->interpolation == Flat)					format = AnyFX::Format(format.c_str(), "flat ", "%s");
 			if (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::NoIO)
 			{
 				if (this->GetPatchParam())
 				{
-					formattedCode.append("layout(location = ");
-					formattedCode.append(AnyFX::Format("%d", input++));
-					formattedCode.append(") patch in ");
+					format = AnyFX::Format(format.c_str(), "%s", "patch ");
 				}
-				else
-				{
-					formattedCode.append("layout(location = ");
-					formattedCode.append(AnyFX::Format("%d", input++));
-					formattedCode.append(") in ");
-				}
-			}
-			else if (this->GetIO() == Parameter::Output)
-			{
-				formattedCode.append("layout(location = ");
-				formattedCode.append(AnyFX::Format("%d", output++));
-				formattedCode.append(") out ");
-			}
-			else if (this->GetIO() == Parameter::InputOutput)
-			{
-				// inout is just qualifier free in GLSL
 			}
 		}
 		else if (shaderType == -1)
 		{
 			// in this case we have no shader to which this function is bound at all
+			format = "";			
 		}
 
+		// replace all remaining %s with empty strings
+		size_t location = 0;
+		while ((location = format.find("%s", location)) != std::string::npos)
+		{
+			format.replace(location, 2, "");
+		}
+
+		formattedCode.append(format);
 		formattedCode.append(DataType::ToProfileType(this->GetDataType(), header.GetType()));
 		formattedCode.append(" ");
 		formattedCode.append(this->GetName());
@@ -205,8 +179,8 @@ Parameter::Format( const Header& header, unsigned& input, unsigned& output ) con
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Parameter::TypeCheck( TypeChecker& typechecker )
+void
+Parameter::TypeCheck(TypeChecker& typechecker)
 {
 	// check that type is defined
 	if (this->type.GetType() == DataType::Undefined)
@@ -222,11 +196,11 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 
 		if (qualifier == "const")					this->isConst = true;
 		else if (qualifier == "patch")				this->patchParam = true;
-		else if (qualifier == "flat")				this->interpolation = Flat;
-		else if (qualifier == "noperspective")		this->interpolation = NoPerspective;
 		else if (qualifier == "in")					this->ioMode = Input;
 		else if (qualifier == "out")				this->ioMode = Output;
 		else if (qualifier == "inout")				this->ioMode = InputOutput;
+		else if (qualifier == "flat")				this->interpolation = Flat;
+		else if (qualifier == "noperspective")		this->interpolation = NoPerspective;
 		else
 		{
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -250,6 +224,20 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 		}
 
 		unsigned shaderType = this->parentShader->GetType();
+        if (this->slotExpression)
+        {
+            if (shaderType != ProgramRow::VertexShader)
+            {
+                std::string message = AnyFX::Format("Slot qualifier is not valid unless parameter is to a vertex shader, %s\n", this->ErrorSuffix().c_str());
+                typechecker.Warning(message);
+            }
+            else
+            {
+                this->index = this->slotExpression->EvalUInt(typechecker);
+            }            
+			delete this->slotExpression;
+        }
+
 		if (shaderType == ProgramRow::VertexShader)
 		{
 			if (this->GetPatchParam())
@@ -270,6 +258,11 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 			{
 				std::string message = AnyFX::Format("Pixel/Fragment shader inputs/outputs does not support the 'patch' qualifier. Ignoring qualifier, %s\n", this->ErrorSuffix().c_str());
 				typechecker.Warning(message);
+			}
+			if (this->feedbackBufferExpression || this->feedbackOffsetExpression)
+			{
+				std::string message = AnyFX::Format("Pixel/Fragment shader has no concept of transform feedbacks, %s\n", this->ErrorSuffix().c_str());
+				typechecker.Error(message);
 			}
 			if (this->GetIO() == Parameter::Output)
 			{
@@ -353,6 +346,27 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 				std::string attributeString = this->AttributeToString(this->attribute);
 				std::string message = AnyFX::Format("Qualifier '%s' serves no purpose in GLSL. Ignoring qualifier, %s\n", attributeString.c_str(), this->ErrorSuffix().c_str());
 				typechecker.Warning(message);
+			}
+		}
+
+		// solve transform feedback stuff
+		if (this->feedbackBufferExpression)
+		{
+			if (this->GetIO() != Parameter::Output)
+			{
+				std::string message = AnyFX::Format("Qualifier 'feedback' has no function unless the parameter is an output parameter, %s\n", this->ErrorSuffix().c_str());
+				typechecker.Error(message);
+			}
+			this->feedbackBuffer = this->feedbackBufferExpression->EvalInt(typechecker);
+			this->feedbackOffset = this->feedbackOffsetExpression->EvalUInt(typechecker);
+			delete this->feedbackOffsetExpression;
+			delete this->feedbackBufferExpression;
+
+			// make sure the offset is valid
+			if (this->feedbackOffset % DataType::ToByteSize(DataType::ToPrimitiveType(this->type)) != 0)
+			{
+				std::string message = AnyFX::Format("Feedback buffer parameter offset must be a multiple of the parameter type, %s\n", this->ErrorSuffix().c_str());
+				typechecker.Error(message);
 			}
 		}
 	}	
@@ -462,8 +476,8 @@ Parameter::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-Parameter::FormatAttribute( const Header::Type& type )
+std::string
+Parameter::FormatAttribute(const Header::Type& type)
 {
 	switch (type)
 	{
@@ -598,7 +612,7 @@ Parameter::FormatAttribute( const Header::Type& type )
 /**
 */
 void
-Parameter::Compile( BinWriter& writer )
+Parameter::Compile(BinWriter& writer)
 {
 	writer.WriteInt('PARA');
 
@@ -611,8 +625,8 @@ Parameter::Compile( BinWriter& writer )
 //------------------------------------------------------------------------------
 /**
 */
-bool 
-Parameter::Compatible( Parameter* other )
+bool
+Parameter::Compatible(Parameter* other)
 {
 	if (this->type == DataType::Float4)
 	{
@@ -737,8 +751,8 @@ Parameter::Compatible( Parameter* other )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-Parameter::AttributeToString( const Attribute& attr )
+std::string
+Parameter::AttributeToString(const Attribute& attr)
 {
 	switch (attr)
 	{

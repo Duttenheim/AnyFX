@@ -12,7 +12,7 @@
 #error "afxapi.h included before effectprogram.h"
 #endif
 
-#include <string>
+#include "EASTL/string.h"
 #include "EASTL/vector.h"
 #include "annotable.h"
 namespace AnyFX
@@ -35,12 +35,8 @@ public:
 	void Apply();
 	/// commits changes to shader variables, call this before rendering
 	void Commit();
-    /// performs pre-draw stuff
-    void PreDraw();
-    /// performs post-draw stuff
-    void PostDraw();
 	/// returns name of program
-	const std::string& GetName() const;
+    const eastl::string& GetName() const;
 	/// returns array to list of shaders, this is list is always a constant size of 6
 	eastl::vector<EffectShader*> GetShaders() const;
 	/// returns render state
@@ -56,12 +52,17 @@ public:
 	/// returns true if linking of program was successful
 	bool IsValid();
 	/// returns linking error string
-	const std::string& GetError() const;
+    const eastl::string& GetError() const;
 
 private:
 	friend class EffectProgramStreamLoader;
 	friend class EffectVariableStreamLoader;
 	friend class EffectVarblockStreamLoader;
+	friend class EffectVarbufferStreamLoader;
+	friend class Effect;
+	
+	/// notify loading is done
+	void LoadingDone();
 
 	EffectRenderState* renderState;
 	struct EffectShaderBlock
@@ -72,20 +73,16 @@ private:
 		EffectShader* hs;		// hull shader
 		EffectShader* gs;		// geometry shader
 		EffectShader* cs;		// compute shader
+
+		bool operator==(const EffectShaderBlock& rhs)
+		{
+			return this->vs == rhs.vs && this->ps == rhs.ps && this->ds == rhs.ds && this->hs == rhs.hs && this->gs == rhs.gs && this->cs == rhs.cs;
+		}
 	} shaderBlock;
 
 	int shaderMask[6];
 	InternalEffectProgram* internalProgram;
 }; 
-
-//------------------------------------------------------------------------------
-/**
-*/
-
-//------------------------------------------------------------------------------
-/**
-*/
-
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

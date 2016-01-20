@@ -10,7 +10,9 @@ namespace AnyFX
 //------------------------------------------------------------------------------
 /**
 */
-InternalEffectVarbuffer::InternalEffectVarbuffer()
+InternalEffectVarbuffer::InternalEffectVarbuffer() :
+	bufferHandle(0),
+	isSlave(false)
 {
 	// empty
 }
@@ -20,17 +22,38 @@ InternalEffectVarbuffer::InternalEffectVarbuffer()
 */
 InternalEffectVarbuffer::~InternalEffectVarbuffer()
 {
-	// empty
+	this->childBuffers.clear();
+	this->masterBuffer = 0;
 }
 
 //------------------------------------------------------------------------------
 /**
-    Override in subclass!
 */
-int 
-InternalEffectVarbuffer::GetHandle() const
+void
+InternalEffectVarbuffer::Setup(eastl::vector<InternalEffectProgram*> programs)
 {
-    return 0;
+	this->masterBuffer = this;
+	this->bufferHandle = new void*;
+	*this->bufferHandle = NULL;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+InternalEffectVarbuffer::SetupSlave(eastl::vector<InternalEffectProgram*> programs, InternalEffectVarbuffer* master)
+{
+	assert(!this->isSlave);
+
+	// set master pointer
+	this->masterBuffer = master;
+	this->masterBuffer->childBuffers.push_back(this);
+
+	// set slave flag
+	this->isSlave = true;
+
+	// make sure slaved varblocks use the same handle
+	this->bufferHandle = masterBuffer->bufferHandle;
 }
 
 //------------------------------------------------------------------------------
@@ -39,7 +62,7 @@ InternalEffectVarbuffer::GetHandle() const
 void 
 InternalEffectVarbuffer::Apply()
 {
-
+	// override in subclass
 }
 
 //------------------------------------------------------------------------------
@@ -48,25 +71,7 @@ InternalEffectVarbuffer::Apply()
 void 
 InternalEffectVarbuffer::Commit()
 {
-
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void 
-InternalEffectVarbuffer::SetVariable( InternalEffectVariable* var, void* value, int index )
-{
-
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void 
-InternalEffectVarbuffer::SetVariableArray( InternalEffectVariable* var, void* value, size_t size, int index )
-{
-
+	// override in subclass
 }
 
 //------------------------------------------------------------------------------
@@ -75,6 +80,7 @@ InternalEffectVarbuffer::SetVariableArray( InternalEffectVariable* var, void* va
 void 
 InternalEffectVarbuffer::Activate( InternalEffectProgram* program )
 {
-
+	// override in subclass
 }
+
 } // namespace AnyFX

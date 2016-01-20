@@ -68,6 +68,11 @@ public:
 	void SetHeader(const Header& header);
 	/// gets the target language
 	const GenerationTarget& GetTargetLanguage() const;
+    /// add a compile flag to the shader, separated by pipes ('|')
+    void SetCompileFlags(const std::string& flags);
+
+	/// set subroutine mappings
+	void SetSubroutineMappings(const std::map<std::string, std::string>& subroutineMappings);
 
 	/// type check shader
 	void TypeCheck(TypeChecker& typechecker);
@@ -116,17 +121,19 @@ private:
 	GenerationTarget target;
 	std::string name;
 	std::string formattedCode;
+    std::string compileFlags;
 	unsigned codeOffset;
 
 	std::string preamble;
-    	std::map<int, std::pair<std::string, std::string> > indexToFileMap;
+    std::map<int, std::pair<std::string, std::string> > indexToFileMap;
+	std::map<std::string, std::string> subroutineMappings;
 }; 
 
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Shader::SetFunction( const Function& func )
+inline void
+Shader::SetFunction(const Function& func)
 {
 	this->func = func;
 }
@@ -147,6 +154,7 @@ inline void
 Shader::SetName( const std::string& name )
 {
 	this->name = name;
+    this->func.SetName(name);
 }
 
 //------------------------------------------------------------------------------
@@ -184,6 +192,24 @@ Shader::GetType() const
 {
 	return this->shaderType;
 }
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Shader::SetCompileFlags(const std::string& flags)
+{
+    this->compileFlags = flags;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Shader::SetSubroutineMappings(const std::map<std::string, std::string>& subroutineMappings)
+{
+	this->subroutineMappings = subroutineMappings;
+}
+
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

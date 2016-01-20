@@ -16,7 +16,9 @@ namespace AnyFX
 VarBlock::VarBlock() :
     bufferExpression(NULL),
     bufferCount(1),
-	hasAnnotation(false)
+	hasAnnotation(false),
+	shared(false),
+	noSync(false)
 {
 	this->symbolType = Symbol::VarblockType;
 }
@@ -41,8 +43,8 @@ VarBlock::AddVariable( const Variable& var )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBlock::TypeCheck( TypeChecker& typechecker )
+void
+VarBlock::TypeCheck(TypeChecker& typechecker)
 {
 	// add varblock, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
@@ -51,6 +53,19 @@ VarBlock::TypeCheck( TypeChecker& typechecker )
 	if (this->hasAnnotation)
 	{
 		this->annotation.TypeCheck(typechecker);
+	}
+
+	// evaluate qualifiers
+	for (unsigned i = 0; i < this->qualifiers.size(); i++)
+	{
+		const std::string& qualifier = this->qualifiers[i];
+		if (qualifier == "shared") this->shared = true;
+		else if (qualifier == "nosync") this->noSync = true;
+		else
+		{  
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
 	}
 
     // evaluate buffer expression
@@ -66,6 +81,7 @@ VarBlock::TypeCheck( TypeChecker& typechecker )
         {
             this->bufferCount = this->bufferExpression->EvalInt(typechecker);
         }
+		delete this->bufferExpression;
     }
 
 	unsigned i;
@@ -80,7 +96,6 @@ VarBlock::TypeCheck( TypeChecker& typechecker )
 
         // since TypeCheck might modify the variable, we must replace the old one. 
 		var.TypeCheck(typechecker);
-        //this->variables[i] = var;
 	}
 
 	const Header& header = typechecker.GetHeader();
@@ -107,21 +122,32 @@ VarBlock::TypeCheck( TypeChecker& typechecker )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-VarBlock::Format( const Header& header ) const
+std::string
+VarBlock::Format(const Header& header, const int index) const
 {
 	std::string formattedCode;
 
-    if (this->isShared)
+    // only output if we have variables
+    if (this->variables.empty()) return formattedCode;
+
+    if (this->shared)
     {
         // varblocks of this type are only available in GLSL3-4 and HLSL4-5
-        if (header.GetType() == Header::GLSL) formattedCode.append("layout(shared) uniform ");
+		if (header.GetType() == Header::GLSL)
+		{
+			std::string layout = AnyFX::Format("layout(shared, binding=%d) uniform ", index);
+			formattedCode.append(layout);
+		}
         else if (header.GetType() == Header::HLSL) formattedCode.append("shared cbuffer ");
     }
-    else
-    {
-        // varblocks of this type are only available in GLSL3-4 and HLSL4-5
-        if (header.GetType() == Header::GLSL) formattedCode.append("layout(shared) uniform ");
+	else
+	{
+		// varblocks of this type are only available in GLSL3-4 and HLSL4-5
+		if (header.GetType() == Header::GLSL)
+		{
+			std::string layout = AnyFX::Format("layout(shared, binding=%d) uniform ", index);
+			formattedCode.append(layout);
+		}
         else if (header.GetType() == Header::HLSL) formattedCode.append("cbuffer ");
     }
 	
@@ -145,11 +171,12 @@ VarBlock::Format( const Header& header ) const
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBlock::Compile( BinWriter& writer )
+void
+VarBlock::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
-	writer.WriteBool(this->isShared);
+	writer.WriteBool(this->shared);
+	writer.WriteBool(this->noSync);
     writer.WriteUInt(this->bufferCount);
 
 	// write if annotation is used

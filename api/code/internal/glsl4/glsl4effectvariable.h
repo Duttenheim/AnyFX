@@ -25,11 +25,12 @@ public:
 
 private:
 	friend class GLSL4EffectSampler;
+	friend class GLSL4EffectProgram;
 
 	/// sets up variable from program, override in subclass
-	void Setup(eastl::vector<InternalEffectProgram*> programs, const std::string& defaultValue);
+    void Setup(eastl::vector<InternalEffectProgram*> programs, const eastl::string& defaultValue);
     /// sets up variable from program as slave, this basically just adds program-uniform pairs
-    void SetupSlave(eastl::vector<InternalEffectProgram*> programs);
+    void SetupSlave(eastl::vector<InternalEffectProgram*> programs, InternalEffectVariable* master);
 	/// sets up texture-specific stuff
 	void MakeTexture();
 	/// activates variable, this makes the uniform location be the one found in the given program
@@ -41,14 +42,27 @@ private:
 	void Commit();
 
 	eastl::hash_map<GLint, GLint> uniformProgramMap;
-	GLuint activeProgram;
+	GLSL4EffectProgram* activeProgram;
+	GLuint activeProgramHandle;
 	GLint uniformLocation;
-	GLint textureUnit;
 	GLenum textureType;
 	GLenum glAccessMode;
 	GLenum glImageFormat;
 
-	
+	struct OpenGLTextureBinding
+	{
+		bool bindless;
+		struct BoundTexture
+		{
+			int textureType;
+			int handle;
+		} bound;
+
+		struct BindlessTexture
+		{
+			uint64_t handle;
+		} notbound;
+	};
 }; 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

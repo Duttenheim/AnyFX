@@ -9,55 +9,68 @@
 */
 //------------------------------------------------------------------------------
 #include "EASTL/vector.h"
-#include <string>
+#include "EASTL/string.h"
+#include "autoref.h"
 namespace AnyFX
 {
 class InternalEffectVariable;
 class InternalEffectProgram;
-class InternalEffectVarbuffer
+class InternalEffectVarbuffer : public AutoRef
 {
 public:
 	/// constructor
 	InternalEffectVarbuffer();
 	/// destructor
 	virtual ~InternalEffectVarbuffer();
-
-    /// returns the handle to the internal object, in OpenGL this is an OpenGL name, in DirectX this is a pointer to an object.
-    virtual int GetHandle() const;
     
     /// returns name of varbuffer
-    const std::string& GetName() const;
+    const eastl::string& GetName() const;
 
 protected:
-    friend class EffectVarbufferStreamLoader;
+	friend class EffectVarbuffer;
+	friend class EffectStreamLoader;
+	friend class InternalEffectProgram;
+    friend class EffectVarbufferStreamLoader;	
+
+	/// sets up varblock from program, override in subclass
+	virtual void Setup(eastl::vector<InternalEffectProgram*> programs);
+	/// sets up varblock from programs using a pre-existing varblock
+	virtual void SetupSlave(eastl::vector<InternalEffectProgram*> programs, InternalEffectVarbuffer* master);
 
     /// applies varbuffer into the current context
     virtual void Apply();
     /// commits changes made to the varbuffer
     virtual void Commit();
 
-    /// updates single variable
-    void SetVariable(InternalEffectVariable* var, void* value, int index);
-    /// updates variable array
-    void SetVariableArray(InternalEffectVariable* var, void* value, size_t size, int index);
+	/// set buffer 
+	virtual void SetBuffer(void* handle) = 0;
+
     /// activates variable, this makes the uniform location be the one found in the given program
     virtual void Activate(InternalEffectProgram* program);
 
-    eastl::vector<InternalEffectVariable*> variables;
+	static unsigned globalVarbufferCounter;
+	eastl::vector<InternalEffectVariable*> variables;
+	eastl::vector<InternalEffectVarbuffer*> childBuffers;
     InternalEffectVarbuffer* masterBuffer;
-    std::string name;
+    eastl::string name;
+	unsigned size;
+	bool isSlave;
+	bool isShared;
+	bool active;
+
+	// assume our buffer is an AutoReffed object
+	void** bufferHandle;
 }; 
 
 
 //------------------------------------------------------------------------------
 /**
 */
-inline const std::string& 
+inline const eastl::string&
 InternalEffectVarbuffer::GetName() const
 {
     return this->name;
 }
-
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

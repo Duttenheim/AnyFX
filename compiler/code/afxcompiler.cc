@@ -35,6 +35,7 @@ extern bool lexerError;
 extern std::string lexerErrorBuffer;
 extern bool parserError;
 extern std::string parserErrorBuffer;
+static GLenum glewInitialized = -1;
 
 #include "mcpp_lib.h"
 
@@ -77,28 +78,25 @@ AnyFXWinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /**
 */
 bool
-AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines, std::string& output)
+AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines, const std::string& vendor, std::string& output)
 {
-    std::ifstream fileStream(file.c_str());
-    if (!fileStream)
-    {
-        Emit("Can't open file %s\n", file.c_str());
-        return false;
-    }
     std::string fileName = file.substr(file.rfind("/")+1, file.length()-1);
     std::string curDir(file);
     unsigned lastSlash = curDir.rfind("/");
     curDir = curDir.substr(0, lastSlash);
 
-    const unsigned numargs = 3 + defines.size();
+	std::string vend = "-DVENDOR=" + vendor;
+
+    const unsigned numargs = 4 + defines.size();
     std::string* args = new std::string[numargs];
-    args[0] = "-C";
-    args[1] = "-W 0";
+	args[0] = std::string("-C");
+	args[1] = std::string("-W 0");
+	args[2] = vend.c_str();
     //args[2] = "-I" + curDir;
     unsigned i;
     for (i = 0; i < defines.size(); i++)
     {
-        args[2 + i] = defines[i].c_str();
+        args[3 + i] = defines[i].c_str();
     }
     args[numargs-1] = file;
 
@@ -114,14 +112,18 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     int result = mcpp_lib_main(numargs, (char**)arguments);
     if (result != 0)
     {
-        delete [] args;
+		mcpp_use_mem_buffers(1);	// clear memory
+        delete[] args;
+		delete[] arguments;
         return false;
     }
     else
     {
         char* preprocessed = mcpp_get_mem_buffer(OUT);
         output.append(preprocessed);
-        delete [] args;
+		mcpp_use_mem_buffers(1);	// clear memory
+		delete[] args;
+		delete[] arguments;
         return true;
     }
 }
@@ -133,17 +135,18 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     @param file			Input file to compile
     @param output		Output destination file
     @param target		Target language
+	@param vendor		GPU vendor name
     @param defines		List of preprocessor definitions
     @param errorBuffer	Buffer containing errors, created in function but must be deleted manually
 */
 bool
-AnyFXCompile(const std::string& file, const std::string& output, const std::string& target, const std::vector<std::string>& defines, AnyFXErrorBlob** errorBuffer)
+AnyFXCompile(const std::string& file, const std::string& output, const std::string& target, const std::string& vendor, const std::vector<std::string>& defines, const std::vector<std::string>& flags, AnyFXErrorBlob** errorBuffer)
 {
     std::string preprocessed;
     (*errorBuffer) = NULL;
 
     // if preprocessor is successful, continue parsing the actual code
-    if (AnyFXPreprocess(file, defines, preprocessed))
+	if (AnyFXPreprocess(file, defines, vendor, preprocessed))
     {
         // when we preprocess, we save it 
         pANTLR3_INPUT_STREAM input;
@@ -165,6 +168,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             // create header
             Header header;
             header.SetProfile(target);
+			header.SetFlags(flags);
 
             // set effect header and setup effect
             effect.SetHeader(header);
@@ -176,6 +180,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
                 if (!glewIsSupported(ext.c_str()))
                 {
                     printf("OpenGL version %d.%d is not supported by the hardware.\n", header.GetMajor(), header.GetMinor());
+
+					// destroy compiler state and return
+					parser->free(parser);
+					tokens->free(tokens);
+					lex->free(lex);
+					input->free(input);
                     return false;
                 }
             }
@@ -226,6 +236,11 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
                         // close writer and finish file
                         writer.Close();
 
+						// destroy compiler state and return
+						parser->free(parser);
+						tokens->free(tokens);
+						lex->free(lex);
+						input->free(input);						
                         return true;
                     }
                     else
@@ -236,6 +251,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
                         (*errorBuffer)->size = errorMessage.size();
                         errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
                         (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
+
+						// destroy compiler state and return
+						parser->free(parser);
+						tokens->free(tokens);
+						lex->free(lex);
+						input->free(input);
                         return false;
                     }
                 }
@@ -252,6 +273,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
                     (*errorBuffer)->size = errorMessage.size();
                     errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
                     (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
+
+					// destroy compiler state and return
+					parser->free(parser);
+					tokens->free(tokens);
+					lex->free(lex);
+					input->free(input);
                     return false;
                 }
             }
@@ -268,6 +295,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
                 (*errorBuffer)->size = errorMessage.size();
                 errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
                 (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
+
+				// destroy compiler state and return
+				parser->free(parser);
+				tokens->free(tokens);
+				lex->free(lex);
+				input->free(input);
                 return false;
             }
         }
@@ -286,6 +319,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             (*errorBuffer)->size = errorMessage.size();
             errorMessage.copy((*errorBuffer)->buffer, (*errorBuffer)->size);
             (*errorBuffer)->buffer[(*errorBuffer)->size-1] = '\0';
+
+			// destroy compiler state and return
+			parser->free(parser);
+			tokens->free(tokens);
+			lex->free(lex);
+			input->free(input);
             return false;
         }
     }
@@ -301,6 +340,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             memcpy((void*)(*errorBuffer)->buffer, (void*)err, size);
             (*errorBuffer)->buffer[size-1] = '\0';
         }
+
         return false;
     }	
 }
@@ -424,10 +464,13 @@ AnyFXBeginCompile()
     CGLSetCurrentContext(ctx);
 #endif
 
-    GLenum status = glewInit();
+	if (glewInitialized != GLEW_OK)
+	{
+		glewInitialized = glewInit();
+	}
 
 #ifndef __ANYFX_COMPILER_LIBRARY__
-    if (status != GLEW_OK)
+	if (glewInitialized != GLEW_OK)
     {
         Emit("Glew failed to initialize!\n");
     }

@@ -6,10 +6,12 @@
 #include "effect.h"
 #include "effectvariable.h"
 #include "effectvarblock.h"
+#include "effectvarbuffer.h"
 #include "internaleffectvariable.h"
 #include "internaleffectsampler.h"
 #include "internaleffectvarblock.h"
 #include "internaleffectsubroutine.h"
+#include "internaleffectvarbuffer.h"
 
 namespace AnyFX
 {
@@ -61,6 +63,13 @@ InternalEffectProgram::Apply()
 		this->effect->varblocksByIndex[i]->internalVarblock->Apply();
 	}
 
+	num = this->effect->numVarbuffers;
+	for (i = 0; i < num; ++i)
+	{
+		this->effect->varbuffersByIndex[i]->internalVarbuffer->Activate(this);
+		this->effect->varbuffersByIndex[i]->internalVarbuffer->Apply();
+	}
+
 	num = this->effect->numSamplers;
 	for (i = 0; i < num; ++i)
 	{
@@ -82,41 +91,17 @@ InternalEffectProgram::Commit()
 		this->effect->variablesByIndex[i]->internalVariable->Commit();
 	}
 
+	num = this->effect->numVarbuffers;
+	for (i = 0; i < num; ++i)
+	{
+		this->effect->varbuffersByIndex[i]->internalVarbuffer->Commit();
+	}
+
 	num = this->effect->numVarblocks;
 	for (i = 0; i < num; ++i)
 	{
 		this->effect->varblocksByIndex[i]->internalVarblock->Commit();
 	}
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void 
-InternalEffectProgram::PreDraw()
-{
-    // signal our variables and varblocks to apply their variables
-    unsigned i;
-    size_t num = this->effect->numVarblocks;
-    for (i = 0; i < num; ++i)
-    {
-        this->effect->varblocksByIndex[i]->internalVarblock->PreDraw();
-    }
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void 
-InternalEffectProgram::PostDraw()
-{
-    // signal our variables and varblocks to apply their variables
-    unsigned i;
-    size_t num = this->effect->numVarblocks;
-    for (i = 0; i < num; ++i)
-    {
-        this->effect->varblocksByIndex[i]->internalVarblock->PostDraw();
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -132,9 +117,28 @@ InternalEffectProgram::Link()
 //------------------------------------------------------------------------------
 /**
 */
+void
+InternalEffectProgram::SetupSlave(InternalEffectProgram* other)
+{
+	// override me!
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 void 
 InternalEffectProgram::SetupSubroutines()
 {
     // override me!
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+InternalEffectProgram::LoadingDone()
+{
+	// override me!
+}
+
 } // namespace AnyFX

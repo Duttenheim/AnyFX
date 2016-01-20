@@ -84,6 +84,7 @@ public:
 		StencilEnabled,
 		AlphaToCoverageEnabled,
 		MultisampleEnabled,
+		PolygonOffsetEnabled,
 
 		NumBoolFlags
 	};
@@ -105,14 +106,28 @@ public:
 		NumEnumFlags
 	};
 
-	enum IntFlag
+	enum UintFlag
 	{
 		StencilReadMask,
 		StencilWriteMask,
+
+		NumUintFlags
+	};
+
+	enum IntFlag
+	{
 		StencilFrontRef,
 		StencilBackRef,
 
 		NumIntFlags
+	};
+
+	enum FloatFlag
+	{
+		PolygonOffsetFactor,
+		PolygonOffsetUnits,
+
+		NumFloatFlags
 	};
 
 	/// constructor
@@ -139,12 +154,8 @@ private:
 	std::string flag;
 	FlagType flagType;
 
-	union
-	{
-		Expression* expr;
-		std::string* stringValue;
-	};
-	
+	Expression* expr;
+	std::string stringValue;	
 }; 
 
 
@@ -166,7 +177,6 @@ RenderStateRow::GetFlag() const
 	return this->flag;
 }
 
-
 //------------------------------------------------------------------------------
 /**
 */
@@ -184,7 +194,7 @@ inline const std::string&
 RenderStateRow::GetString() const
 {
 	assert(this->flagType == StringFlagType);
-	return *this->stringValue;
+	return this->stringValue;
 }
 
 } // namespace AnyFX

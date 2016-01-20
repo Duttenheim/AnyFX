@@ -110,11 +110,30 @@ public:
 	/// gets number of qualifiers
 	unsigned GetNumQualifiers() const;
 
+	/// sets feedback buffer expression
+	void SetFeedbackBufferExpression(Expression* expr);
+	/// sets feedback buffer offset expression
+	void SetFeedbackOffsetExpression(Expression* expr);
+	/// returns true if parameter is supposed to be used for transform feedback
+	bool IsTransformFeedback() const;
+	/// returns to which buffer this parameter should do transform feedback
+	const int GetFeedbackBuffer() const;
+	/// returns offset into above feedback buffer this parameter is supposed to land
+	const unsigned GetFeedbackOffset() const;
+
+    /// set the slot expression
+    void SetSlotExpression(Expression* expr);
+    /// get the slot where this parameter is bound
+    const int GetSlot() const;
+    /// set index into function where this parameter resides
+    void SetParameterIndex(const unsigned index);
+    /// returns true if this parameter has an explicit slot binding
+    const bool HasExplicitSlot() const;
+
 	/// returns true if parameter is array
 	bool IsArray() const;
 	/// returns array size
 	unsigned GetArraySize() const;
-
 	/// sets array size expression
 	void SetSizeExpression(Expression* expr);
 	/// gets array size expression
@@ -145,9 +164,23 @@ private:
 
 	std::vector<std::string> qualifiers;
 	bool isConst;
+
+	// array stuff
 	Expression* sizeExpression;
 	bool isArray;
 	unsigned arraySize;
+
+    // slot stuff
+    Expression* slotExpression;
+    unsigned index;
+    bool explicitSlot;
+
+	// feedback buffer stuff
+	Expression* feedbackBufferExpression;
+	Expression* feedbackOffsetExpression;
+	int feedbackBuffer;
+	unsigned feedbackOffset;
+
 	bool patchParam;
 	IO ioMode;
 	Interpolation interpolation;
@@ -160,8 +193,8 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetIO( const IO& io )
+inline void
+Parameter::SetIO(const IO& io)
 {
 	this->ioMode = io;
 }
@@ -178,8 +211,8 @@ Parameter::GetIO() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetAttribute( const Parameter::Attribute& attr )
+inline void
+Parameter::SetAttribute(const Parameter::Attribute& attr)
 {
 	this->attribute = attr;
 }
@@ -196,8 +229,8 @@ Parameter::GetAttribute() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetName( const std::string& name )
+inline void
+Parameter::SetName(const std::string& name)
 {
 	this->name = name;
 }
@@ -214,8 +247,8 @@ Parameter::GetName() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetDataType( const DataType& type )
+inline void
+Parameter::SetDataType(const DataType& type)
 {
 	this->type = type;
 }
@@ -232,8 +265,8 @@ Parameter::GetDataType() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetShader( Shader* shader )
+inline void
+Parameter::SetShader(Shader* shader)
 {
 	this->parentShader = shader;
 }
@@ -268,8 +301,8 @@ Parameter::GetConst() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::AddQualifier( const std::string& qualifier )
+inline void
+Parameter::AddQualifier(const std::string& qualifier)
 {
 	this->qualifiers.push_back(qualifier);
 }
@@ -281,6 +314,88 @@ inline unsigned
 Parameter::GetNumQualifiers() const
 {
 	return this->qualifiers.size();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Parameter::SetFeedbackBufferExpression(Expression* expr)
+{
+	this->feedbackBufferExpression = expr;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Parameter::SetFeedbackOffsetExpression(Expression* expr)
+{
+	this->feedbackOffsetExpression = expr;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline bool
+Parameter::IsTransformFeedback() const
+{
+	return this->feedbackBuffer > -1;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const int
+Parameter::GetFeedbackBuffer() const
+{
+	return this->feedbackBuffer;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+Parameter::GetFeedbackOffset() const
+{
+	return this->feedbackOffset;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Parameter::SetSlotExpression(Expression* expr)
+{
+    this->slotExpression = expr;
+    this->explicitSlot = true;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const int
+Parameter::GetSlot() const
+{
+    return this->index;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Parameter::SetParameterIndex(const unsigned index)
+{
+    this->index = index;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const bool
+Parameter::HasExplicitSlot() const
+{
+    return this->explicitSlot;
 }
 
 //------------------------------------------------------------------------------
@@ -304,8 +419,8 @@ Parameter::GetArraySize() const
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Parameter::SetSizeExpression( Expression* expr )
+inline void
+Parameter::SetSizeExpression(Expression* expr)
 {
 	this->sizeExpression = expr;
 	this->isArray = true;

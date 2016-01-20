@@ -13,7 +13,8 @@ namespace AnyFX
 /**
 */
 Header::Header() : 
-	type(InvalidType)
+	type(InvalidType),
+	flags(NoFlags)
 {
 	// empty
 }
@@ -29,8 +30,8 @@ Header::~Header()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Header::SetProfile( const std::string& profile )
+void
+Header::SetProfile(const std::string& profile)
 {
 	if (profile == "dx11")
 	{
@@ -49,6 +50,12 @@ Header::SetProfile( const std::string& profile )
 		this->type = HLSL;
 		this->major = 3;
 		this->minor = 0;
+	}
+	else if (profile == "gl45")
+	{
+		this->type = GLSL;
+		this->major = 4;
+		this->minor = 5;
 	}
 	else if (profile == "gl44")
 	{
@@ -168,12 +175,12 @@ Header::SetProfile( const std::string& profile )
 		this->type = PS;
 		this->major = 1;
 	}
-	else if (profile == "wiiu")
+	else if (profile == "wii2")
 	{
 		this->type = Wii;
 		this->major = 2;
 	}
-	else if (profile == "wii")
+	else if (profile == "wii1")
 	{
 		this->type = Wii;
 		this->major = 1;
@@ -184,18 +191,31 @@ Header::SetProfile( const std::string& profile )
 		this->major = -1;
 		this->minor = -1;
 	}
-	this->profileName = profile;
+	this->profile = profile;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Header::TypeCheck( TypeChecker& typechecker )
+void
+Header::SetFlags(const std::vector<std::string>& defines)
+{
+	for (unsigned i = 0; i < defines.size(); i++)
+	{
+		if (defines[i] == "/NOSUB")			this->flags |= NoSubroutines;
+		else if (defines[i] == "/GBLOCK")	this->flags |= PutGlobalVariablesInBlock;
+	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Header::TypeCheck(TypeChecker& typechecker)
 {
 	if (this->type == InvalidType)
 	{
-		std::string message = Format("Profile '%s' is not supported\n", this->profileName.c_str());
+		std::string message = Format("Profile '%s' is not supported\n", this->profile.c_str());
 		typechecker.Error(message);
 	}
 }
