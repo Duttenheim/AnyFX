@@ -8,9 +8,9 @@ ADD_SUBDIRECTORY(mcpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}
 		    ${ANYFX_SOURCE_DIR}/util/code
-		    ${ANYFX_GLEW_FOLDER}/include
 		    ${ANYFX_SOURCE_DIR}/compiler/code
 		    ${ANYFX_SOURCE_DIR}/compiler/antlr/include
+			${ANYFX_SOURCE_DIR}/exts/glslang
 		    ${ANYFX_SOURCE_DIR}/compiler/mcpp
 )
 					
@@ -24,11 +24,6 @@ FILE(GLOB SRC "code/expressions/*.cc")
 FILE(GLOB HEAD "code/expressions/*.h")
 SOURCE_GROUP("compiler\\expressions" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
-
-FILE(GLOB HEAD "GL/*.h")
-SOURCE_GROUP("api\\glew" FILES ${HEAD})
-LIST(APPEND CODE ${HEAD})
-#ADD_DEFINITIONS(-DGLEW_STATIC)
 
 FILE(GLOB SRC code/lexererrorhandler.cc code/parsererrorhandler.cc)
 FILE(GLOB HEAD code/lexererrorhandler.h code/parsererrorhandler.h)
@@ -75,12 +70,20 @@ ENDIF()
 		#GenerateParser
 		util
 		antlr
+		glslang
+		OGLCompiler
+		OSDependent
+		SPIRV
 		mcpp)
 		
 	TARGET_LINK_LIBRARIES(compiler
 		util
 		antlr
 		mcpp
+		glslang
+		OGLCompiler
+		OSDependent
+		SPIRV
 		${OPENGL_LIBS})
 		
 SET_DEFAULT_OUTPUT(compiler)

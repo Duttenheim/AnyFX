@@ -17,6 +17,7 @@
 #include "function.h"
 #include "variable.h"
 #include "header.h"
+#include "glslang/Public/ShaderLang.h"
 namespace AnyFX
 {
 class Variable;
@@ -94,7 +95,7 @@ public:
 		const std::vector<Function>& functions);
 
 private:
-
+	friend class Program;
 #pragma region OpenGL
 	/// generates GLSL4 target code
 	void GenerateGLSL4(Generator& generator);
@@ -105,6 +106,8 @@ private:
 	void GLSLProblemIntelATI(Generator& generator, std::stringstream& stream);
 	/// output AnyFX formatted GLSL problem using the NVIDIA syntax
 	void GLSLProblemNvidia(Generator& generator, std::stringstream& stream);
+	/// output AnyFX formatted GLSL problem using the Khronos syntax
+	void GLSLProblemKhronos(Generator& generator, std::stringstream& stream);
 #pragma endregion
 
 #pragma region DirectX
@@ -124,9 +127,12 @@ private:
     std::string compileFlags;
 	unsigned codeOffset;
 
+	void* shaderHandle;
+
 	std::string preamble;
     std::map<int, std::pair<std::string, std::string> > indexToFileMap;
 	std::map<std::string, std::string> subroutineMappings;
+
 }; 
 
 //------------------------------------------------------------------------------

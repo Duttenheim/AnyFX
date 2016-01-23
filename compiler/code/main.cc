@@ -19,10 +19,15 @@ main(int argc, char** argv)
 	std::string file;
 	std::string output;
 	std::string target;
+	std::vector<std::string> flags;
 	std::vector<std::string> defines;
 
 	AnyFXBeginCompile();
 	defines = args.GetArguments("-D");
+	std::vector<std::string>& includes = args.GetArguments("-I");
+	defines.insert(defines.end(), includes.begin(), includes.end());
+
+	flags = args.GetArguments("/");
 
 	bool validArgs = false;
 	if (args.HasArgument("-f"))
@@ -35,12 +40,12 @@ main(int argc, char** argv)
 			{
 				target = args.GetArgument("-target");
 				AnyFXErrorBlob* errors;
-				AnyFXCompile(file, output, target, defines, &errors);
+				AnyFXCompile(file, output, target, "Intel", defines, flags, &errors);
 				if (errors)
 				{
 					printf(errors->buffer);
+					delete errors;
 				}
-				delete errors;
 			}
 			else
 			{

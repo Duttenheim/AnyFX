@@ -12,7 +12,6 @@
 #include "parser/AnyFXParser.h"
 #include "lexererrorhandler.h"
 #include "parsererrorhandler.h"
-#include "GL/glew.h"
 #include "typechecker.h"
 #include "generator.h"
 #include "header.h"
@@ -35,9 +34,9 @@ extern bool lexerError;
 extern std::string lexerErrorBuffer;
 extern bool parserError;
 extern std::string parserErrorBuffer;
-static GLenum glewInitialized = -1;
 
 #include "mcpp_lib.h"
+#include "glslang/Public/ShaderLang.h"
 
 #if WIN32
 //------------------------------------------------------------------------------
@@ -112,7 +111,6 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     int result = mcpp_lib_main(numargs, (char**)arguments);
     if (result != 0)
     {
-		mcpp_use_mem_buffers(1);	// clear memory
         delete[] args;
 		delete[] arguments;
         return false;
@@ -121,7 +119,6 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
     {
         char* preprocessed = mcpp_get_mem_buffer(OUT);
         output.append(preprocessed);
-		mcpp_use_mem_buffers(1);	// clear memory
 		delete[] args;
 		delete[] arguments;
         return true;
@@ -174,22 +171,6 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             effect.SetHeader(header);
             effect.Setup();
 
-            if (header.GetType() == Header::GLSL)
-            {
-                std::string ext = Format("GL_VERSION_%d_%d", header.GetMajor(), header.GetMinor());
-                if (!glewIsSupported(ext.c_str()))
-                {
-                    printf("OpenGL version %d.%d is not supported by the hardware.\n", header.GetMajor(), header.GetMinor());
-
-					// destroy compiler state and return
-					parser->free(parser);
-					tokens->free(tokens);
-					lex->free(lex);
-					input->free(input);
-                    return false;
-                }
-            }
-
             // create type checker
             TypeChecker typeChecker;
 
@@ -240,7 +221,8 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 						parser->free(parser);
 						tokens->free(tokens);
 						lex->free(lex);
-						input->free(input);						
+						input->free(input);				
+						mcpp_use_mem_buffers(1);	// clear mcpp
                         return true;
                     }
                     else
@@ -257,6 +239,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 						tokens->free(tokens);
 						lex->free(lex);
 						input->free(input);
+						mcpp_use_mem_buffers(1);	// clear mcpp
                         return false;
                     }
                 }
@@ -279,6 +262,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 					tokens->free(tokens);
 					lex->free(lex);
 					input->free(input);
+					mcpp_use_mem_buffers(1);	// clear mcpp
                     return false;
                 }
             }
@@ -301,6 +285,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 				tokens->free(tokens);
 				lex->free(lex);
 				input->free(input);
+				mcpp_use_mem_buffers(1);	// clear mcpp
                 return false;
             }
         }
@@ -325,6 +310,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 			tokens->free(tokens);
 			lex->free(lex);
 			input->free(input);
+			mcpp_use_mem_buffers(1);	// clear mcpp
             return false;
         }
     }
@@ -339,6 +325,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             (*errorBuffer)->size = size;
             memcpy((void*)(*errorBuffer)->buffer, (void*)err, size);
             (*errorBuffer)->buffer[size-1] = '\0';
+			mcpp_use_mem_buffers(1);	// clear mcpp
         }
 
         return false;
@@ -352,6 +339,9 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 void
 AnyFXBeginCompile()
 {
+	//ShInitialize();
+	glslang::InitializeProcess();
+	/*
 #if WIN32
     HDC hDc;
     HGLRC hRc;      
@@ -481,6 +471,7 @@ AnyFXBeginCompile()
     printf("Version:  %s\n", glGetString(GL_VERSION)); 
     printf("GLSL:     %s\n\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 #endif
+	*/
 }
 
 //------------------------------------------------------------------------------
@@ -490,6 +481,9 @@ AnyFXBeginCompile()
 void
 AnyFXEndCompile()
 {
+	glslang::FinalizeProcess();
+	//ShFinalize();
+	/*
 #if (WIN32)
     DestroyWindow(hWnd);
     wglMakeCurrent(NULL, NULL);
@@ -501,4 +495,5 @@ AnyFXEndCompile()
     XCloseDisplay(dsp);
 #elif (APPLE)
 #endif
+	*/
 }

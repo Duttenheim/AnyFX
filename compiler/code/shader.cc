@@ -6,7 +6,6 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
-#include "GL/glew.h"
 #include "shader.h"
 #include "programrow.h"
 #include "parameter.h"
@@ -19,12 +18,111 @@
 #include "constant.h"
 #include "varbuffer.h"
 #include "subroutine.h"
+#include "glslang/Include/ResourceLimits.h"
 
 #define max(x, y) x > y ? x : y
 
+TBuiltInResource DefaultResources;
+
+void SetupDefaultResources()
+{
+DefaultResources.maxLights = 32;												;
+DefaultResources.maxClipPlanes = 6;												;
+DefaultResources.maxTextureUnits = 32;											;
+DefaultResources.maxTextureCoords = 32;											;
+DefaultResources.maxVertexAttribs =64											;
+DefaultResources.maxVertexUniformComponents =4096								;
+DefaultResources.maxVaryingFloats =64											;
+DefaultResources.maxVertexTextureImageUnits =32									;
+DefaultResources.maxCombinedTextureImageUnits =80								;
+DefaultResources.maxTextureImageUnits =32										;
+DefaultResources.maxFragmentUniformComponents =4096								;
+DefaultResources.maxDrawBuffers =32												;
+DefaultResources.maxVertexUniformVectors =128									;
+DefaultResources.maxVaryingVectors =8											;
+DefaultResources.maxFragmentUniformVectors =16									;
+DefaultResources.maxVertexOutputVectors =16										;
+DefaultResources.maxFragmentInputVectors =15									;
+DefaultResources.minProgramTexelOffset =-8										;
+DefaultResources.maxProgramTexelOffset =7										;
+DefaultResources.maxClipDistances =8											;
+DefaultResources.maxComputeWorkGroupCountX =65535								;
+DefaultResources.maxComputeWorkGroupCountY =65535								;
+DefaultResources.maxComputeWorkGroupCountZ =65535								;
+DefaultResources.maxComputeWorkGroupSizeX =1024									;
+DefaultResources.maxComputeWorkGroupSizeY =1024									;
+DefaultResources.maxComputeWorkGroupSizeZ =64									;
+DefaultResources.maxComputeUniformComponents =1024								;
+DefaultResources.maxComputeTextureImageUnits =16								;
+DefaultResources.maxComputeImageUniforms =8										;
+DefaultResources.maxComputeAtomicCounters =8									;
+DefaultResources.maxComputeAtomicCounterBuffers =1								;
+DefaultResources.maxVaryingComponents =60										;
+DefaultResources.maxVertexOutputComponents =64									;
+DefaultResources.maxGeometryInputComponents =64									;
+DefaultResources.maxGeometryOutputComponents =128								;
+DefaultResources.maxFragmentInputComponents =128								;
+DefaultResources.maxImageUnits =8												;
+DefaultResources.maxCombinedImageUnitsAndFragmentOutputs =8						;
+DefaultResources.maxCombinedShaderOutputResources =8							;
+DefaultResources.maxImageSamples =0												;
+DefaultResources.maxVertexImageUniforms =0										;
+DefaultResources.maxTessControlImageUniforms =0									;
+DefaultResources.maxTessEvaluationImageUniforms =0								;
+DefaultResources.maxGeometryImageUniforms =0									;
+DefaultResources.maxFragmentImageUniforms =8									;
+DefaultResources.maxCombinedImageUniforms =8									;
+DefaultResources.maxGeometryTextureImageUnits =16								;
+DefaultResources.maxGeometryOutputVertices =256									;
+DefaultResources.maxGeometryTotalOutputComponents =1024							;
+DefaultResources.maxGeometryUniformComponents =1024								;
+DefaultResources.maxGeometryVaryingComponents =64								;
+DefaultResources.maxTessControlInputComponents =128								;
+DefaultResources.maxTessControlOutputComponents =128							;
+DefaultResources.maxTessControlTextureImageUnits =16							;
+DefaultResources.maxTessControlUniformComponents =1024							;
+DefaultResources.maxTessControlTotalOutputComponents =4096						;
+DefaultResources.maxTessEvaluationInputComponents =128							;
+DefaultResources.maxTessEvaluationOutputComponents =128							;
+DefaultResources.maxTessEvaluationTextureImageUnits =16							;
+DefaultResources.maxTessEvaluationUniformComponents =1024						;
+DefaultResources.maxTessPatchComponents =120									;
+DefaultResources.maxPatchVertices =32											;
+DefaultResources.maxTessGenLevel =64											;
+DefaultResources.maxViewports =16												;
+DefaultResources.maxVertexAtomicCounters =0										;
+DefaultResources.maxTessControlAtomicCounters =0								;
+DefaultResources.maxTessEvaluationAtomicCounters =0								;
+DefaultResources.maxGeometryAtomicCounters =0									;
+DefaultResources.maxFragmentAtomicCounters =8									;
+DefaultResources.maxCombinedAtomicCounters =8									;
+DefaultResources.maxAtomicCounterBindings =1									;
+DefaultResources.maxVertexAtomicCounterBuffers =0								;
+DefaultResources.maxTessControlAtomicCounterBuffers =0							;
+DefaultResources.maxTessEvaluationAtomicCounterBuffers =0						;
+DefaultResources.maxGeometryAtomicCounterBuffers =0								;
+DefaultResources.maxFragmentAtomicCounterBuffers =1								;
+DefaultResources.maxCombinedAtomicCounterBuffers =1								;
+DefaultResources.maxAtomicCounterBufferSize =16384								;
+DefaultResources.maxTransformFeedbackBuffers =4									;
+DefaultResources.maxTransformFeedbackInterleavedComponents =64					;
+DefaultResources.maxCullDistances =8											;
+DefaultResources.maxCombinedClipAndCullDistances =8								;
+DefaultResources.maxSamples =4													;
+
+DefaultResources.limits.nonInductiveForLoops =1									;
+DefaultResources.limits.whileLoops =1											;
+DefaultResources.limits.doWhileLoops =1											;
+DefaultResources.limits.generalUniformIndexing =1								;
+DefaultResources.limits.generalAttributeMatrixVectorIndexing =1					;
+DefaultResources.limits.generalVaryingIndexing =1								;
+DefaultResources.limits.generalSamplerIndexing =1								;
+DefaultResources.limits.generalVariableIndexing =1								;
+DefaultResources.limits.generalConstantMatrixVectorIndexing =1					;
+}
+
 namespace AnyFX
 {
-
 //------------------------------------------------------------------------------
 /**
 */
@@ -39,7 +137,7 @@ Shader::Shader() :
 */
 Shader::~Shader()
 {
-	// empty
+	if (this->shaderHandle) delete this->shaderHandle;
 }
 
 //------------------------------------------------------------------------------
@@ -127,6 +225,8 @@ Shader::Setup()
 		Parameter* param = this->func.GetParameter(i);
 		param->SetShader(this);
 	}
+
+	SetupDefaultResources();
 }
 
 //------------------------------------------------------------------------------
@@ -154,8 +254,6 @@ Shader::Generate(
 		std::string version = Format("#version %d%d%d\n", header.GetMajor(), header.GetMinor(), header.GetMinor() > 10 ? header.GetMinor() % 10 : 0);
 		this->preamble.append(version);
 	}
-
-    this->preamble.append("#extension GL_ARB_bindless_texture : require\n");
 
 	// this list holds a couple of defines which are inserted into the preamble of the code in order to be able to separate functions depending on shader type
 	const std::string shaderDefines[] =
@@ -563,22 +661,22 @@ Shader::GenerateGLSL4(Generator& generator)
 
 	// this seems a bit weird, we attempt to compile when we perform type checking
 	// however, we only perform a test compilation just to see if the formatted GLSL code is syntactically correct
-	const GLenum shaderTable[] = 
+	const EShLanguage shaderTable[] =
 	{
-		GL_VERTEX_SHADER,
-		GL_FRAGMENT_SHADER,
-		GL_GEOMETRY_SHADER,			// only accepted in GLSL3+
-		GL_TESS_CONTROL_SHADER,		// only accepted in GLSL4+
-		GL_TESS_EVALUATION_SHADER,	// only accepted in GLSL4+
-		GL_COMPUTE_SHADER			// only accepted in GLSL4.3+
+		EShLangVertex,
+		EShLangFragment,
+		EShLangGeometry,		// only accepted in GLSL3+
+		EShLangTessControl,		// only accepted in GLSL4+
+		EShLangTessEvaluation,	// only accepted in GLSL4+
+		EShLangCompute			// only accepted in GLSL4.3+
 	};
 
-	// create temporary shader object
-	GLenum shader = glCreateShader(shaderTable[this->shaderType]);
 
 	// create array of strings
-	GLint* lengths = new GLint[2];
-	const GLchar** sources = new const GLchar*[2];
+	int* lengths = new int[2];
+	const char** sources = new const char*[2];
+
+	ShHandle compiler = ShConstructCompiler(shaderTable[this->shaderType], EShOptNone);
 
 	// the preamble part of the code should be the responsibility of AnyFX to ALWAYS get right
 	// the rest of the code patches are up to the programmer
@@ -589,56 +687,24 @@ Shader::GenerateGLSL4(Generator& generator)
 	sources[1] = this->formattedCode.c_str();
 	lengths[1] = this->formattedCode.length();
 
-	// put source in shader
-	glShaderSource(shader, 2, sources, lengths);
+	EShMessages messages = EShMsgSuppressWarnings;
+	glslang::TShader* shaderObject = new glslang::TShader(shaderTable[this->shaderType]);
+	shaderObject->setStringsWithLengths(sources, lengths, 2);
 
-	// now compile
-	glCompileShader(shader);
-
-	// if there was an error, get it
-	GLint status;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-	GLint errorSize;
-	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errorSize);
-
-	if (errorSize > 0 && status != GL_TRUE)
+	// perform compilation
+	if (!shaderObject->parse(&DefaultResources, 430, false, messages))
 	{
-		// get error log
-		GLchar* errorLog = new GLchar[errorSize];
-		glGetShaderInfoLog(shader, errorSize, NULL, errorLog);
-
-		// create string from error log
-		std::string errorString(errorLog, errorSize);
+		std::string message = shaderObject->getInfoLog();
 
 		// now format errors and warnings to have correct line positions
-		std::stringstream stream(errorString);
+ 		std::stringstream stream(message);
 
-		// get vendor string
-		std::string vendor = (const char*)glGetString(GL_VENDOR);
-
-		// since different compilers handle error reporting differently, test for common strings and attempt to decode and output message accordingly
-		if (vendor.find("ATI") != vendor.npos ||
-			vendor.find("Intel") != vendor.npos)
-		{
-			this->GLSLProblemIntelATI(generator, stream);
-		}
-		else if (vendor.find("NVIDIA") != vendor.npos)
-		{
-			this->GLSLProblemNvidia(generator, stream);
-		}
-		else
-		{
-			// no known GPU vendor, just output raw string
-			Emit(errorString.c_str());
-		}
-		delete[] errorLog;
+		// handle error, Khronos follow the ATI way...
+		this->GLSLProblemKhronos(generator, stream);
 	}
-
-	delete[] lengths;
+	this->shaderHandle = shaderObject;
 	delete[] sources;
-
-	// delete shader, we don't want it hogging any more memory now do we!
-	glDeleteShader(shader);
+	delete[] lengths;
 
 	// merge code
 	this->formattedCode = this->preamble + this->formattedCode;
@@ -833,7 +899,7 @@ Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
                 {
                     int lineValue = atoi(line);
                     const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
-                    std::string msg = Format("OpenGL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
+                    std::string msg = Format("OpenGL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
                     generator.Error(msg);
                 }
 				else
@@ -958,6 +1024,100 @@ Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
             generator.Error(line);
         }
         delete [] data;
+	}
+}
+
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Shader::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
+{
+	while (!stream.eof())
+	{
+		std::string line;
+		std::getline(stream, line);
+
+		if (line.length() == 0) continue;
+
+		char* data = new char[line.size() + 1];
+		strcpy(data, line.c_str());
+
+		char* errorMsg = strstr(data, "ERROR: ");
+		char* warningMsg = strstr(data, "WARNING: ");
+
+		// the error log can contain either warning or error
+		// in some cases we may also have problem padding, but we throw that part away since we handle it ourselves
+		if (errorMsg)
+		{
+			char* lineRow = errorMsg + sizeof("ERROR:");
+			char* file = strtok(lineRow, ":");
+			char* line = strtok(NULL, ":");
+			if (line)
+			{
+				lineRow = strtok(NULL, "\n");
+				int fileValue = atoi(file);
+
+				// first file is the preamble
+				if (fileValue == 0)
+				{
+					int lineValue = atoi(line);
+					std::string msg = Format("GLSL error: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
+					generator.Error(msg);
+				}
+				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
+				{
+					int lineValue = atoi(line);
+					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
+					std::string msg = Format("GLSL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
+					generator.Error(msg);
+				}
+				else
+				{
+					int lineValue = atoi(line);
+					std::string msg = Format("GLSL error: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
+					generator.Error(msg);
+				}
+			}
+		}
+		else if (warningMsg)
+		{
+			char* lineRow = warningMsg + sizeof("WARNING:");
+			char* file = strtok(lineRow, ":");
+			char* line = strtok(NULL, ":");
+			if (line)
+			{
+				lineRow = strtok(NULL, "\n");
+				int fileValue = atoi(file);
+
+				// first file is the preamble
+				if (fileValue == 0)
+				{
+					int lineValue = atoi(line);
+					std::string msg = Format("GLSL warning: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
+					generator.Warning(msg);
+				}
+				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
+				{
+					int lineValue = atoi(line);
+					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
+					std::string msg = Format("GLSL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
+					generator.Warning(msg);
+				}
+				else
+				{
+					int lineValue = atoi(line);
+					std::string msg = Format("GLSL warning: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
+					generator.Warning(msg);
+				}
+			}
+		}
+		else
+		{
+			generator.Error(line);
+		}
+		delete[] data;
 	}
 }
 
