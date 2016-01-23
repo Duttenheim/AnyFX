@@ -356,6 +356,12 @@ Effect::Generate(Generator& generator)
 		// generate code for shaders
 		shader->Generate(generator, this->variables, this->structures, this->constants, this->varBlocks, this->varBuffers, this->subroutines, this->functions);
 	}
+
+	unsigned i;
+	for (i = 0; i < this->programs.size(); i++)
+	{
+		this->programs[i].Generate(generator);
+	}
 }
 
 //------------------------------------------------------------------------------

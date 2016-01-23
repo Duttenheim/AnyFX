@@ -5,6 +5,8 @@
 #include "program.h"
 #include "typechecker.h"
 #include "subroutine.h"
+#include <sstream>
+#include "generator.h"
 namespace AnyFX
 {
 
@@ -33,6 +35,13 @@ Program::Program() :
 	this->slotMask[ProgramRow::GeometryShader] = false;
 	this->slotMask[ProgramRow::ComputeShader] = false;
 	this->slotMask[ProgramRow::RenderState] = true;
+
+	this->shaders[ProgramRow::VertexShader] = NULL;
+	this->shaders[ProgramRow::PixelShader] = NULL;
+	this->shaders[ProgramRow::HullShader] = NULL;
+	this->shaders[ProgramRow::DomainShader] = NULL;
+	this->shaders[ProgramRow::GeometryShader] = NULL;
+	this->shaders[ProgramRow::ComputeShader] = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -238,6 +247,7 @@ Program::TypeCheck(TypeChecker& typechecker)
 		this->patchSize = hs->GetIntFlag(FunctionAttribute::InputVertices);
 	}
 
+	/*
 	if (vs && hs)
 	{
 		std::vector<Parameter*> outputs = vs->GetOutputParameters();
@@ -451,6 +461,48 @@ Program::TypeCheck(TypeChecker& typechecker)
 			}
 		}
 	}
+	*/
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::Generate(Generator& generator)
+{
+	// now generate target language specifics
+	Header::Type type = generator.GetHeader().GetType();
+	int major = generator.GetHeader().GetMajor();
+	switch (type)
+	{
+	case Header::GLSL:
+		switch (major)
+		{
+		case 4:
+			this->LinkGLSL4(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		case 3:
+		case 2:
+		case 1:
+			this->LinkGLSL3(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		}
+		break;
+	case Header::HLSL:
+		switch (major)
+		{
+		case 5:
+			this->LinkHLSL5(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		case 4:
+			this->LinkHLSL4(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		case 3:
+			this->LinkHLSL3(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		}
+		break;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -596,10 +648,132 @@ Program::BuildShaders(const Header& header, const std::vector<Function>& functio
                         shader->SetCompileFlags(this->compileFlags);
 						shader->SetSubroutineMappings(subroutineMappings);
                         shaders[functionNameWithDefines] = shader;
+						this->shaders[i] = shader;
 					}
 				}
 			}
 		}
 	}
 }
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+{
+	glslang::TProgram* program = new glslang::TProgram;
+	if (vs) program->addShader((glslang::TShader*)vs->shaderHandle);
+	if (ps) program->addShader((glslang::TShader*)ps->shaderHandle);
+	if (hs) program->addShader((glslang::TShader*)hs->shaderHandle);
+	if (ds) program->addShader((glslang::TShader*)ds->shaderHandle);
+	if (gs) program->addShader((glslang::TShader*)gs->shaderHandle);
+	if (cs) program->addShader((glslang::TShader*)cs->shaderHandle);
+
+	EShMessages messages = EShMsgDefault;
+	if (!program->link(messages))
+	{
+		std::string message = program->getInfoLog();
+
+		// now format errors and warnings to have correct line positions
+		std::stringstream stream(message);
+
+		// handle error, Khronos follow the ATI way...
+		this->GLSLProblemKhronos(generator, stream);
+	}
+	delete program;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+{
+	glslang::TProgram* program = new glslang::TProgram;
+	if (vs) program->addShader((glslang::TShader*)vs->shaderHandle);
+	if (ps) program->addShader((glslang::TShader*)ps->shaderHandle);
+	if (hs) program->addShader((glslang::TShader*)hs->shaderHandle);
+	if (ds) program->addShader((glslang::TShader*)ds->shaderHandle);
+	if (gs) program->addShader((glslang::TShader*)gs->shaderHandle);
+	if (cs) program->addShader((glslang::TShader*)cs->shaderHandle);
+
+	EShMessages messages = EShMsgDefault;
+	if (!program->link(messages))
+	{
+		std::string message = program->getInfoLog();
+
+		// now format errors and warnings to have correct line positions
+		std::stringstream stream(message);
+
+		// handle error, Khronos follow the ATI way...
+		this->GLSLProblemKhronos(generator, stream);
+	}
+	delete program;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
+{
+	while (!stream.eof())
+	{
+		std::string line;
+		std::getline(stream, line);
+
+		if (line.length() == 0) continue;
+
+		char* data = new char[line.size() + 1];
+		strcpy(data, line.c_str());
+
+		char* errorMsg = strstr(data, "ERROR: ");
+		char* warningMsg = strstr(data, "WARNING: ");
+
+		// the error log can contain either warning or error
+		// in some cases we may also have problem padding, but we throw that part away since we handle it ourselves
+		if (errorMsg)
+		{
+		
+		}
+		else if (warningMsg)
+		{
+		
+		}
+		else
+		{
+			generator.Error(line);
+		}
+		delete[] data;
+	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::LinkHLSL5(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+{
+
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::LinkHLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+{
+
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::LinkHLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+{
+
+}
+
 } // namespace AnyFX
