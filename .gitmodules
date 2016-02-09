@@ -1,6 +1,3 @@
-[submodule "exts/glew"]
-	path = exts/glew
-	url = https://github.com/gscept/glew.git
 [submodule "exts/eastl"]
 	path = exts/eastl
 	url = https://github.com/gscept/EASTL.git
