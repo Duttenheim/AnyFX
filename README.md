@@ -12,20 +12,21 @@ AnyFX also uses CMake to setup the project, and is fully implemented in C/C++.
 
 AnyFX uses the following libraries (all of which are included), all of which follows either the BSD or GNU lesser general license:
 
-mcpp
-antlr3c
-glew
+* mcpp
+* antlr3c
+* glew
+* glslang
 
 The AnyFX demo project (which is optional) also uses:
 
-DevIL
-glm
+* DevIL
+* glm
 
 AnyFX is split into two major parts, the compiler and the API. The compiler will take one AnyFX formatted effect file and output a binary blob which can then be read by the API. The API then provides a simple interface to use the resources generated from the effect. 
 
 OpenGL 4
 =====
-AnyFX is extremely high performant using OpenGL4, using the latest APIs which enables variable updates to be done without glUniform* and thus asynchronously with the draw calls. It also enables a state switch system which guarantees no state gets changed to its current state without using glGet*. It also enables shader program variations without the extensive use of glUseProgram through the functionality of subroutines.
+AnyFX utilizes next-gen OpenGL with APIs such as glBindTextures and glBindBuffers to bind all shader resources in a single call. It provides an incremental state cache to avoid updating if not required. 
 
 
 Setup
@@ -33,10 +34,10 @@ Setup
 
 AnyFX can be setup in different ways. When running CMake, you will see four variables. These are:
 
-ANYFX_BUILD_COMPILER_LIBRARY
-ANYFX_BUILD_DEMO
-ANYFX_BUILD_GRAMMAR
-ANYFX_TRANSPOSE_MATRICES
+* ANYFX_BUILD_COMPILER_LIBRARY
+* ANYFX_BUILD_DEMO
+* ANYFX_BUILD_GRAMMAR
+* ANYFX_TRANSPOSE_MATRICES
 
 The ANYFX_BUILD_COMPILER_LIBRARY will switch if the compiler should build as its own application, or be a library which you can link to your own application and use. When using the compiler as a library, you simply include the contained anyfxcompiler.h in your software.
 
@@ -53,13 +54,17 @@ Features
 
 AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no direct (as of yet) backwards compatibility with earlier versions of OpenGL, OpenGLES or GLSL. The language specification is defined in the _anyfx\_spec.pdf_ file included in the repository.
 
+Next API in the pipeline is probably going to be SPIR-V and Vulkan, as soon as it gets released. 
+
 AnyFX supports the following GLSL features:
 - Vertex and fragment shaders.
 - Hull/domain and geometry shaders.
+- Transform feedbacks (requires support for GL 4.4 or higher)
 - Compute shaders.
 - Offline compilation and validation. (but not using program binaries)
 - Cross-shader variables.
 - Uniform blocks.
+- Shader storage buffers.
 - Subroutines.
 
 And the following OpenGL features:
@@ -68,10 +73,11 @@ And the following OpenGL features:
 - Program assembly.
 - Per-program variable usage.
 - Uniform buffers:
-  - Persistently mapped uniform buffers.  
-  - Explicitly synced or implicitly synced dependent on need.
-  - Multiple buffering to avoid stalls.
   - Application global uniform block sharing.
+- Shader storage buffers:
+  - Application global shader storage sharing.
 - Incremental state update.
 
-AnyFX is completely incremental. This means AnyFX will never perform a state change unless it actually changes the OpenGL state (by always keeping a copy of the state in memory, not by calling glGet* each frame). This ensures redundant state changes never happen, although AnyFX cannot optimize the order in which state switches occur. 
+Uniform buffers and shader storage blocks are considered to be globally accessible if defined with the flag *shared* in the shader. This means that setting the buffer in one loaded effect will cause the same buffer to be bound to another effect sharing the same variable. As such, one can define a shared header which is to be included by every shader that shares the same buffer layouts, and they only need to be bound once. 
+
+AnyFX tries to be incremental. This means AnyFX will never perform a state change unless it actually changes the OpenGL state (by always keeping a copy of the state in memory, not by calling glGet*). This ensures redundant state changes never happen, although AnyFX cannot optimize the order in which state switches occur. 
