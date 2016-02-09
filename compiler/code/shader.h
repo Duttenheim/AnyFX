@@ -127,7 +127,8 @@ private:
     std::string compileFlags;
 	unsigned codeOffset;
 
-	void* shaderHandle;
+	glslang::TShader* glslShader;
+	void* hlslShader;
 
 	std::string preamble;
     std::map<int, std::pair<std::string, std::string> > indexToFileMap;

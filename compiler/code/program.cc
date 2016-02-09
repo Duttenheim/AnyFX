@@ -663,12 +663,12 @@ void
 Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
 {
 	glslang::TProgram* program = new glslang::TProgram;
-	if (vs) program->addShader((glslang::TShader*)vs->shaderHandle);
-	if (ps) program->addShader((glslang::TShader*)ps->shaderHandle);
-	if (hs) program->addShader((glslang::TShader*)hs->shaderHandle);
-	if (ds) program->addShader((glslang::TShader*)ds->shaderHandle);
-	if (gs) program->addShader((glslang::TShader*)gs->shaderHandle);
-	if (cs) program->addShader((glslang::TShader*)cs->shaderHandle);
+	if (vs) program->addShader((glslang::TShader*)vs->glslShader);
+	if (ps) program->addShader((glslang::TShader*)ps->glslShader);
+	if (hs) program->addShader((glslang::TShader*)hs->glslShader);
+	if (ds) program->addShader((glslang::TShader*)ds->glslShader);
+	if (gs) program->addShader((glslang::TShader*)gs->glslShader);
+	if (cs) program->addShader((glslang::TShader*)cs->glslShader);
 
 	EShMessages messages = EShMsgDefault;
 	if (!program->link(messages))
@@ -681,6 +681,7 @@ Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Sha
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
 	}
+	
 	delete program;
 }
 
@@ -691,12 +692,12 @@ void
 Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
 {
 	glslang::TProgram* program = new glslang::TProgram;
-	if (vs) program->addShader((glslang::TShader*)vs->shaderHandle);
-	if (ps) program->addShader((glslang::TShader*)ps->shaderHandle);
-	if (hs) program->addShader((glslang::TShader*)hs->shaderHandle);
-	if (ds) program->addShader((glslang::TShader*)ds->shaderHandle);
-	if (gs) program->addShader((glslang::TShader*)gs->shaderHandle);
-	if (cs) program->addShader((glslang::TShader*)cs->shaderHandle);
+	if (vs) program->addShader((glslang::TShader*)vs->glslShader);
+	if (ps) program->addShader((glslang::TShader*)ps->glslShader);
+	if (hs) program->addShader((glslang::TShader*)hs->glslShader);
+	if (ds) program->addShader((glslang::TShader*)ds->glslShader);
+	if (gs) program->addShader((glslang::TShader*)gs->glslShader);
+	if (cs) program->addShader((glslang::TShader*)cs->glslShader);
 
 	EShMessages messages = EShMsgDefault;
 	if (!program->link(messages))

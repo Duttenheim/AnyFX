@@ -127,6 +127,8 @@ namespace AnyFX
 /**
 */
 Shader::Shader() :
+	glslShader(0),
+	hlslShader(0),
 	codeOffset(0)
 {
 	// empty
@@ -137,7 +139,8 @@ Shader::Shader() :
 */
 Shader::~Shader()
 {
-	if (this->shaderHandle) delete this->shaderHandle;
+	if (this->glslShader) delete this->glslShader;
+	if (this->hlslShader) delete this->hlslShader;
 }
 
 //------------------------------------------------------------------------------
@@ -702,7 +705,8 @@ Shader::GenerateGLSL4(Generator& generator)
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
 	}
-	this->shaderHandle = shaderObject;
+	
+	this->glslShader = shaderObject;
 	delete[] sources;
 	delete[] lengths;
 
