@@ -33,8 +33,10 @@ LIST(APPEND CODE ${SRC} ${HEAD})
 FILE(GLOB SRC code/parser/AnyFXParser.c code/parser/AnyFXLexer.c)
 FILE(GLOB HEAD code/parser/AnyFXParser.h code/parser/AnyFXLexer.h)
 SOURCE_GROUP("parser" FILES ${SRC} ${HEAD})
-set_source_files_properties( ${SRC} PROPERTIES LANGUAGE "CXX" )
+SET_SOURCE_FILES_PROPERTIES( ${SRC} PROPERTIES LANGUAGE "CXX" )
 LIST(APPEND CODE ${SRC} ${HEAD})
+
+
 
 IF(ANYFX_BUILD_GRAMMAR)
 	FILE(GLOB GRAMMAR "antlr/grammar/AnyFX.g")
