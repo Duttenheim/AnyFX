@@ -53,6 +53,8 @@ public:
 	std::string ReadString();
 	/// reads character
 	char ReadChar();
+	/// reads byte array, remember to delete it when it is no longer needed
+	char* ReadBytes(unsigned numbytes);
 	/// skips n characters in stream
 	void Skip(unsigned n);
 

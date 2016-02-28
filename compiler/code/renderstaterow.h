@@ -32,6 +32,26 @@ public:
 		NumComparisonFunctions
 	};
 
+	enum LogicalOp
+	{
+		Clear,
+		And,
+		AndReverse,
+		Copy,
+		AndInverted,
+		NoOp,
+		Xor,
+		Or,
+		Nor,
+		Equivalent,
+		Inverted,
+		OrReverse,
+		CopyInverted,
+		OrInverted,
+		Nand,
+		Set
+	};
+
 	enum StencilOp
 	{
 		Keep,
@@ -53,6 +73,27 @@ public:
 		None,
 
 		NumCullModes
+	};
+
+	enum WindingModes
+	{
+		CW,
+		CCW,
+
+		NumWindingModes
+	};
+
+	enum SampleCount
+	{
+		Bits1,
+		Bits2,
+		Bits4,
+		Bits8,
+		Bits16,
+		Bits32,
+		Bits64,
+
+		NumSampleCounts
 	};
 
 	enum FillModes
@@ -83,8 +124,11 @@ public:
 		ScissorEnabled,
 		StencilEnabled,
 		AlphaToCoverageEnabled,
+		AlphaToOneEnabled,
 		MultisampleEnabled,
 		PolygonOffsetEnabled,
+		RasterizerDiscardEnabled,
+		LogicOpEnabled,
 
 		NumBoolFlags
 	};
@@ -94,6 +138,9 @@ public:
 		DepthFunc,
 		CullMode,
 		RasterizerMode,
+		WindingMode,
+		SampleCount,
+		LogicOp,
 		StencilFrontFailOp,
 		StencilBackFailOp,
 		StencilFrontPassOp,
@@ -126,6 +173,10 @@ public:
 	{
 		PolygonOffsetFactor,
 		PolygonOffsetUnits,
+		MinSampleShading,
+		MinDepthBounds,
+		MaxDepthBounds,
+		LineWidth,
 
 		NumFloatFlags
 	};

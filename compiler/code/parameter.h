@@ -86,7 +86,7 @@ public:
 	/// gets io mode
 	const IO& GetIO() const;
 	/// set attribute
-	void SetAttribute(const Attribute& attr);
+	void SetAttribute(const std::string& attr);
 	/// get attribute
 	const Attribute& GetAttribute() const;
 	/// set name
@@ -105,10 +105,6 @@ public:
 	const bool GetPatchParam() const;
 	/// gets const
 	bool GetConst() const;
-	/// adds qualifier
-	void AddQualifier(const std::string& qualifier);
-	/// gets number of qualifiers
-	unsigned GetNumQualifiers() const;
 
 	/// sets feedback buffer expression
 	void SetFeedbackBufferExpression(Expression* expr);
@@ -162,7 +158,6 @@ private:
 	/// formats attribute to target-specific string
 	std::string FormatAttribute(const Header::Type& type);
 
-	std::vector<std::string> qualifiers;
 	bool isConst;
 
 	// array stuff
@@ -184,6 +179,8 @@ private:
 	bool patchParam;
 	IO ioMode;
 	Interpolation interpolation;
+
+	std::string attributeString;
 	Attribute attribute;
 	Shader* parentShader;
 	std::string name;
@@ -212,19 +209,20 @@ Parameter::GetIO() const
 /**
 */
 inline void
-Parameter::SetAttribute(const Parameter::Attribute& attr)
+Parameter::SetAttribute(const std::string& attr)
 {
-	this->attribute = attr;
+	this->attributeString = attr;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
-inline const Parameter::Attribute& 
+inline const Parameter::Attribute&
 Parameter::GetAttribute() const
 {
 	return this->attribute;
 }
+
 
 //------------------------------------------------------------------------------
 /**
@@ -296,24 +294,6 @@ inline bool
 Parameter::GetConst() const
 {
 	return this->isConst;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline void
-Parameter::AddQualifier(const std::string& qualifier)
-{
-	this->qualifiers.push_back(qualifier);
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline unsigned 
-Parameter::GetNumQualifiers() const
-{
-	return this->qualifiers.size();
 }
 
 //------------------------------------------------------------------------------
@@ -434,7 +414,6 @@ Parameter::GetSizeExpression() const
 {
 	return this->sizeExpression;
 }
-
 
 //------------------------------------------------------------------------------
 /**

@@ -160,8 +160,8 @@ Subroutine::Format(const Header& header) const
 {
     std::string formattedCode;
 
-#pragma region GLSL
-    if (header.GetType() == Header::GLSL)
+#pragma region GLSL_SPIRV
+	if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
     {
 		if (header.GetFlags() & Header::NoSubroutines)
 		{

@@ -129,16 +129,34 @@ DataType::ToGLSLType( const DataType& type )
 		return "image2D";
 	case Image2DArray:
 		return "image2DArray";
+	case Image2DMS:
+		return "image2DMS";
+	case Image2DMSArray:
+		return "image2DMSArray";
 	case Image3D:
 		return "image3D";
 	case ImageCube:
 		return "imageCube";
 	case ImageCubeArray:
 		return "imageCubeArray";
-	case Image2DMS:
-		return "image2DMS";
-	case Image2DMSArray:
-		return "image2DMSArray";
+	case Texture1D:
+		return "texture1D";
+	case Texture1DArray:
+		return "texture1DArray";
+	case Texture2D:
+		return "texture2D";
+	case Texture2DArray:
+		return "texture2DArray";
+	case Texture2DMS:
+		return "texture2DMS";
+	case Texture2DMSArray:
+		return "texture2DMSArray";
+	case Texture3D:
+		return "texture3D";
+	case TextureCube:
+		return "textureCube";
+	case TextureCubeArray:
+		return "textureCubeArray";
 	case Void:
 		return "void";
 	case UserType:
@@ -152,8 +170,8 @@ DataType::ToGLSLType( const DataType& type )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-DataType::ToHLSLType( const DataType& type )
+std::string
+DataType::ToHLSLType(const DataType& type)
 {
 	switch (type.type)
 	{
@@ -281,6 +299,7 @@ DataType::ToProfileType( const DataType& dtype, const Header::Type& ttype )
 	{
 	case Header::HLSL:
 		return ToHLSLType(dtype);
+	case Header::SPIRV:
 	case Header::GLSL:
 		return ToGLSLType(dtype);
 	default:
@@ -292,8 +311,8 @@ DataType::ToProfileType( const DataType& dtype, const Header::Type& ttype )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-DataType::ToSignature( const DataType& type )
+std::string
+DataType::ToSignature(const DataType& type)
 {
 	switch (type.type)
 	{
@@ -412,8 +431,8 @@ DataType::ToSignature( const DataType& type )
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-DataType::ToString( const DataType& type )
+std::string
+DataType::ToString(const DataType& type)
 {
 	switch (type.type)
 	{
@@ -509,16 +528,34 @@ DataType::ToString( const DataType& type )
 		return "image [2D]";
 	case Image2DArray:
 		return "image [2D-Array]";
+	case Image2DMS:
+		return "image [2D-Multisample]";
+	case Image2DMSArray:
+		return "image [2D-Multisample-Array]";
 	case Image3D:
 		return "image [3D]";
 	case ImageCube:
 		return "image [Cube]";
 	case ImageCubeArray:
 		return "image [Cube-Array]";
-	case Image2DMS:
-		return "image [2D-Multisample]";
-	case Image2DMSArray:
-		return "image [2D-Multisample-Array]";
+	case Texture1D:
+		return "texture [1D]";
+	case Texture1DArray:
+		return "texture [1D-Array]";
+	case Texture2D:
+		return "texture [2D]";
+	case Texture2DArray:
+		return "texture [2D-Array]";
+	case Texture2DMS:
+		return "texture [2D-Multisample]";
+	case Texture2DMSArray:
+		return "texture [2D-Multisample-Array]";
+	case Texture3D:
+		return "texture [3D]";
+	case TextureCube:
+		return "texture [Cube]";
+	case TextureCubeArray:
+		return "texture [Cube-Array]";
 	case Void:
 		return "void";
 	case String:
@@ -534,8 +571,8 @@ DataType::ToString( const DataType& type )
 //------------------------------------------------------------------------------
 /**
 */
-unsigned 
-DataType::ToVectorSize( const DataType& type )
+unsigned
+DataType::ToVectorSize(const DataType& type)
 {
 	switch (type.type)
 	{
@@ -603,6 +640,15 @@ DataType::ToVectorSize( const DataType& type )
 	case ImageCubeArray:
 	case Image2DMS:
 	case Image2DMSArray:
+	case Texture1D:
+	case Texture1DArray:
+	case Texture2D:
+	case Texture2DArray:
+	case Texture3D:
+	case TextureCube:
+	case TextureCubeArray:
+	case Texture2DMS:
+	case Texture2DMSArray:
 	case Void:
 	case UserType:
 	case Undefined:
@@ -614,8 +660,8 @@ DataType::ToVectorSize( const DataType& type )
 //------------------------------------------------------------------------------
 /**
 */
-unsigned 
-DataType::ToByteSize( const DataType& type )
+unsigned
+DataType::ToByteSize(const DataType& type)
 {
     switch (type.GetType())
     {

@@ -47,30 +47,38 @@ private:
 
 #pragma region OpenGL
 	/// generates GLSL4 target code
-	void LinkGLSL4(Generator& typeChecker, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs);
+	void LinkGLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 	/// generates GLSL3 target code
-	void LinkGLSL3(Generator& typeChecker, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs);
+	void LinkGLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 
 	/// output AnyFX formatted GLSL problem using the Khronos syntax
-	void GLSLProblemKhronos(Generator& typeChecker, std::stringstream& stream);
+	void GLSLProblemKhronos(Generator& generator, std::stringstream& stream);
+#pragma endregion
+
+#pragma region Vulkan
+	/// generates SPIRV target code from GLSL representation
+	void LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 #pragma endregion
 
 #pragma region DirectX
 	/// generates HLSL5 target code
-	void LinkHLSL5(Generator& typeChecker, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs);
+	void LinkHLSL5(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 	/// generates HLSL4 target code
-	void LinkHLSL4(Generator& typeChecker, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs);
+	void LinkHLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 	/// generates HLSL3 target code
-	void LinkHLSL3(Generator& typeChecker, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs);
+	void LinkHLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs);
 #pragma endregion
 
 	std::vector<std::string> invalidFlags;
 	std::vector<std::string> slotNames;
 	bool slotMask[ProgramRow::NumProgramRows];
-    std::map<std::string, std::string> slotSubroutineMappings[ProgramRow::NumProgramRows];
-	Shader* shaders[ProgramRow::NumProgramRows];
+    std::map<std::string, std::string> slotSubroutineMappings[ProgramRow::NumProgramRows-1];
+	Shader* shaders[ProgramRow::NumProgramRows-1];
+	std::vector<unsigned> binary[ProgramRow::NumProgramRows-1];
     std::string compileFlags;
 	unsigned patchSize;
+
+	std::map<std::string, unsigned> uniformBufferOffsets;
 
 	bool hasAnnotation;
 	Annotation annotation;

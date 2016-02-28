@@ -44,6 +44,7 @@ Parameter::~Parameter()
 	// empty
 }
 
+
 //------------------------------------------------------------------------------
 /**
 */
@@ -65,7 +66,7 @@ Parameter::Format(const Header& header, unsigned& input, unsigned& output) const
 
 	std::string formattedCode;
 	
-	if (header.GetType() == Header::GLSL)
+	if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
 	{
 		std::string format = "%slayout(%s) %s%s";
 
@@ -208,6 +209,39 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 		}
 	}
 
+	// check attribute string
+	if (!this->attributeString.empty())
+	{
+		if (this->attributeString == "drawinstanceID") 						{ this->attribute = Parameter::DrawInstance; }
+		else if (this->attributeString == "vertexID") 						{ this->attribute = Parameter::Vertex; }
+		else if (this->attributeString == "primitiveID") 					{ this->attribute = Parameter::Primitive; }
+		else if (this->attributeString == "invocationID") 					{ this->attribute = Parameter::Invocation; }
+		else if (this->attributeString == "viewportID") 					{ this->attribute = Parameter::Viewport; }
+		else if (this->attributeString == "rendertargetID") 				{ this->attribute = Parameter::Rendertarget; }
+		else if (this->attributeString == "innertessellation") 				{ this->attribute = Parameter::InnerTessellation; }
+		else if (this->attributeString == "outertessellation") 				{ this->attribute = Parameter::OuterTessellation; }
+		else if (this->attributeString == "position") 						{ this->attribute = Parameter::Position; }
+		else if (this->attributeString == "pointsize") 						{ this->attribute = Parameter::PointSize; }
+		else if (this->attributeString == "clipdistance") 					{ this->attribute = Parameter::ClipDistance; }
+		else if (this->attributeString == "frontface") 						{ this->attribute = Parameter::FrontFace; }
+		else if (this->attributeString == "coordinate") 					{ this->attribute = Parameter::Coordinate; }
+		else if (this->attributeString == "depth")							{ this->attribute = Parameter::Depth; }
+		else if (this->attributeString == "color0") 						{ this->attribute = Parameter::Color0; }
+		else if (this->attributeString == "color1") 						{ this->attribute = Parameter::Color1; }
+		else if (this->attributeString == "color2") 						{ this->attribute = Parameter::Color2; }
+		else if (this->attributeString == "color3") 						{ this->attribute = Parameter::Color3; }
+		else if (this->attributeString == "color4") 						{ this->attribute = Parameter::Color4; }
+		else if (this->attributeString == "color5") 						{ this->attribute = Parameter::Color5; }
+		else if (this->attributeString == "color6") 						{ this->attribute = Parameter::Color6; }
+		else if (this->attributeString == "color7") 						{ this->attribute = Parameter::Color7; }
+		else if (this->attributeString == "workgroupID")					{ this->attribute = Parameter::WorkGroup; }
+		else if (this->attributeString == "numgroups")						{ this->attribute = Parameter::NumGroups; }
+		else if (this->attributeString == "localID") 						{ this->attribute = Parameter::LocalID; }
+		else if (this->attributeString == "localindex") 					{ this->attribute = Parameter::LocalIndex; }
+		else if (this->attributeString == "globalID") 						{ this->attribute = Parameter::GlobalID; }
+		else 																{ this->attribute = Parameter::InvalidAttribute; }
+	}
+
 	if (this->sizeExpression)
 	{
 		this->arraySize = this->sizeExpression->EvalInt(typechecker);
@@ -245,7 +279,7 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 				std::string message = AnyFX::Format("Pixel/Fragment shader inputs/outputs does not support the 'patch' qualifier. Ignoring qualifier, %s\n", this->ErrorSuffix().c_str());
 				typechecker.Warning(message);
 			}
-			if (this->attribute != Parameter::NoAttribute && type == Header::GLSL)
+			if (this->attribute != Parameter::NoAttribute && (type == Header::GLSL || type == Header::SPIRV))
 			{
 				std::string attributeString = this->AttributeToString(this->attribute);
 				std::string message = AnyFX::Format("Qualifier '%s' serves no purpose in GLSL. Ignoring qualifier, %s\n", attributeString.c_str(), this->ErrorSuffix().c_str());
@@ -294,7 +328,7 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 					typechecker.Error(message);
 				}
 			}	
-			if (this->attribute != Parameter::NoAttribute && type == Header::GLSL)
+			if (this->attribute != Parameter::NoAttribute && (type == Header::GLSL || type == Header::SPIRV))
 			{
 				std::string attributeString = this->AttributeToString(this->attribute);
 				std::string message = AnyFX::Format("Qualifier '%s' serves no purpose in GLSL. Ignoring qualifier, %s\n", attributeString.c_str(), this->ErrorSuffix().c_str());
@@ -324,7 +358,7 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 				std::string message = AnyFX::Format("Hull/Control shaders does not support the 'inout' since input and output size may be of different size, %s\n", this->ErrorSuffix().c_str());
 				typechecker.Error(message);
 			}
-			if (this->attribute != Parameter::NoAttribute && type == Header::GLSL)
+			if (this->attribute != Parameter::NoAttribute && (type == Header::GLSL || type == Header::SPIRV))
 			{
 				std::string attributeString = this->AttributeToString(this->attribute);
 				std::string message = AnyFX::Format("Qualifier '%s' serves no purpose in GLSL. Ignoring qualifier, %s\n", attributeString.c_str(), this->ErrorSuffix().c_str());
@@ -341,7 +375,7 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 					typechecker.Error(message);
 				}
 			}
-			if (this->attribute != Parameter::NoAttribute && type == Header::GLSL)
+			if (this->attribute != Parameter::NoAttribute && (type == Header::GLSL || type == Header::SPIRV))
 			{
 				std::string attributeString = this->AttributeToString(this->attribute);
 				std::string message = AnyFX::Format("Qualifier '%s' serves no purpose in GLSL. Ignoring qualifier, %s\n", attributeString.c_str(), this->ErrorSuffix().c_str());
@@ -373,6 +407,7 @@ Parameter::TypeCheck(TypeChecker& typechecker)
 
 	switch (typechecker.GetHeader().GetType())
 	{
+	case Header::SPIRV:
 	case Header::GLSL:
 		{
 			switch (this->attribute)
@@ -481,6 +516,7 @@ Parameter::FormatAttribute(const Header::Type& type)
 {
 	switch (type)
 	{
+		case Header::SPIRV:
 		case Header::GLSL:
 		{
 			switch (this->attribute)

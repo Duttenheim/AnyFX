@@ -59,7 +59,7 @@ std::string
 Constant::Format(const Header& header) const
 {
 	std::string result;
-	if (header.GetType() == Header::GLSL)
+	if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
 	{
 		result.append("const ");
 		result.append(DataType::ToProfileType(this->type, header.GetType()));

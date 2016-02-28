@@ -1,0 +1,49 @@
+#pragma once
+//------------------------------------------------------------------------------
+/**
+	Describes a basic sampler object.
+	
+	(C) 2016 Individual contributors, see AUTHORS file
+*/
+//------------------------------------------------------------------------------
+#include "annotable.h"
+#include "variablebase.h"
+#include "enums.h"
+#include <EASTL/vector.h>
+namespace AnyFX
+{
+struct SamplerBase : public Annotable
+{
+public:
+	/// constructor
+	SamplerBase();
+	/// destructor
+	virtual ~SamplerBase();
+
+	struct SamplerSettings
+	{
+		FilterMode filterMode;
+		AddressMode addressU;
+		AddressMode addressV;
+		AddressMode addressW;
+		ComparisonFunc comparisonFunc;
+
+		bool isComparison;
+		float minLod;
+		float maxLod;
+		float lodBias;
+		float maxAnisotropic;
+		float borderColor[4];
+
+	} samplerSettings;
+
+	eastl::string name;
+	eastl::vector<VariableBase*> textureVariables;
+
+private:
+	friend class SamplerLoader;
+
+	/// callback for when program is done loading
+	virtual void OnLoaded();
+};
+} // namespace AnyFX

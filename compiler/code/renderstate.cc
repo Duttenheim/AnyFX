@@ -26,6 +26,9 @@ RenderState::RenderState() :
 	this->drawEnumFlags[RenderStateRow::DepthFunc] = RenderStateRow::Less;
 	this->drawEnumFlags[RenderStateRow::CullMode] = RenderStateRow::Back;
 	this->drawEnumFlags[RenderStateRow::RasterizerMode] = RenderStateRow::Fill;
+	this->drawEnumFlags[RenderStateRow::WindingMode] = RenderStateRow::CW;
+	this->drawEnumFlags[RenderStateRow::SampleCount] = RenderStateRow::Bits1;
+	this->drawEnumFlags[RenderStateRow::LogicOp] = RenderStateRow::Copy;
 	
 	// set default blend flags
 	unsigned i;
@@ -49,13 +52,22 @@ RenderState::RenderState() :
 	this->drawBoolFlags[RenderStateRow::StencilEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::MultisampleEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::AlphaToCoverageEnabled] = false;
+	this->drawBoolFlags[RenderStateRow::AlphaToOneEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::PolygonOffsetEnabled] = false;
+	this->drawBoolFlags[RenderStateRow::RasterizerDiscardEnabled] = true;
+	this->drawBoolFlags[RenderStateRow::LogicOpEnabled] = false;
+
 	this->drawIntFlags[RenderStateRow::StencilFrontRef] = 0;
 	this->drawIntFlags[RenderStateRow::StencilBackRef] = 0;
 	this->drawUintFlags[RenderStateRow::StencilReadMask] = 1;
 	this->drawUintFlags[RenderStateRow::StencilWriteMask] = 1;
+
 	this->drawFloatFlags[RenderStateRow::PolygonOffsetFactor] = 0.0f;
 	this->drawFloatFlags[RenderStateRow::PolygonOffsetUnits] = 0.0f;
+	this->drawFloatFlags[RenderStateRow::MinSampleShading] = 0.0f;
+	this->drawFloatFlags[RenderStateRow::MinDepthBounds] = 0.0f;
+	this->drawFloatFlags[RenderStateRow::MaxDepthBounds] = 10000.0f;
+	this->drawFloatFlags[RenderStateRow::LineWidth] = 1.0f;
 
 	for (i = 0; i < RenderStateRow::NumIntFlags; i++)
 	{
@@ -150,6 +162,76 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 			}
 
 			this->drawEnumFlags[RenderStateRow::CullMode] = flagVal;
+		}
+		else if (row.GetFlag() == "WindingMode")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "CW")								flagVal = RenderStateRow::CW;
+			else if (flag == "CCW")							flagVal = RenderStateRow::CCW;
+			
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::WindingMode] = flagVal;
+		}
+		else if (row.GetFlag() == "SampleCount")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Bits1")							flagVal = RenderStateRow::Bits1;
+			else if (flag == "Bits2")						flagVal = RenderStateRow::Bits2;
+			else if (flag == "Bits4")						flagVal = RenderStateRow::Bits4;
+			else if (flag == "Bits8")						flagVal = RenderStateRow::Bits8;
+			else if (flag == "Bits16")						flagVal = RenderStateRow::Bits16;
+			else if (flag == "Bits32")						flagVal = RenderStateRow::Bits32;
+			else if (flag == "Bits64")						flagVal = RenderStateRow::Bits64;
+
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::SampleCount] = flagVal;
+		}
+		else if (row.GetFlag() == "LogicOp")
+		{
+			const std::string& flag = row.GetString();
+			unsigned flagVal = -1;
+
+			if (flag == "Clear")							flagVal = RenderStateRow::Clear;
+			else if (flag == "And")							flagVal = RenderStateRow::And;
+			else if (flag == "AndReverse")					flagVal = RenderStateRow::AndReverse;
+			else if (flag == "Copy")						flagVal = RenderStateRow::Copy;
+			else if (flag == "AndInverted")					flagVal = RenderStateRow::AndInverted;
+			else if (flag == "NoOp")						flagVal = RenderStateRow::NoOp;
+			else if (flag == "Xor")							flagVal = RenderStateRow::Xor;
+			else if (flag == "Or")							flagVal = RenderStateRow::Or;
+			else if (flag == "Nor")							flagVal = RenderStateRow::Nor;
+			else if (flag == "Equivalent")					flagVal = RenderStateRow::Equivalent;
+			else if (flag == "Inverted")					flagVal = RenderStateRow::Inverted;
+			else if (flag == "OrReverse")					flagVal = RenderStateRow::OrReverse;
+			else if (flag == "CopyInverted")				flagVal = RenderStateRow::CopyInverted;
+			else if (flag == "OrInverted")					flagVal = RenderStateRow::OrInverted;
+			else if (flag == "Nand")						flagVal = RenderStateRow::Nand;
+			else if (flag == "Set")							flagVal = RenderStateRow::Set;
+
+			else
+			{
+				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), flag };
+				this->invalidValues.push_back(foo);
+				return;
+			}
+
+			this->drawEnumFlags[RenderStateRow::LogicOp] = flagVal;
 		}
 		else if (row.GetFlag() == "StencilFrontFailOp")
 		{
@@ -425,21 +507,28 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 		}
 		break;
 	case RenderStateRow::ExpressionFlagType:
-		if (row.GetFlag() == "StencilFrontRef")				this->drawIntExpressions[RenderStateRow::StencilFrontRef] = row.GetExpression();
-		else if (row.GetFlag() == "StencilBackRef")			this->drawIntExpressions[RenderStateRow::StencilBackRef] = row.GetExpression();
-		else if (row.GetFlag() == "StencilReadMask")		this->drawUintExpressions[RenderStateRow::StencilReadMask] = row.GetExpression();
-		else if (row.GetFlag() == "StencilWriteMask")		this->drawUintExpressions[RenderStateRow::StencilWriteMask] = row.GetExpression();
-		else if (row.GetFlag() == "DepthEnabled")			this->drawBoolExpressions[RenderStateRow::DepthEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "DepthWrite")				this->drawBoolExpressions[RenderStateRow::DepthWrite] = row.GetExpression();
-		else if (row.GetFlag() == "DepthClamp")				this->drawBoolExpressions[RenderStateRow::DepthClamp] = row.GetExpression();
-		else if (row.GetFlag() == "SeparateBlend")			this->drawBoolExpressions[RenderStateRow::SeparateBlend] = row.GetExpression();
-		else if (row.GetFlag() == "ScissorEnabled")			this->drawBoolExpressions[RenderStateRow::ScissorEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "StencilEnabled")			this->drawBoolExpressions[RenderStateRow::StencilEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "AlphaToCoverageEnabled") this->drawBoolExpressions[RenderStateRow::AlphaToCoverageEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "MultisampleEnabled")		this->drawBoolExpressions[RenderStateRow::MultisampleEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "PolygonOffsetEnabled")	this->drawBoolExpressions[RenderStateRow::PolygonOffsetEnabled] = row.GetExpression();
-		else if (row.GetFlag() == "PolygonOffsetFactor")	this->drawFloatExpressions[RenderStateRow::PolygonOffsetFactor] = row.GetExpression();
-		else if (row.GetFlag() == "PolygonOffsetUnits")		this->drawFloatExpressions[RenderStateRow::PolygonOffsetUnits] = row.GetExpression();
+		if (row.GetFlag() == "StencilFrontRef")					this->drawIntExpressions[RenderStateRow::StencilFrontRef] = row.GetExpression();
+		else if (row.GetFlag() == "StencilBackRef")				this->drawIntExpressions[RenderStateRow::StencilBackRef] = row.GetExpression();
+		else if (row.GetFlag() == "StencilReadMask")			this->drawUintExpressions[RenderStateRow::StencilReadMask] = row.GetExpression();
+		else if (row.GetFlag() == "StencilWriteMask")			this->drawUintExpressions[RenderStateRow::StencilWriteMask] = row.GetExpression();
+		else if (row.GetFlag() == "DepthEnabled")				this->drawBoolExpressions[RenderStateRow::DepthEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "DepthWrite")					this->drawBoolExpressions[RenderStateRow::DepthWrite] = row.GetExpression();
+		else if (row.GetFlag() == "DepthClamp")					this->drawBoolExpressions[RenderStateRow::DepthClamp] = row.GetExpression();
+		else if (row.GetFlag() == "SeparateBlend")				this->drawBoolExpressions[RenderStateRow::SeparateBlend] = row.GetExpression();
+		else if (row.GetFlag() == "ScissorEnabled")				this->drawBoolExpressions[RenderStateRow::ScissorEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "StencilEnabled")				this->drawBoolExpressions[RenderStateRow::StencilEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "AlphaToCoverageEnabled")		this->drawBoolExpressions[RenderStateRow::AlphaToCoverageEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "AlphaToOneEnabled")			this->drawBoolExpressions[RenderStateRow::AlphaToOneEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "MultisampleEnabled")			this->drawBoolExpressions[RenderStateRow::MultisampleEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "RasterizerDiscardEnabled")	this->drawBoolExpressions[RenderStateRow::RasterizerDiscardEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "LogicOpEnabled")				this->drawBoolExpressions[RenderStateRow::LogicOpEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetEnabled")		this->drawBoolExpressions[RenderStateRow::PolygonOffsetEnabled] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetFactor")		this->drawFloatExpressions[RenderStateRow::PolygonOffsetFactor] = row.GetExpression();
+		else if (row.GetFlag() == "PolygonOffsetUnits")			this->drawFloatExpressions[RenderStateRow::PolygonOffsetUnits] = row.GetExpression();
+		else if (row.GetFlag() == "MinSampleShading")			this->drawFloatExpressions[RenderStateRow::MinSampleShading] = row.GetExpression();
+		else if (row.GetFlag() == "MinDepthBounds")				this->drawFloatExpressions[RenderStateRow::MinDepthBounds] = row.GetExpression();
+		else if (row.GetFlag() == "MaxDepthBounds")				this->drawFloatExpressions[RenderStateRow::MaxDepthBounds] = row.GetExpression();
+		else if (row.GetFlag() == "LineWidth")					this->drawFloatExpressions[RenderStateRow::LineWidth] = row.GetExpression();
 		else this->invalidExpressionFlags.push_back(row.GetFlag());
 		break;
 	}
@@ -449,8 +538,8 @@ RenderState::ConsumeRenderRow( const RenderStateRow& row )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-RenderState::ConsumeBlendRow( const BlendStateRow& row )
+void
+RenderState::ConsumeBlendRow(const BlendStateRow& row)
 {
 	switch (row.GetFlagType())
 	{

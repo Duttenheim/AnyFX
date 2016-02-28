@@ -51,6 +51,18 @@ Header::SetProfile(const std::string& profile)
 		this->major = 3;
 		this->minor = 0;
 	}
+	else if (profile == "spv10")
+	{
+		this->type = SPIRV;
+		this->major = 1;
+		this->minor = 0;
+	}
+	else if (profile == "metal10")
+	{
+		this->type = Metal;
+		this->major = 1;
+		this->minor = 0;
+	}
 	else if (profile == "gl45")
 	{
 		this->type = GLSL;
@@ -224,7 +236,7 @@ Header::TypeCheck(TypeChecker& typechecker)
 /**
 */
 void
-Header::Compile( BinWriter& writer )
+Header::Compile(BinWriter& writer)
 {
 	writer.WriteInt('HEAD');
 	writer.WriteInt(this->type);

@@ -19,10 +19,10 @@ public:
 	enum StringType
 	{
 		VertexShader,
-		PixelShader,
-		GeometryShader,
 		HullShader,
 		DomainShader,
+		GeometryShader,
+		PixelShader,
 		ComputeShader,
 		RenderState,        // ALWAYS KEEP AT THE END!  (necessary in program.cc where we check for subroutine bindings)
 

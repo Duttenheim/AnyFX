@@ -47,6 +47,23 @@ public:
 		NumFilterModes
 	};
 
+	enum ComparisonFunction
+	{
+		Never,
+		Less,
+		LEqual,
+		Greater,
+		GEqual,
+		Equal,
+		NEqual,
+		Always,
+
+		NumComparisonFunctions,
+
+		InvalidComparisonFunction
+	};
+
+
 	enum FlagType
 	{
 		ExpressionFlagType,

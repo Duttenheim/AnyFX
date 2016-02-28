@@ -24,21 +24,4 @@ struct matrix
 	T m[R][C];
 };
 
-// this enumeration is globally available seeing as it is used by many different parser types
-enum ComparisonFunction
-{
-	Never,
-	Less,
-	LEqual,
-	Greater,
-	GEqual,
-	Equal,
-	NEqual,
-	Always,
-
-	NumComparisonFunctions,
-
-	InvalidComparisonFunction
-};
-
 }

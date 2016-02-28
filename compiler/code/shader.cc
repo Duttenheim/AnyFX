@@ -19,6 +19,7 @@
 #include "varbuffer.h"
 #include "subroutine.h"
 #include "glslang/Include/ResourceLimits.h"
+#include "SPIRV/GLSL.std.450.h"
 
 #define max(x, y) x > y ? x : y
 
@@ -123,13 +124,17 @@ DefaultResources.limits.generalConstantMatrixVectorIndexing =1					;
 
 namespace AnyFX
 {
+
+unsigned Shader::bindingIndices[64];
 //------------------------------------------------------------------------------
 /**
 */
 Shader::Shader() :
 	glslShader(0),
 	hlslShader(0),
-	codeOffset(0)
+	codeOffset(0),
+	binary(NULL),
+	binarySize(0)
 {
 	// empty
 }
@@ -141,72 +146,7 @@ Shader::~Shader()
 {
 	if (this->glslShader) delete this->glslShader;
 	if (this->hlslShader) delete this->hlslShader;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void
-Shader::SetHeader(const Header& header)
-{
-    int major = header.GetMajor();
-    Header::Type type = header.GetType();
-    if (type == Header::GLSL)
-    {
-        if (major == 4)
-        {
-            this->target = GLSL4;
-        }
-        else if (major == 3)
-        {
-            this->target = GLSL3;
-        }
-        else if (major == 2)
-        {
-            this->target = GLSL2;
-        }
-        else if (major == 1)
-        {
-            this->target = GLSL1;
-		}
-    }
-    else if (type == Header::HLSL)
-    {
-        if (major == 5)
-        {
-            this->target = HLSL5;
-        }
-        else if (major == 4)
-        {
-            this->target = HLSL4;
-        }
-        else if (major == 3)
-        {
-            this->target = HLSL3;
-        }
-    }
-    else if (type == Header::Wii)
-    {
-        if (major == 1)
-        {
-            this->target = WII;
-        }
-        else if (major == 2)
-        {
-            this->target = WIIU;
-        }
-    }
-    else if (type == Header::PS)
-    {
-        if (major == 1)
-        {
-            this->target = PS3;
-        }
-        else if (major == 2)
-        {
-            this->target = PS4;
-        }
-    }
+	if (binary) delete[] binary;
 }
 
 //------------------------------------------------------------------------------
@@ -256,6 +196,20 @@ Shader::Generate(
 	{
 		std::string version = Format("#version %d%d%d\n", header.GetMajor(), header.GetMinor(), header.GetMinor() > 10 ? header.GetMinor() % 10 : 0);
 		this->preamble.append(version);
+
+		this->preamble.append("#extension GL_GOOGLE_cpp_style_line_directive : enable\n");
+		this->preamble.append("#define GLSL\n");
+	}
+	else if (header.GetType() == Header::SPIRV)
+	{
+		std::string version = Format("#version 450\n");
+		this->preamble.append(version);
+
+		// add SPIR-V specific remaps and define flag
+		this->preamble.append("#define gl_InstanceID gl_InstanceIndex\n");
+		this->preamble.append("#define gl_VertexID gl_VertexIndex\n");
+		this->preamble.append("#extension GL_GOOGLE_cpp_style_line_directive : enable\n");
+		this->preamble.append("#define SPIRV\n");
 	}
 
 	// this list holds a couple of defines which are inserted into the preamble of the code in order to be able to separate functions depending on shader type
@@ -316,13 +270,13 @@ Shader::Generate(
 	for (i = 0; i < blocks.size(); i++)
 	{
 		const VarBlock& block = blocks[i];
-		this->preamble.append(block.Format(header, i));
+		this->preamble.append(block.Format(header));
 	}
 
     for (i = 0; i < buffers.size(); i++)
     {
         const VarBuffer& buffer = buffers[i];
-        this->preamble.append(buffer.Format(header, i));
+        this->preamble.append(buffer.Format(header));
     }
 
 	for (i = 0; i < constants.size(); i++)
@@ -356,25 +310,25 @@ Shader::Generate(
 		}
 	}
 
-	// now generate target language specifics
-	switch (this->target)
+	switch (header.GetType())
 	{
-	case GLSL1:
-	case GLSL2:
-	case GLSL3:
-		this->GenerateGLSL3(generator);
+	case Header::GLSL:
+		this->CompileGLSL(
+			this->GenerateGLSL(&generator, header.GetMajor(), header.GetMinor()), 
+			&generator);
 		break;
-	case GLSL4:
-		this->GenerateGLSL4(generator);
+	case Header::SPIRV:
+		this->CompileSPIRV(
+			this->GenerateGLSL(&generator, 4, 5),
+			&generator);
 		break;
-	case HLSL3:
-		this->GenerateHLSL3(generator);
+	case Header::HLSL:
 		break;
-	case HLSL4:
-		this->GenerateHLSL4(generator);
+	case Header::Metal:
 		break;
-	case HLSL5:
-		this->GenerateHLSL5(generator);
+	case Header::Wii:
+		break;
+	case Header::PS:
 		break;
 	}
 }
@@ -383,282 +337,8 @@ Shader::Generate(
 /**
 */
 void
-Shader::GenerateGLSL4(Generator& generator)
-{
-	std::string code;
-
-	// get header type
-	const Header& header = generator.GetHeader();
-
-	// write function attributes
-	if (this->shaderType == ProgramRow::VertexShader)
-	{
-		// type checker should throw warning/error if we have an attribute
-	}
-	else if (this->shaderType == ProgramRow::PixelShader)
-	{
-		if (this->func.HasBoolFlag(FunctionAttribute::EarlyDepth))
-		{
-			code.append("layout(early_fragment_tests) in;\n");
-		}
-	}
-	else if (this->shaderType == ProgramRow::HullShader)
-	{
-		bool hasOutputSize = this->func.HasIntFlag(FunctionAttribute::OutputVertices);
-		if (!hasOutputSize)
-		{
-			std::string err = Format("Hull shader '%s' requires [outputvertices] to be defined, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
-			generator.Error(err);
-		}
-
-		int outputSize = this->func.GetIntFlag(FunctionAttribute::OutputVertices);
-		code.append("layout(vertices = " + Format("%d", outputSize) + ") out;\n");
-	}
-	else if (this->shaderType == ProgramRow::DomainShader)
-	{
-		bool hasVertexCount = this->func.HasIntFlag(FunctionAttribute::InputVertices);
-		bool hasInputTopology = this->func.HasIntFlag(FunctionAttribute::Topology);
-		if (!hasVertexCount)
-		{
-			std::string err = Format("Domain shader '%s' requires [inputvertices] to be defined, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
-			generator.Error(err);
-		}
-		// input topology and spacing is not optional
-		if (!hasInputTopology)
-		{
-			std::string err = Format("Domain shader '%s' requires [topology] to be defined, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
-			generator.Error(err);
-		}
-
-		int vertexCount = this->func.GetIntFlag(FunctionAttribute::InputVertices);		
-		int inputTopology = this->func.GetIntFlag(FunctionAttribute::Topology);
-		bool hasSpacing = this->func.HasIntFlag(FunctionAttribute::PartitionMethod);
-		bool hasWindingOrder = this->func.HasIntFlag(FunctionAttribute::WindingOrder);
-		
-		code.append("layout(");
-
-		// write topology
-		switch (inputTopology)
-		{
-		case 0:			// isolines
-			code.append("triangles");
-			break;
-		case 1:			// triangles
-			code.append("quads");
-			break;
-		case 2:			// quads
-			code.append("isolines");
-			break;
-		case 3:			// force points
-			code.append("point_mode");
-			break;
-		}
-
-		if (hasSpacing)
-		{
-			// add comma for spacing method
-			code.append(", ");
-			int spacing = this->func.GetIntFlag(FunctionAttribute::PartitionMethod);
-
-			switch (spacing)
-			{
-			case 0:
-				code.append("equal_spacing");
-				break;
-			case 1:
-				code.append("fractional_even_spacing");
-				break;
-			case 2:
-				code.append("fractional_odd_spacing");
-				break;
-			case 3:
-				{
-					std::string message = Format("Tessellation Evaluation Shader '%s' does not define partitioning method 'pow' for GLSL4, %d:%d\n", this->name.c_str(), this->line, this->row);
-					generator.Error(message);
-					break;
-				}
-			}
-		}
-
-		if (hasWindingOrder)
-		{
-			// add comma for winding order
-			code.append(", ");
-			int winding = this->func.GetIntFlag(FunctionAttribute::WindingOrder);
-
-			switch (winding)
-			{
-			case 0:
-				code.append("cw");
-				break;
-			case 1:
-				code.append("ccw");
-				break;
-			}
-		}
-
-		// write end of evaluation shader attributes
-		code.append(") in;\n");
-	}
-	else if (this->shaderType == ProgramRow::GeometryShader)
-	{
-		bool hasInput = this->func.HasIntFlag(FunctionAttribute::InputPrimitive);
-		bool hasOutput = this->func.HasIntFlag(FunctionAttribute::OutputPrimitive);
-		bool hasMaxVerts = this->func.HasIntFlag(FunctionAttribute::MaxVertexCount);
-		bool hasInstances = this->func.HasIntFlag(FunctionAttribute::Instances);
-
-		if (!hasInput)
-		{
-			return;
-		}
-		if (!hasOutput)
-		{
-			return;
-		}
-		if (!hasMaxVerts)
-		{
-			return;
-		}
-
-		// write input primitive type
-		{
-			int type = this->func.GetIntFlag(FunctionAttribute::InputPrimitive);
-			std::string inLayout;
-
-			switch (type)
-			{
-			case 0:			// points
-				inLayout.append("points");
-				break;
-			case 1:			// lines
-				inLayout.append("lines");
-				break;
-			case 2:			// lines_adjacency
-				inLayout.append("lines_adjacency");
-				break;
-			case 3:			// triangles
-				inLayout.append("triangles");
-				break;
-			case 4:			// triangles_adjacency
-				inLayout.append("triangles_adjacency");
-				break;
-			}
-
-			// append instances if required
-			if (hasInstances)
-			{
-				inLayout.append(AnyFX::Format(", invocations = %d", this->func.GetIntFlag(FunctionAttribute::Instances)));
-			}
-			code.append(AnyFX::Format("layout(%s) in;\n", inLayout.c_str()));
-		}
-
-		// write output primitive type
-		{
-			int type = this->func.GetIntFlag(FunctionAttribute::OutputPrimitive);
-			int maxVerts = this->func.GetIntFlag(FunctionAttribute::MaxVertexCount);
-			switch (type)
-			{
-			case 0:			// points
-				code.append("layout(points, max_vertices = " + Format("%d", maxVerts) + ") out;\n");
-				break;
-			case 1:			// line_strip
-				code.append("layout(line_strip, max_vertices = " + Format("%d", maxVerts) + ") out;\n");
-				break;
-			case 2:			// triangle_strip
-				code.append("layout(triangle_strip, max_vertices = " + Format("%d", maxVerts) + ") out;\n");
-				break;
-			}
-		}
-	}
-	else if (this->shaderType == ProgramRow::ComputeShader)
-	{
-		bool hasLocalX = this->func.HasIntFlag(FunctionAttribute::LocalSizeX);
-		bool hasLocalY = this->func.HasIntFlag(FunctionAttribute::LocalSizeY);
-		bool hasLocalZ = this->func.HasIntFlag(FunctionAttribute::LocalSizeZ);
-
-		if (hasLocalX || hasLocalY || hasLocalZ)
-		{
-			code.append("layout(local_size_x = ");
-			if (hasLocalX)
-			{
-				std::string number = AnyFX::Format("%d", this->func.GetIntFlag(FunctionAttribute::LocalSizeX));
-				code.append(number);
-			}
-			else
-			{
-				code.append("1");
-			}
-
-			code.append(", ");
-			code.append("local_size_y = ");
-
-			if (hasLocalY)
-			{	
-				std::string number = AnyFX::Format("%d", this->func.GetIntFlag(FunctionAttribute::LocalSizeY));
-				code.append(number);
-			}
-			else
-			{
-				code.append("1");
-			}
-
-			code.append(", ");
-			code.append("local_size_z = ");
-
-			if (hasLocalZ)
-			{
-				std::string number = AnyFX::Format("%d", this->func.GetIntFlag(FunctionAttribute::LocalSizeZ));
-				code.append(number);
-			}
-			else
-			{
-				code.append("1");
-			}
-			code.append(") in;\n");
-		}
-	}
-
-	unsigned input, output;
-	input = output = 0;
-
-	unsigned i;
-	const unsigned numParams = this->func.GetNumParameters();
-	for (i = 0; i < numParams; i++)
-	{
-		const Parameter* param = this->func.GetParameter(i);
-
-		// format parameter and add it to the code
-		code.append(param->Format(header, input, output));
-	}
-
-	// add function header
-	std::string returnType = DataType::ToProfileType(this->func.GetReturnType(), header.GetType());
-	code.append(returnType);
-	code.append("\nmain()\n{\n");
-	std::string line = Format("#line %d %d\n", this->func.GetCodeLine(), this->indexToFileMap.size() + 1);
-	code.append(line);
-	code.append(func.GetCode());
-	code.append("\n}\n");
-
-	// if we don't have subroutines, find and replace names of subroutines with generated functions
-	if (header.GetFlags() & Header::NoSubroutines)
-	{
-		std::map<std::string, std::string>::const_iterator it;
-		for (it = this->subroutineMappings.begin(); it != this->subroutineMappings.end(); it++)
-		{
-			const std::string& find = (*it).first;
-			const std::string& replace = (*it).second;
-			while (code.find(find) != std::string::npos)
-			{
-				size_t start = code.find(find);
-				code.replace(start, find.length(), replace);
-			}
-		}
-	}
-
-	// set formatted code as the code we just generated
-	this->formattedCode = code;
-	
+Shader::CompileGLSL(const std::string& code, Generator* generator)
+{	
 	// start compilation
 	bool compilationSuccess = false;
 
@@ -674,12 +354,9 @@ Shader::GenerateGLSL4(Generator& generator)
 		EShLangCompute			// only accepted in GLSL4.3+
 	};
 
-
 	// create array of strings
 	int* lengths = new int[2];
 	const char** sources = new const char*[2];
-
-	ShHandle compiler = ShConstructCompiler(shaderTable[this->shaderType], EShOptNone);
 
 	// the preamble part of the code should be the responsibility of AnyFX to ALWAYS get right
 	// the rest of the code patches are up to the programmer
@@ -687,23 +364,28 @@ Shader::GenerateGLSL4(Generator& generator)
 	lengths[0] = this->preamble.length();
 		
 	// add the shader source lastly, as such, everything before should be already defined
-	sources[1] = this->formattedCode.c_str();
-	lengths[1] = this->formattedCode.length();
+	sources[1] = code.c_str();
+	lengths[1] = code.length();
 
 	EShMessages messages = EShMsgSuppressWarnings;
 	glslang::TShader* shaderObject = new glslang::TShader(shaderTable[this->shaderType]);
 	shaderObject->setStringsWithLengths(sources, lengths, 2);
 
 	// perform compilation
-	if (!shaderObject->parse(&DefaultResources, 430, false, messages))
+	const Header& header = generator->GetHeader();
+	int versionNumber = header.GetMajor() * 100 + header.GetMinor() * 10;
+	if (!shaderObject->parse(&DefaultResources, versionNumber, false, messages))
 	{
 		std::string message = shaderObject->getInfoLog();
+		generator->Error(message);
 
+		/*
 		// now format errors and warnings to have correct line positions
  		std::stringstream stream(message);
 
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
+		*/
 	}
 	
 	this->glslShader = shaderObject;
@@ -711,58 +393,69 @@ Shader::GenerateGLSL4(Generator& generator)
 	delete[] lengths;
 
 	// merge code
-	this->formattedCode = this->preamble + this->formattedCode;
+	this->formattedCode = this->preamble + code;
 }
 
 //------------------------------------------------------------------------------
 /**
-	Generates GLSL3 target language code
 */
-void 
-Shader::GenerateGLSL3(Generator& generator)
+void
+Shader::CompileSPIRV(const std::string& code, Generator* generator)
 {
-	std::string message = Format("GLSL3 code generator is not implemented yet!\n");
-	generator.Error(message);
-	// IMPLEMENT ME!
-}
+	// start compilation
+	bool compilationSuccess = false;
 
-//------------------------------------------------------------------------------
-/**
-	Generates HLSL5 target language code
-*/
-void 
-Shader::GenerateHLSL5(Generator& generator)
-{
-	std::string message = Format("HLSL5 code generator is not implemented yet!\n");
-	generator.Error(message);
+	// this seems a bit weird, we attempt to compile when we perform type checking
+	// however, we only perform a test compilation just to see if the formatted GLSL code is syntactically correct
+	const EShLanguage shaderTable[] =
+	{
+		EShLangVertex,
+		EShLangTessControl,		
+		EShLangTessEvaluation,	
+		EShLangGeometry,		
+		EShLangFragment,
+		EShLangCompute
+	};
 
-	// IMPLEMENT ME!
-}
+	// create array of strings
+	int* lengths = new int[2];
+	const char** sources = new const char*[2];
 
-//------------------------------------------------------------------------------
-/**
-	Generates HLSL4 target language code
-*/
-void 
-Shader::GenerateHLSL4(Generator& generator)
-{
-	std::string message = Format("HLSL4 code generator is not implemented yet!\n");
-	generator.Error(message);
+	// the preamble part of the code should be the responsibility of AnyFX to ALWAYS get right
+	// the rest of the code patches are up to the programmer
+	sources[0] = this->preamble.c_str();
+	lengths[0] = this->preamble.length();
 
-	// IMPLEMENT ME!
-}
+	// add the shader source lastly, as such, everything before should be already defined
+	sources[1] = code.c_str();
+	lengths[1] = code.length();
 
-//------------------------------------------------------------------------------
-/**
-	Generates HLSL3 target language code
-*/
-void 
-Shader::GenerateHLSL3(Generator& generator)
-{
-	std::string message = Format("HLSL3 code generator is not implemented yet!\n");
-	generator.Error(message);
+	EShMessages messages = (EShMessages)(EShMsgSuppressWarnings | EShMsgVulkanRules | EShMsgSpvRules);
+	glslang::TShader* shaderObject = new glslang::TShader(shaderTable[this->shaderType]);
+	shaderObject->setStringsWithLengths(sources, lengths, 2);
 
-	// IMPLEMENT ME!
+	// perform compilation
+	const Header& header = generator->GetHeader();
+	if (!shaderObject->parse(&DefaultResources, 450, true, messages))
+	{
+		std::string message = shaderObject->getInfoLog();
+		generator->Error(message);
+
+		/*
+		// now format errors and warnings to have correct line positions
+		std::stringstream stream(message);
+
+		// handle error, Khronos follow the ATI way...
+		this->GLSLProblemKhronos(generator, stream);
+		*/
+	}
+
+	this->glslShader = shaderObject;
+	delete[] sources;
+	delete[] lengths;
+
+	// formatted code is left empty since SPIR-V use a binary representation
+	this->formattedCode = "";
 }
 
 //------------------------------------------------------------------------------
@@ -865,7 +558,7 @@ Shader::TypeCheck(TypeChecker& typechecker)
 /**
 */
 void
-Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
+Shader::GLSLProblemIntelATI(Generator* generator, std::stringstream& stream)
 {
 	while (!stream.eof())
 	{
@@ -897,20 +590,20 @@ Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
 				{
 					int lineValue = atoi(line);
                     std::string msg = Format("OpenGL error: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
-					generator.Error(msg);
+					generator->Error(msg);
 				}
                 else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
                 {
                     int lineValue = atoi(line);
                     const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
                     std::string msg = Format("OpenGL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
-                    generator.Error(msg);
+					generator->Error(msg);
                 }
 				else
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("OpenGL error: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
-					generator.Error(msg);
+					generator->Error(msg);
 				}					
 			}
 		}
@@ -929,26 +622,26 @@ Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
 				{
 					int lineValue = atoi(line);
                     std::string msg = Format("OpenGL warning: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
-					generator.Warning(msg);
+					generator->Warning(msg);
 				}
                 else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
                 {
                     int lineValue = atoi(line);
                     const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
                     std::string msg = Format("OpenGL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
-                    generator.Warning(msg);
+					generator->Warning(msg);
                 }
 				else
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("OpenGL warning: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
-					generator.Warning(msg);
+					generator->Warning(msg);
 				}				
 			}
 		}
         else
         {
-            generator.Error(line);
+			generator->Error(line);
         }
         delete [] data;
 	}		
@@ -958,7 +651,7 @@ Shader::GLSLProblemIntelATI(Generator& generator, std::stringstream& stream)
 /**
 */
 void
-Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
+Shader::GLSLProblemNvidia(Generator* generator, std::stringstream& stream)
 {
 	while (!stream.eof())
 	{
@@ -985,18 +678,18 @@ Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
 			if (fileNumber == 0)
 			{
                 std::string msg = Format("OpenGL error: %s at row %d in file %s.\n", lineRow, lineNumber, this->func.GetFile().c_str());
-				generator.Error(msg);
+				generator->Error(msg);
 			}
             else if (this->indexToFileMap.find(fileNumber) != this->indexToFileMap.end())
             {
                 const std::pair<std::string, std::string>& func = this->indexToFileMap[fileNumber];
                 std::string msg = Format("OpenGL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineNumber, lineRow, func.second.c_str());
-                generator.Error(msg);
+				generator->Error(msg);
             }
 			else
 			{
 				std::string msg = Format("OpenGL error: shader '%s' at row %d, %s in file %s.\n", this->name.c_str(), lineNumber, lineRow, this->file.c_str());
-				generator.Error(msg);
+				generator->Error(msg);
 			}
 
 		}
@@ -1009,23 +702,23 @@ Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
 			if (fileNumber == 0)
 			{
                 std::string msg = Format("OpenGL warning: %s at row %d in file %s.\n", lineRow, lineNumber, this->func.GetFile().c_str());
-				generator.Warning(msg);
+				generator->Warning(msg);
 			}
             else if (this->indexToFileMap.find(fileNumber) != this->indexToFileMap.end())
             {
                 const std::pair<std::string, std::string>& func = this->indexToFileMap[fileNumber];
                 std::string msg = Format("OpenGL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineNumber, lineRow, func.second.c_str());
-                generator.Warning(msg);
+				generator->Warning(msg);
             }            
 			else
 			{
 				std::string msg = Format("OpenGL warning: shader '%s' at row %d, %s in file %s.\n", this->name.c_str(), lineNumber, lineRow, this->file.c_str());
-				generator.Warning(msg);
+				generator->Warning(msg);
 			}	
 		}
         else
         {
-            generator.Error(line);
+			generator->Error(line);
         }
         delete [] data;
 	}
@@ -1036,7 +729,7 @@ Shader::GLSLProblemNvidia(Generator& generator, std::stringstream& stream)
 /**
 */
 void
-Shader::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
+Shader::GLSLProblemKhronos(Generator* generator, std::stringstream& stream)
 {
 	while (!stream.eof())
 	{
@@ -1068,20 +761,20 @@ Shader::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("GLSL error: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
-					generator.Error(msg);
+					generator->Error(msg);
 				}
 				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
 				{
 					int lineValue = atoi(line);
 					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
 					std::string msg = Format("GLSL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
-					generator.Error(msg);
+					generator->Error(msg);
 				}
 				else
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("GLSL error: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
-					generator.Error(msg);
+					generator->Error(msg);
 				}
 			}
 		}
@@ -1100,26 +793,26 @@ Shader::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("GLSL warning: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
-					generator.Warning(msg);
+					generator->Warning(msg);
 				}
 				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
 				{
 					int lineValue = atoi(line);
 					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
 					std::string msg = Format("GLSL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
-					generator.Warning(msg);
+					generator->Warning(msg);
 				}
 				else
 				{
 					int lineValue = atoi(line);
 					std::string msg = Format("GLSL warning: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
-					generator.Warning(msg);
+					generator->Warning(msg);
 				}
 			}
 		}
 		else
 		{
-			generator.Error(line);
+			generator->Error(line);
 		}
 		delete[] data;
 	}

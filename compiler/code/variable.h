@@ -96,7 +96,7 @@ public:
         NoQualifiers = 0,
         GroupShared = 1 << 0,   // group shared means shared within a shader compute group
         Shared = 1 << 1,        // ordinary shared means shared during the application execution
-        Bindless = 1 << 2       // Denotes that a texture should be used as bindless
+        Bindless = 1 << 2,      // denotes that a texture should be used as bindless
 
     };
 
@@ -123,13 +123,6 @@ public:
 	/// gets variable byte size
 	const unsigned GetByteSize() const;
 
-	/// adds a qualifier to the variable
-	void AddQualifier(const std::string& qualifier);
-	/// get number of qualifiers
-	const unsigned GetNumQualifiers() const;
-	/// get qualifier by index
-	const std::string& GetQualifier(unsigned i) const;
-
 	/// adds a value-type pair
 	void AddValue(const DataType& type, const ValueList& value);
 	/// adds a value-type for basic types
@@ -152,8 +145,6 @@ public:
 	void SetAccess(const AccessMode& mode);
 	/// set variable format
 	void SetFormat(const ImageFormat& format);
-	/// set image/texture unit
-	void SetBindingUnit(int& samplerCount, int& imageCount);
 
 	/// preprocess variable
 	void Preprocess();
@@ -179,7 +170,6 @@ private:
 
 	
 	std::string defaultValue;
-	std::vector<std::string> qualifiers;
 	std::vector<std::pair<DataType, ValueList> > valueTable;
 	DataType type;
 	ImageFormat format;
@@ -198,7 +188,8 @@ private:
 	Annotation annotation;
 
 	// the binding unit for this variable
-	int bindingUnit;
+	unsigned group;
+	unsigned binding;
 }; 
 
 //------------------------------------------------------------------------------
@@ -256,33 +247,6 @@ inline const int
 Variable::GetArraySize() const
 {
 	return this->arraySize;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline void
-Variable::AddQualifier(const std::string& qualifier)
-{
-	this->qualifiers.push_back(qualifier);
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const unsigned 
-Variable::GetNumQualifiers() const
-{
-	return this->qualifiers.size();
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const std::string&
-Variable::GetQualifier(unsigned i) const
-{
-	return this->qualifiers[i];
 }
 
 //------------------------------------------------------------------------------

@@ -25,6 +25,10 @@ FILE(GLOB HEAD "code/expressions/*.h")
 SOURCE_GROUP("compiler\\expressions" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
 
+FILE(GLOB SRC "code/generators/*.cc")
+SOURCE_GROUP("compiler\\generators" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
 FILE(GLOB SRC code/lexererrorhandler.cc code/parsererrorhandler.cc)
 FILE(GLOB HEAD code/lexererrorhandler.h code/parsererrorhandler.h)
 SOURCE_GROUP("parser" FILES ${SRC} ${HEAD})

@@ -18,6 +18,8 @@
 #include "variable.h"
 #include "header.h"
 #include "glslang/Public/ShaderLang.h"
+
+
 namespace AnyFX
 {
 class Variable;
@@ -31,23 +33,6 @@ class Shader : public Compileable
 {
 public:
 	
-	enum GenerationTarget
-	{
-		GLSL4,
-		GLSL3,
-		GLSL2,
-		GLSL1,
-		HLSL5,
-		HLSL4,
-		HLSL3,
-		PS3,
-		PS4,
-		WII,
-		WIIU,
-
-		NumGenerationTargets
-	};
-
 	/// constructor
 	Shader();
 	/// destructor
@@ -65,12 +50,9 @@ public:
 	void SetName(const std::string& name);
 	/// gets shader name
 	const std::string& GetName() const;
-	/// sets the target language, which is necessary to create the formatted code
-	void SetHeader(const Header& header);
-	/// gets the target language
-	const GenerationTarget& GetTargetLanguage() const;
-    /// add a compile flag to the shader, separated by pipes ('|')
-    void SetCompileFlags(const std::string& flags);
+
+	/// set compile flags for this shader
+	void SetCompileFlags(const std::string& flags);
 
 	/// set subroutine mappings
 	void SetSubroutineMappings(const std::map<std::string, std::string>& subroutineMappings);
@@ -79,7 +61,6 @@ public:
 	void TypeCheck(TypeChecker& typechecker);
 	/// compile shader
 	void Compile(BinWriter& writer);
-	
 
 	/// sets up shader
 	void Setup();
@@ -94,20 +75,46 @@ public:
         const std::vector<Subroutine>& subroutines,
 		const std::vector<Function>& functions);
 
+	/// static function which resets all bindings
+	static void ResetBindings();
+	static unsigned bindingIndices[64]; // each binding index is a slot for a descriptor set in Vulkan
 private:
 	friend class Program;
+
+#pragma region GLSL
+	std::string GenerateGLSL(AnyFX::Generator* generator, int major, int minor);
+
+	// sub generation functions
+	std::string GenerateGLSL4(AnyFX::Generator* generator);
+	std::string GenerateGLSL3(AnyFX::Generator* generator);
+#pragma endregion
+
+#pragma region HLSL
+	std::string GenerateHLSL(AnyFX::Generator* generator, int major, int minor);
+	std::string GenerateHLSL5(AnyFX::Generator* generator);
+	std::string GenerateHLSL4(AnyFX::Generator* generator);
+#pragma endregion
+
+	std::string GenerateSPIRV(AnyFX::Generator* generator, int major, int minor);
+	std::string GenerateMetal(AnyFX::Generator* generator, int major, int minor);
+
 #pragma region OpenGL
+	/// compiles the generated code to check for validation in GLSL
+	void CompileGLSL(const std::string& code, Generator* generator);
+	/// compiles the generated code to check for validation in GLSL
+	void CompileSPIRV(const std::string& code, Generator* generator);
+
 	/// generates GLSL4 target code
 	void GenerateGLSL4(Generator& generator);
 	/// generates GLSL3 target code
 	void GenerateGLSL3(Generator& generator);
 
 	/// output AnyFX formatted GLSL problem using the AMD/Intel syntax
-	void GLSLProblemIntelATI(Generator& generator, std::stringstream& stream);
+	void GLSLProblemIntelATI(Generator* generator, std::stringstream& stream);
 	/// output AnyFX formatted GLSL problem using the NVIDIA syntax
-	void GLSLProblemNvidia(Generator& generator, std::stringstream& stream);
+	void GLSLProblemNvidia(Generator* generator, std::stringstream& stream);
 	/// output AnyFX formatted GLSL problem using the Khronos syntax
-	void GLSLProblemKhronos(Generator& generator, std::stringstream& stream);
+	void GLSLProblemKhronos(Generator* generator, std::stringstream& stream);
 #pragma endregion
 
 #pragma region DirectX
@@ -121,7 +128,6 @@ private:
 
 	Function func;
 	unsigned shaderType;
-	GenerationTarget target;
 	std::string name;
 	std::string formattedCode;
     std::string compileFlags;
@@ -129,6 +135,8 @@ private:
 
 	glslang::TShader* glslShader;
 	void* hlslShader;
+	char* binary;
+	unsigned binarySize;
 
 	std::string preamble;
     std::map<int, std::pair<std::string, std::string> > indexToFileMap;
@@ -176,15 +184,6 @@ Shader::GetName() const
 //------------------------------------------------------------------------------
 /**
 */
-inline const Shader::GenerationTarget&
-Shader::GetTargetLanguage() const
-{
-	return this->target;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
 inline void 
 Shader::SetType( const unsigned type )
 {
@@ -217,6 +216,14 @@ Shader::SetSubroutineMappings(const std::map<std::string, std::string>& subrouti
 	this->subroutineMappings = subroutineMappings;
 }
 
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Shader::ResetBindings()
+{
+	memset(Shader::bindingIndices, 0, sizeof(Shader::bindingIndices));
+}
 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

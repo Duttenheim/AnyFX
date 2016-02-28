@@ -41,6 +41,10 @@ public:
 	void SetReturnType(const DataType& type);
 	/// get return type
 	const DataType& GetReturnType() const;
+	/// set on which line the function starts
+	void SetFunctionLine(unsigned line);
+	/// get on which line the function starts
+	const unsigned GetFunctionLine() const;
 	/// set on which line the code starts
 	void SetCodeLine(unsigned line);
 	/// get on which line the code starts
@@ -90,6 +94,7 @@ private:
 
 	DataType returnType;
 	unsigned codeLine;
+	unsigned functionLine;
 	std::string code;
 	std::vector<Parameter> parameters;
 	bool shaderTarget;
@@ -231,6 +236,23 @@ Function::GetCodeLine() const
 	return this->codeLine;
 }
 
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Function::SetFunctionLine(unsigned line)
+{
+	this->functionLine = line;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+Function::GetFunctionLine() const
+{
+	return this->functionLine;
+}
 //------------------------------------------------------------------------------
 /**
 */

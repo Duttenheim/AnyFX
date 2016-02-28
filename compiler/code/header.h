@@ -22,6 +22,8 @@ public:
 	{
 		HLSL,
 		GLSL,
+		SPIRV,
+		Metal,
 		PS,
 		Wii,
 

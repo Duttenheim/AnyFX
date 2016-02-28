@@ -33,17 +33,7 @@ public:
 
 	/// get if varblock is shared
 	bool IsShared() const;
-
-	/// add qualifier to varblock
-	void AddQualifier(const std::string& qualifier);
-	/// get number of qualifiers
-	const unsigned GetNumQualifiers() const;
-	/// get qualifier by index
-	const std::string& GetQualifier(unsigned i) const;
     
-    /// set backing buffer expression
-    void SetBufferExpression(Expression* expr);
-
 	/// sorts variables in varblock
 	void SortVariables();
 
@@ -53,17 +43,18 @@ public:
 	void Compile(BinWriter& writer);
 
 	/// format variable to fit target language
-	std::string Format(const Header& header, const int index) const;
+	std::string Format(const Header& header) const;
+
 private:
 	std::vector<Variable> variables;
-	std::vector<std::string> qualifiers;
+
 	bool shared;
-	bool noSync;
-    unsigned bufferCount;
+	unsigned group;
+	unsigned binding;
+	bool push;
 
 	bool hasAnnotation;
 	Annotation annotation;
-    Expression* bufferExpression;
 }; 
 
 //------------------------------------------------------------------------------
@@ -79,47 +70,12 @@ VarBlock::SetAnnotation(const Annotation& annotation)
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-VarBlock::SetBufferExpression(Expression* expr)
-{
-    this->bufferExpression = expr;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
 inline bool 
 VarBlock::IsShared() const
 {
 	return this->shared;
 }
 
-//------------------------------------------------------------------------------
-/**
-*/
-inline void
-VarBlock::AddQualifier(const std::string& qualifier)
-{
-	this->qualifiers.push_back(qualifier);
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const unsigned
-VarBlock::GetNumQualifiers() const
-{
-	return this->qualifiers.size();
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const std::string&
-VarBlock::GetQualifier(unsigned i) const
-{
-	return this->qualifiers[i];
-}
 
 //------------------------------------------------------------------------------
 /**

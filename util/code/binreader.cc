@@ -194,6 +194,22 @@ BinReader::ReadChar()
 //------------------------------------------------------------------------------
 /**
 */
+char*
+BinReader::ReadBytes(unsigned numbytes)
+{
+	if (numbytes > 0)
+	{
+		char* value = new char[numbytes];
+		if (this->inputFile) this->inputFile->read(value, numbytes);
+		else this->inputString->read(value, numbytes);
+		return value;
+	}
+	return NULL;	
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 void
 BinReader::Skip(unsigned n)
 {

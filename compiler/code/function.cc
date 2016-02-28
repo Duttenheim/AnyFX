@@ -58,8 +58,8 @@ Function::~Function()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Function::SetParameters( const std::vector<Parameter>& parameters )
+void
+Function::SetParameters(const std::vector<Parameter>& parameters)
 {
 	this->parameters = parameters;
 }
@@ -67,17 +67,18 @@ Function::SetParameters( const std::vector<Parameter>& parameters )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Function::SetReturnType( const DataType& type )
+void
+Function::SetReturnType(const DataType& type)
 {
 	this->returnType = type;
 }
 
+
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Function::SetCode( const std::string& data )
+void
+Function::SetCode(const std::string& data)
 {
 	this->code = data;
 }
@@ -85,8 +86,8 @@ Function::SetCode( const std::string& data )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-Function::ConsumeAttribute( const FunctionAttribute& attr )
+void
+Function::ConsumeAttribute(const FunctionAttribute& attr)
 {
 	switch (attr.GetFlagType())
 	{
@@ -173,9 +174,10 @@ Function::TypeCheck(TypeChecker& typechecker)
 		typechecker.Error(message);
 	}
 
-	// remove any mcpp #line markers in the source code
+	// remove any mcpp #line markers in the source code (because they have file paths in them)
 	size_t pos = this->code.find("#line");
 
+	/*
 	while (pos != this->code.npos)
 	{
 		size_t line = this->code.find('\n', pos);
@@ -187,6 +189,7 @@ Function::TypeCheck(TypeChecker& typechecker)
 		//this->code.erase(std::remove(this->code.begin() + pos, this->code.begin() + line, '\n'), this->code.begin() + line);
 		pos = this->code.find("#line");
 	}
+	*/
 
 	// make sure no parameter has an equal attribute
 	unsigned i;
@@ -297,6 +300,8 @@ Function::Restore(const Header& header, int index)
 	const Header::Type& type = header.GetType();
 
 	// restore return value and name
+	std::string line = Format("#line %d \"%s\"\n", this->functionLine, this->file.c_str());
+	restoredCode.append(line);
 	restoredCode.append(DataType::ToProfileType(this->returnType, type));
 	restoredCode.append("\n");
 	restoredCode.append(this->name);
@@ -345,10 +350,10 @@ Function::Restore(const Header& header, int index)
 
 	// finalize by closing parameter list and append the code
 	restoredCode.append(")\n{\n");
-	std::string line = Format("#line %d %d\n", this->codeLine, index);
+	line = Format("#line %d \"%s\"\n", this->codeLine, this->file.c_str());
 	restoredCode.append(line);
 	restoredCode.append(this->code);
-	restoredCode.append("\n}\n");
+	restoredCode.append("\n}\n\n");
 
 	// now, replace the code with the restored code
 	this->code = restoredCode;

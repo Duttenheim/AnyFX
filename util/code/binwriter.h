@@ -45,7 +45,8 @@ public:
 	void WriteString(const std::string& s);
 	/// write character
 	void WriteChar(char c);
-
+	/// write bytes
+	void WriteBytes(const char* ptr, unsigned numbytes);
 
 private:
 	std::string path;

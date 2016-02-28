@@ -4,35 +4,80 @@
 
 INCLUDE_DIRECTORIES(${ANYFX_SOURCE_DIR}
 					${ANYFX_SOURCE_DIR}/util/code
-					${ANYFX_GLEW_FOLDER}/include
 					${ANYFX_SOURCE_DIR}/exts/eastl/include
-					${ANYFX_SOURCE_DIR}/api/code)
-					
-
-FILE(GLOB SRC "code/*.cc")
-FILE(GLOB HEAD "code/*.h")
+					${ANYFX_SOURCE_DIR}/exts/glslang
+					${ANYFX_SOURCE_DIR}/api
+					${ANYFX_SOURCE_DIR}/api/lowlevel
+					${ANYFX_SOURCE_DIR}/api/highlevel)
+										
+FILE(GLOB SRC "*.cc")
+FILE(GLOB HEAD "*.h")
 SOURCE_GROUP("api" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
 
-FILE(GLOB SRC "code/internal/*.cc")
-FILE(GLOB HEAD "code/internal/*.h")
-SOURCE_GROUP("api\\internal" FILES ${SRC} ${HEAD})
+FILE(GLOB SRC "lowlevel/*.cc")
+FILE(GLOB HEAD "lowlevel/*.h")
+SOURCE_GROUP("lowlevel" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
 
-FILE(GLOB SRC "code/internal/glsl4/*.cc")
-FILE(GLOB HEAD "code/internal/glsl4/*.h")
-SOURCE_GROUP("api\\internal\\glsl4" FILES ${SRC} ${HEAD})
+FILE(GLOB SRC "lowlevel/base/*.cc")
+FILE(GLOB HEAD "lowlevel/base/*.h")
+SOURCE_GROUP("lowlevel\\base" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
 
-FILE(GLOB SRC "code/loaders/*.cc")
-FILE(GLOB HEAD "code/loaders/*.h")
-SOURCE_GROUP("api\\loaders" FILES ${SRC} ${HEAD})
+FILE(GLOB SRC "lowlevel/gl4/*.cc")
+FILE(GLOB HEAD "lowlevel/gl4/*.h")
+SOURCE_GROUP("lowlevel\\gl4" FILES ${SRC} ${HEAD})
 LIST(APPEND CODE ${SRC} ${HEAD})
 
-#FILE(GLOB SRC "glew/*.c")
-FILE(GLOB HEAD "GL/*.h")
-SOURCE_GROUP("api\\glew" FILES ${HEAD})
-LIST(APPEND CODE ${HEAD})
+FILE(GLOB SRC "lowlevel/vk/*.cc")
+FILE(GLOB HEAD "lowlevel/vk/*.h")
+SOURCE_GROUP("lowlevel\\vk" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+IF (ANYFX_HAS_METAL)
+FILE(GLOB SRC "lowlevel/mtl/*.cc")
+FILE(GLOB HEAD "lowlevel/mtl/*.h")
+SOURCE_GROUP("lowlevel\\mtl" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+ENDIF()
+
+IF (ANYFX_HAS_DX12)
+FILE(GLOB SRC "lowlevel/dx12/*.cc")
+FILE(GLOB HEAD "lowlevel/dx12/*.h")
+SOURCE_GROUP("lowlevel\\dx12" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+ENDIF()
+
+FILE(GLOB SRC "lowlevel/loaders/*.cc")
+FILE(GLOB HEAD "lowlevel/loaders/*.h")
+SOURCE_GROUP("lowlevel\\loaders" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+FILE(GLOB SRC "highlevel/*.cc")
+FILE(GLOB HEAD "highlevel/*.h")
+SOURCE_GROUP("highlevel" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+FILE(GLOB SRC "highlevel/internal/*.cc")
+FILE(GLOB HEAD "highlevel/internal/*.h")
+SOURCE_GROUP("highlevel\\internal" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+FILE(GLOB SRC "highlevel/internal/glsl4/*.cc")
+FILE(GLOB HEAD "highlevel/internal/glsl4/*.h")
+SOURCE_GROUP("highlevel\\internal\\glsl4" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+FILE(GLOB SRC "highlevel/internal/vk/*.cc")
+FILE(GLOB HEAD "highlevel/internal/vk/*.h")
+SOURCE_GROUP("highlevel\\internal\\vk" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
+
+FILE(GLOB SRC "highlevel/loaders/*.cc")
+FILE(GLOB HEAD "highlevel/loaders/*.h")
+SOURCE_GROUP("highlevel\\loaders" FILES ${SRC} ${HEAD})
+LIST(APPEND CODE ${SRC} ${HEAD})
 
 ADD_DEFINITIONS(-DGLEW_STATIC)
 
@@ -45,6 +90,5 @@ IF (MSVC11)
 ENDIF()
 
 ADD_LIBRARY(api STATIC ${CODE})
-
 ADD_DEPENDENCIES(api util)
-TARGET_LINK_LIBRARIES(api util)
+TARGET_LINK_LIBRARIES(api util glew)

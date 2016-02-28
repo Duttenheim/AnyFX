@@ -145,4 +145,14 @@ BinWriter::WriteChar(char c)
 	this->output.put(c);
 }
 
+//------------------------------------------------------------------------------
+/**
+*/
+void
+BinWriter::WriteBytes(const char* ptr, unsigned numbytes)
+{
+	// convert to char* and write
+	this->output.write(ptr, numbytes);
+}
+
 } // namespace AnyFX

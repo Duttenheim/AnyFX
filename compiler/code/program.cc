@@ -7,6 +7,7 @@
 #include "subroutine.h"
 #include <sstream>
 #include "generator.h"
+#include "GlslangToSpv.h"
 namespace AnyFX
 {
 
@@ -247,6 +248,7 @@ Program::TypeCheck(TypeChecker& typechecker)
 		this->patchSize = hs->GetIntFlag(FunctionAttribute::InputVertices);
 	}
 
+#pragma region anyfx_link_validation
 	/*
 	if (vs && hs)
 	{
@@ -462,6 +464,7 @@ Program::TypeCheck(TypeChecker& typechecker)
 		}
 	}
 	*/
+#pragma endregion
 }
 
 //------------------------------------------------------------------------------
@@ -487,6 +490,14 @@ Program::Generate(Generator& generator)
 			this->LinkGLSL3(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
 			break;
 		}
+		break;
+	case Header::SPIRV:
+		switch (major)
+		{
+		case 1:
+			this->LinkSPIRV(generator, this->shaders[0], this->shaders[1], this->shaders[2], this->shaders[3], this->shaders[4], this->shaders[5]);
+			break;
+		}		
 		break;
 	case Header::HLSL:
 		switch (major)
@@ -539,15 +550,8 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-
-	writer.WriteInt('PIXL');
-	writer.WriteString(this->slotNames[ProgramRow::PixelShader]);
-    writer.WriteUInt(this->slotSubroutineMappings[ProgramRow::PixelShader].size());
-    for (it = this->slotSubroutineMappings[ProgramRow::PixelShader].begin(); it != this->slotSubroutineMappings[ProgramRow::PixelShader].end(); it++)
-    {
-        writer.WriteString((*it).first);
-        writer.WriteString((*it).second);
-    }
+	writer.WriteUInt(this->binary[ProgramRow::VertexShader].size());
+	if (this->binary[ProgramRow::VertexShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::VertexShader].front(), this->binary[ProgramRow::VertexShader].size());
 
 	writer.WriteInt('HULL');
 	writer.WriteString(this->slotNames[ProgramRow::HullShader]);
@@ -557,6 +561,8 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
+	writer.WriteUInt(this->binary[ProgramRow::HullShader].size());
+	if (this->binary[ProgramRow::HullShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::HullShader].front(), this->binary[ProgramRow::HullShader].size());
 
 	writer.WriteInt('DOMA');
 	writer.WriteString(this->slotNames[ProgramRow::DomainShader]);
@@ -566,6 +572,8 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
+	writer.WriteUInt(this->binary[ProgramRow::DomainShader].size());
+	if (this->binary[ProgramRow::DomainShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::DomainShader].front(), this->binary[ProgramRow::DomainShader].size());
 
 	writer.WriteInt('GEOM');
 	writer.WriteString(this->slotNames[ProgramRow::GeometryShader]);
@@ -575,6 +583,19 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
+	writer.WriteUInt(this->binary[ProgramRow::GeometryShader].size());
+	if (this->binary[ProgramRow::GeometryShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::GeometryShader].front(), this->binary[ProgramRow::GeometryShader].size());
+
+	writer.WriteInt('PIXL');
+	writer.WriteString(this->slotNames[ProgramRow::PixelShader]);
+	writer.WriteUInt(this->slotSubroutineMappings[ProgramRow::PixelShader].size());
+	for (it = this->slotSubroutineMappings[ProgramRow::PixelShader].begin(); it != this->slotSubroutineMappings[ProgramRow::PixelShader].end(); it++)
+	{
+		writer.WriteString((*it).first);
+		writer.WriteString((*it).second);
+	}
+	writer.WriteUInt(this->binary[ProgramRow::PixelShader].size());
+	if (this->binary[ProgramRow::PixelShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::PixelShader].front(), this->binary[ProgramRow::PixelShader].size());
 
 	writer.WriteInt('COMP');
 	writer.WriteString(this->slotNames[ProgramRow::ComputeShader]);
@@ -584,6 +605,16 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
+	writer.WriteUInt(this->binary[ProgramRow::ComputeShader].size());
+	if (this->binary[ProgramRow::ComputeShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::ComputeShader].front(), this->binary[ProgramRow::ComputeShader].size());
+
+	writer.WriteUInt(this->uniformBufferOffsets.size());
+	std::map<std::string, unsigned>::const_iterator offsetIt;
+	for (offsetIt = this->uniformBufferOffsets.begin(); offsetIt != this->uniformBufferOffsets.end(); offsetIt++)
+	{
+		writer.WriteString(offsetIt->first);
+		writer.WriteUInt(offsetIt->second);
+	}
 
 	writer.WriteInt('RSTA');
 	writer.WriteString(this->slotNames[ProgramRow::RenderState]);
@@ -644,7 +675,6 @@ Program::BuildShaders(const Header& header, const std::vector<Function>& functio
 						shader->SetFunction(func);
 						shader->SetType(i);
                         shader->SetName(functionNameWithDefines);
-						shader->SetHeader(header);
                         shader->SetCompileFlags(this->compileFlags);
 						shader->SetSubroutineMappings(subroutineMappings);
                         shaders[functionNameWithDefines] = shader;
@@ -660,7 +690,7 @@ Program::BuildShaders(const Header& header, const std::vector<Function>& functio
 /**
 */
 void
-Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
 {
 	glslang::TProgram* program = new glslang::TProgram;
 	if (vs) program->addShader((glslang::TShader*)vs->glslShader);
@@ -689,7 +719,7 @@ Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Sha
 /**
 */
 void
-Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
 {
 	glslang::TProgram* program = new glslang::TProgram;
 	if (vs) program->addShader((glslang::TShader*)vs->glslShader);
@@ -715,6 +745,73 @@ Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Sha
 
 //------------------------------------------------------------------------------
 /**
+*/
+void
+Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
+{
+	glslang::TProgram* program = new glslang::TProgram;
+	glslang::TShader* gvs = vs != NULL ? vs->glslShader : NULL;
+	glslang::TShader* ghs = hs != NULL ? hs->glslShader : NULL;
+	glslang::TShader* gds = ds != NULL ? ds->glslShader : NULL;
+	glslang::TShader* ggs = gs != NULL ? gs->glslShader : NULL;
+	glslang::TShader* gps = ps != NULL ? ps->glslShader : NULL;
+	glslang::TShader* gcs = cs != NULL ? cs->glslShader : NULL;
+	if (gvs) program->addShader(gvs);
+	if (ghs) program->addShader(ghs);
+	if (gds) program->addShader(gds);
+	if (ggs) program->addShader(ggs);
+	if (gps) program->addShader(gps);
+	if (gcs) program->addShader(gcs);
+
+	EShMessages messages = EShMsgDefault;
+	if (!program->link(messages))
+	{
+		std::string message = program->getInfoLog();
+
+		// now format errors and warnings to have correct line positions
+		std::stringstream stream(message);
+
+		// handle error, Khronos follow the ATI way...
+		this->GLSLProblemKhronos(generator, stream);
+		return;
+	}
+
+	// build reflection to get uniform stuff
+	assert(program->buildReflection());
+
+	// get uniform offsets and save to program
+	int numVars = program->getNumLiveUniformVariables();
+	int numBlocks = program->getNumLiveUniformBlocks();
+	for (int i = 0; i < numVars; i++)
+	{
+		std::string uniformName = program->getUniformName(i);
+		size_t indexOfArray = uniformName.find("[0]");
+		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
+		int index = program->getUniformIndex(uniformName.c_str());
+		int type = program->getUniformType(index);
+		if (type < 0x8B5D)
+		{ 
+			unsigned offset = program->getUniformBufferOffset(index);
+			this->uniformBufferOffsets[uniformName] = offset;
+		}
+	}
+
+	glslang::TShader* shaders[] = { gvs, ghs, gds, ggs, gps, gcs };
+	for (int i = 0; i < EShLangCount; i++)
+	{
+		glslang::TIntermediate* intermediate = program->getIntermediate((EShLanguage)i);
+		if (intermediate != NULL)
+		{
+			glslang::GlslangToSpv(*intermediate, this->binary[i]);
+		}		
+	}
+	
+	delete program;
+}
+
+//------------------------------------------------------------------------------
+/**
+	TODO: Handle link errors in GLSL from the Khronos compiler
 */
 void
 Program::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
@@ -754,7 +851,7 @@ Program::GLSLProblemKhronos(Generator& generator, std::stringstream& stream)
 /**
 */
 void
-Program::LinkHLSL5(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+Program::LinkHLSL5(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
 {
 
 }
@@ -763,7 +860,7 @@ Program::LinkHLSL5(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Sha
 /**
 */
 void
-Program::LinkHLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+Program::LinkHLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
 {
 
 }
@@ -772,7 +869,7 @@ Program::LinkHLSL4(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Sha
 /**
 */
 void
-Program::LinkHLSL3(Generator& generator, Shader* vs, Shader* ps, Shader* hs, Shader* ds, Shader* gs, Shader* cs)
+Program::LinkHLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Shader* gs, Shader* ps, Shader* cs)
 {
 
 }

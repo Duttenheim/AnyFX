@@ -5,6 +5,7 @@
 #include "variable.h"
 #include "typechecker.h"
 #include "util.h"
+#include "shader.h"
 
 namespace AnyFX
 {
@@ -19,12 +20,13 @@ Variable::Variable() :
 	arrayType(ExplicitArray),
 	arraySize(1),
 	sizeExpression(0),
-	bindingUnit(-1),
 	format(NoFormat),
 	accessMode(NoAccess),
     qualifierFlags(NoQualifiers),
 	isUniform(true),
-	hasAnnotation(false)
+	hasAnnotation(false),
+	group(0),
+	binding(0)
 {
 	this->symbolType = Symbol::VariableType;
 }
@@ -61,26 +63,6 @@ Variable::AddValue(const ValueList& value)
 	pair.second = value;
 	this->hasDefaultValue = true;
 	this->valueTable.push_back(pair);
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-void
-Variable::SetBindingUnit(int& samplerCount, int& imageCount)
-{
-	if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
-	{
-		this->bindingUnit = samplerCount++;
-	}
-	else if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
-	{
-		this->bindingUnit = imageCount++;
-	}
-	else
-	{
-		this->bindingUnit = -1;
-	}
 }
 
 //------------------------------------------------------------------------------
@@ -176,6 +158,43 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	if (this->hasAnnotation)
 	{
 		this->annotation.TypeCheck(typechecker);
+	}
+
+	for (unsigned i = 0; i < this->qualifierExpressions.size(); i++)
+	{
+		const std::string& qualifier = this->qualifierExpressions[i].name;
+		Expression* expr = this->qualifierExpressions[i].expr;
+		if (qualifier == "group") this->group = expr->EvalUInt(typechecker);
+		else
+		{
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			AnyFX::Emit(message.c_str());
+		}
+		delete expr;
+	}
+
+	// get the binding location and increment the global counter
+	if (typechecker.GetHeader().GetType() == Header::GLSL)
+	{
+		if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
+		{
+			this->binding = Shader::bindingIndices[2];
+			Shader::bindingIndices[2]++;
+		}
+		else if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
+		{
+			this->binding = Shader::bindingIndices[3];
+			Shader::bindingIndices[3]++;
+		}
+		
+	}
+	else if (typechecker.GetHeader().GetType() == Header::SPIRV)
+	{
+		if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::TextureCubeArray)
+		{
+			this->binding = Shader::bindingIndices[this->group];
+			Shader::bindingIndices[this->group]++;
+		}
 	}
 
     // check to see that the user type is valid to be used with a variable
@@ -340,7 +359,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	}
 	
 	const Header::Type type = typechecker.GetHeader().GetType();
-	if (type == Header::GLSL)
+	if (type == Header::GLSL || type == Header::SPIRV)
 	{
 		if (this->type.GetStyle() != DataType::GLSL && this->type.GetStyle() != DataType::Generic)
 		{
@@ -368,7 +387,8 @@ Variable::Compile(BinWriter& writer)
 	writer.WriteString(this->name);
     writer.WriteBool(shared);
     writer.WriteBool((this->qualifierFlags & Bindless) != 0);
-	writer.WriteInt(this->bindingUnit);
+	writer.WriteUInt(this->binding);
+	writer.WriteUInt(this->group);
 	writer.WriteInt(this->type.GetType());
 
 	// if this is a compute variable, write the format and access mode to stream
@@ -429,28 +449,49 @@ Variable::Format(const Header& header, bool inVarblock) const
 	std::string formattedCode;
 
 	if (header.GetFlags() & Header::NoSubroutines && this->isSubroutine) return formattedCode;
-	if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
+
+	if (header.GetType() == Header::GLSL)
 	{
-		if (this->bindingUnit == -1) AnyFX::Emit("Texture %s has an invalid texture unit!", this->ErrorSuffix().c_str());
-		formattedCode.append(AnyFX::Format("layout(binding = %d, ", this->bindingUnit));
-		formattedCode.append(this->FormatImageFormat(header));
-		formattedCode.append(") ");
-		formattedCode.append(this->FormatImageAccess(header));
-		formattedCode.append(" ");
-	}    
-    else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
-    {
-		if (this->bindingUnit == -1) AnyFX::Emit("Texture %s has an invalid texture unit!", this->ErrorSuffix().c_str());
-		if (this->qualifierFlags & Bindless) formattedCode.append(AnyFX::Format("layout(binding = %d, bindless_sampler) ", this->bindingUnit));
-		else								 formattedCode.append(AnyFX::Format("layout(binding = %d) ", this->bindingUnit));
-    }
-	else if (this->type.GetType() >= DataType::Matrix2x2 && this->type.GetType() <= DataType::Matrix4x4 && inVarblock)
+		if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
+		{
+			formattedCode.append(AnyFX::Format("layout(binding=%d, ", this->binding));
+			formattedCode.append(this->FormatImageFormat(header));
+			formattedCode.append(") ");
+			formattedCode.append(this->FormatImageAccess(header));
+			formattedCode.append(" ");
+		}    
+		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
+		{
+			if (this->qualifierFlags & Bindless) formattedCode.append(AnyFX::Format("layout(binding=%d, bindless_sampler) ", this->binding));
+			else								 formattedCode.append(AnyFX::Format("layout(binding=%d) ", this->binding));
+		}
+		else if (this->type.GetType() >= DataType::Matrix2x2 && this->type.GetType() <= DataType::Matrix4x4 && inVarblock)
+		{
+			formattedCode.append("layout(column_major) ");
+		}
+	}
+	else if (header.GetType() == Header::SPIRV)
 	{
-		formattedCode.append("layout(column_major) ");
+		if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
+		{
+			formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d, ", this->group, this->binding));
+			formattedCode.append(this->FormatImageFormat(header));
+			formattedCode.append(") ");
+			formattedCode.append(this->FormatImageAccess(header));
+			formattedCode.append(" ");
+		}
+		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
+		{
+			formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d) ", this->group, this->binding));
+		}
+		else if (this->type.GetType() >= DataType::Matrix2x2 && this->type.GetType() <= DataType::Matrix4x4 && inVarblock)
+		{
+			formattedCode.append("layout(column_major) ");
+		}
 	}
 
 	// add GLSL uniform qualifier
-	if (header.GetType() == Header::GLSL && !inVarblock)
+	if ((header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV) && !inVarblock)
 	{
         if (this->isSubroutine)                 formattedCode.append("subroutine ");
         if (this->qualifierFlags & GroupShared) formattedCode.append("shared ");
@@ -486,7 +527,7 @@ Variable::GetByteSize() const
 std::string 
 Variable::FormatImageFormat(const Header& header) const
 {
-	if (header.GetType() == Header::GLSL)
+	if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
 	{
 		switch (this->format)
 		{
@@ -583,7 +624,7 @@ Variable::FormatImageFormat(const Header& header) const
 std::string 
 Variable::FormatImageAccess( const Header& header ) const
 {
-	if (header.GetType() == Header::GLSL)
+	if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
 	{
 		switch (this->accessMode)
 		{

@@ -9,6 +9,8 @@
 */
 //------------------------------------------------------------------------------
 #include "binwriter.h"
+#include "qualifierexpression.h"
+#include <vector>
 #include <string>
 namespace AnyFX
 {
@@ -42,6 +44,20 @@ public:
 	/// get error
 	const std::string& GetError() const;
 
+	/// add qualifier to varblock
+	void AddQualifier(const std::string& qualifier);
+	/// get number of qualifiers
+	const unsigned GetNumQualifiers() const;
+	/// get qualifier by index
+	const std::string& GetQualifier(unsigned i) const;
+
+	/// add expression qualifier to varblock
+	void AddQualifierExpression(const QualifierExpression& qualifier);
+	/// get number of expression qualifiers
+	const unsigned GetNumQualifierExpressions() const;
+	/// get name of expression qualifier
+	const QualifierExpression& GetQualifierExpression(unsigned i) const;
+
 	/// formats an appropriate error suffix
 	std::string ErrorSuffix() const;
 	
@@ -61,6 +77,9 @@ protected:
 	int row;
 	bool hasErrors;
 	bool hasWarnings;
+
+	std::vector<std::string> qualifiers;
+	std::vector<QualifierExpression> qualifierExpressions;
 }; 
 
 //------------------------------------------------------------------------------
@@ -133,6 +152,60 @@ inline const std::string&
 Compileable::GetError() const
 {
 	return this->error;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Compileable::AddQualifier(const std::string& qualifier)
+{
+	this->qualifiers.push_back(qualifier);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+Compileable::GetNumQualifiers() const
+{
+	return this->qualifiers.size();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+Compileable::GetQualifier(unsigned i) const
+{
+	return this->qualifiers[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Compileable::AddQualifierExpression(const QualifierExpression& qualifier)
+{
+	this->qualifierExpressions.push_back(qualifier);
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const unsigned
+Compileable::GetNumQualifierExpressions() const
+{
+	return this->qualifierExpressions.size();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const QualifierExpression&
+Compileable::GetQualifierExpression(unsigned i) const
+{
+	return this->qualifierExpressions[i];
 }
 } // namespace AnyFX
 //------------------------------------------------------------------------------

@@ -35,13 +35,6 @@ public:
 	/// get if varblock is shared
 	bool IsShared() const;
 
-	/// add qualifier to varbuffer
-	void AddQualifier(const std::string& qualifier);
-	/// get number of qualifiers
-	const unsigned GetNumQualifiers() const;
-	/// get qualifier by index
-	const std::string& GetQualifier(unsigned i) const;
-
 	/// sorts variables in varblock
 	void SortVariables();
 
@@ -51,15 +44,19 @@ public:
 	void Compile(BinWriter& writer);
 
 	/// format variable to fit target language
-	std::string Format(const Header& header, const int index) const;
+	std::string Format(const Header& header) const;
+
 private:
 	std::vector<Variable> variables;
-	std::vector<std::string> qualifiers;
-	bool shared;
-	unsigned size;
 
+	bool shared;
+	unsigned group;
+	unsigned binding;
+	
 	bool hasAnnotation;
 	Annotation annotation;
+
+	unsigned size;
 }; 
 
 //------------------------------------------------------------------------------
@@ -70,33 +67,6 @@ VarBuffer::SetAnnotation(const Annotation& annotation)
 {
     this->annotation = annotation;
     this->hasAnnotation = true;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline void
-VarBuffer::AddQualifier(const std::string& qualifier)
-{
-	this->qualifiers.push_back(qualifier);
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const unsigned
-VarBuffer::GetNumQualifiers() const
-{
-	return this->qualifiers.size();
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-inline const std::string&
-VarBuffer::GetQualifier(unsigned i) const
-{
-	return this->qualifiers[i];
 }
 
 //------------------------------------------------------------------------------

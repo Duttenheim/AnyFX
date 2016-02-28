@@ -46,7 +46,7 @@ Sampler::Sampler() :
 	intFlags[SamplerRow::AddressU] = SamplerRow::Wrap;
 	intFlags[SamplerRow::AddressV] = SamplerRow::Wrap;
 	intFlags[SamplerRow::AddressW] = SamplerRow::Wrap;
-	intFlags[SamplerRow::ComparisonFunc] = LEqual;
+	intFlags[SamplerRow::ComparisonFunc] = SamplerRow::LEqual;
 
 	boolFlags[SamplerRow::Comparison] = false;
 	
@@ -163,14 +163,14 @@ Sampler::ConsumeRow(const SamplerRow& row)
 		{
 			const std::string& value = row.GetString();
 			unsigned flagVal = -1;
-			if (value == "Never")					flagVal = Never;
-			else if (value == "Less")				flagVal = Less;
-			else if (value == "Lequal")				flagVal = LEqual;
-			else if (value == "Greater")			flagVal = Greater;
-			else if (value == "Gequal")				flagVal = GEqual;
-			else if (value == "Equal")				flagVal = Equal;
-			else if (value == "NotEqual")			flagVal = NEqual;
-			else if (value == "Always")				flagVal = Always;
+			if (value == "Never")					flagVal = SamplerRow::Never;
+			else if (value == "Less")				flagVal = SamplerRow::Less;
+			else if (value == "Lequal")				flagVal = SamplerRow::LEqual;
+			else if (value == "Greater")			flagVal = SamplerRow::Greater;
+			else if (value == "Gequal")				flagVal = SamplerRow::GEqual;
+			else if (value == "Equal")				flagVal = SamplerRow::Equal;
+			else if (value == "NotEqual")			flagVal = SamplerRow::NEqual;
+			else if (value == "Always")				flagVal = SamplerRow::Always;
 			else
 			{
 				InvalidValueContainer foo = { this->numEntries, row.GetFlag(), value };

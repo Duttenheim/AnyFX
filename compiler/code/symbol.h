@@ -9,6 +9,7 @@
 */
 //------------------------------------------------------------------------------
 #include "compileable.h"
+
 #include <string>
 namespace AnyFX
 {
@@ -46,10 +47,12 @@ public:
     /// get if symbol is reserved
     const bool IsReserved() const;
 
+
 	/// returns type of symbol
 	const Type& GetType() const;
 
 protected:
+
     bool reserved;
 	std::string name;
 	Type symbolType;

@@ -133,6 +133,7 @@ void SetupFile(AnyFX::Compileable* comp, pANTLR3_TOKEN_STREAM stream, int index 
 #include <string>
 #include <stack>
 
+#include "../../code/qualifierexpression.h"
 #include "../../code/compileable.h"
 #include "../../code/effect.h"
 #include "../../code/header.h"
@@ -163,7 +164,6 @@ void SetupFile(AnyFX::Compileable* comp, pANTLR3_TOKEN_STREAM stream, int index 
 #include "../../code/expressions/intexpression.h"
 #include "../../code/expressions/boolexpression.h"
 #include "../../code/expressions/floatexpression.h"
-
 using namespace AnyFX;
 
 }
@@ -254,7 +254,7 @@ PREPROCESSOR
 		int line = atoi((const char*)$includeLine.text->chars);
 		LEXER->input->line = line;
 		includeFileNameLexer = file;
-		$channel = HIDDEN;
+		//$channel = HIDDEN;
 	}
 	;
 	
@@ -283,8 +283,8 @@ entry		returns [ Effect returnEffect ]
 effect	returns [ Effect effect ]
 	:  
 		(
-			variable { $effect.AddVariable($variable.variable); } 
-			| constant { $effect.AddConstant($constant.constant);}
+			constant { $effect.AddConstant($constant.constant);}
+			| variable { $effect.AddVariable($variable.variable); } 
 			| renderState { $effect.AddRenderState($renderState.state); }
 			| function { $effect.AddFunction($function.function); }
 			| program { $effect.AddProgram($program.program); }
@@ -295,7 +295,105 @@ effect	returns [ Effect effect ]
 			| sampler { $effect.AddSampler($sampler.sampler); }
 		)*
 	;
+
+// add qualifiers here
+qualifier returns [ std::string str ]
+@init
+{
+	pANTLR3_COMMON_TOKEN startToken;
+	pANTLR3_COMMON_TOKEN endToken;
+	startToken = LT(0);
+}
+@after
+{
+	endToken = LT(-1);
 	
+	pANTLR3_TOKEN_STREAM stream = PARSER->getTokenStream(PARSER);
+	
+	// get all text inbetween the two tokens
+	pANTLR3_STRING code = stream->toStringSS(stream, startToken->index, endToken->index);
+	str = std::string((const char*)code->chars);
+}
+	: 'const'
+	| 'shared'
+	| 'push'
+	
+	// shader and function parameter qualifiers
+	| 'flat'
+	| 'noperspective'
+	| 'patch'
+	| 'in'
+	| 'out'
+	| 'inout'
+	
+	// compute qualifier
+	| 'groupshared'
+	
+	// image types
+	| 'rgba32f'
+	| 'rgba16f'
+	| 'rg32f'
+	| 'rg16f'
+	| 'r11g11b10f'
+	| 'r32f'
+	| 'r16f'
+	| 'rgba16'
+	| 'rgba8'
+	| 'rgb10a2'
+	| 'rg16'
+	| 'rg8'
+	| 'r16'
+	| 'r8'
+	| 'rgba16snorm'
+	| 'rgba8snorm'
+	| 'rg16snorm'
+	| 'rg8snorm'
+	| 'r16snorm'
+	| 'r8snorm'
+	| 'rgba32i'
+	| 'rgba16i'
+	| 'rgba8i'
+	| 'rg32i'
+	| 'rg16i'
+	| 'rg8i'
+	| 'r32i'
+	| 'r16i'
+	| 'r8i'	
+	| 'rgba32ui'
+	| 'rgba16ui'
+	| 'rgba8ui'
+	| 'rg32ui'
+	| 'rg16ui'
+	| 'rg8ui'
+	| 'r32ui'
+	| 'r16ui'
+	| 'r8ui'
+	
+	// image access
+	| 'read'
+	| 'write'
+	| 'readwrite'
+	;
+	
+qualifierValued returns [ std::string str ]
+@init
+{
+	pANTLR3_COMMON_TOKEN startToken;
+	pANTLR3_COMMON_TOKEN endToken;
+	startToken = LT(0);
+}
+@after
+{
+	endToken = LT(-1);
+	
+	pANTLR3_TOKEN_STREAM stream = PARSER->getTokenStream(PARSER);
+	
+	// get all text inbetween the two tokens
+	pANTLR3_STRING code = stream->toStringSS(stream, startToken->index, endToken->index);
+	str = std::string((const char*)code->chars);
+}
+	: 'group'
+	;
 
 // all types are declared in this expression
 // here, we define all variable types from both HLSL and GLSL up to the latest release
@@ -399,11 +497,25 @@ type		returns [ DataType type ]
 		else if (typeString == "image3D") { $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Image3D); }
 		else if (typeString == "imageCube") { $type.SetStyle(DataType::GLSL); $type.SetType(DataType::ImageCube); }
 		else if (typeString == "imageCubeArray") { $type.SetStyle(DataType::GLSL); $type.SetType(DataType::ImageCubeArray); }
-		else if (typeString == "atomic_uint") { $type.SetStyle(DataType::GLSL); $type.SetType(DataType::AtomicCounter); }
+		else if (typeString == "texture1D") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture1D); }
+		else if (typeString == "texture1DArray") 	{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture1DArray); }
+		else if (typeString == "texture2D") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture2D); }
+		else if (typeString == "texture2DArray") 	{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture2DArray); }
+		else if (typeString == "texture2DMS") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture2DMS); }
+		else if (typeString == "texture2DMSArray") 	{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture2DMSArray); }
+		else if (typeString == "texture3D") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::Texture3D); }
+		else if (typeString == "textureCube") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::TextureCube); }
+		else if (typeString == "textureCubeArray") 	{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::TextureCubeArray); }
+		else if (typeString == "atomic_uint") 		{ $type.SetStyle(DataType::GLSL); $type.SetType(DataType::AtomicCounter); }
 		
 		// user defined type detected
 		else { $type.SetStyle(DataType::Generic); $type.SetType(DataType::UserType); $type.SetName(typeString); }
 	}
+	;
+	
+// setup a special type of qualifier which is numbered
+qualifierExpression returns [ QualifierExpression q ]
+	: base = qualifierValued parantexpression { $q.name = $base.str; $q.expr = $parantexpression.tree; }
 	;
 
 // we can also define structs outside the function scopes
@@ -416,12 +528,7 @@ structure	returns [ Structure structure ]
 // since this is just a special way of denoting a structure, we give it some extra attributes such as shared, which means this will structure will go in a shared dictionary, and be EQUAL to every shader utilizing this block
 varblock	returns [ VarBlock block ]
 	: 
-	(qualifier = IDENTIFIER { $block.AddQualifier((const char*)$qualifier.text->chars); } )*		
-	( 'buffers' EQ expression
-	{
-		{ $block.SetBufferExpression($expression.tree); }
-	}
-	)?
+	(qualifier { $block.AddQualifier($qualifier.str); } | qualifierExpression { $block.AddQualifierExpression($qualifierExpression.q); })*
 	'varblock' name = IDENTIFIER { SetupFile(&$block, INPUT); } 
 	(annotation { $block.SetAnnotation($annotation.annotation); })?
 	LB ( variable { $block.AddVariable($variable.variable); } )* RB SC { $block.SetName((const char*)$name.text->chars); }
@@ -432,7 +539,7 @@ varblock	returns [ VarBlock block ]
 // in OpenGL this is known as a shader storage block.
 varbuffer	returns [ VarBuffer buffer ]
 	:
-	(qualifier = IDENTIFIER { $buffer.AddQualifier((const char*)$qualifier.text->chars); } )*		
+	(qualifier { $buffer.AddQualifier($qualifier.str); } | qualifierExpression { $buffer.AddQualifierExpression($qualifierExpression.q); })*
 	'varbuffer' name = IDENTIFIER { SetupFile(&$buffer, INPUT); }
 	(annotation { $buffer.SetAnnotation($annotation.annotation); })?
 	LB ( variable {$buffer.AddVariable($variable.variable); } )* RB SC { $buffer.SetName((const char*)$name.text->chars); }
@@ -474,7 +581,8 @@ valueSingleList	returns [ ValueList valueList ]
 
 // variable is type, name and semicolon
 variable	returns [ Variable variable ]
-	:	(qualifier = IDENTIFIER { $variable.AddQualifier((const char*)$qualifier.text->chars); } )*
+	:	
+		(qualifier { $variable.AddQualifier($qualifier.str); } | qualifierExpression { $variable.AddQualifierExpression($qualifierExpression.q); })*
 		declType = type name = IDENTIFIER { $variable.SetVarType($declType.type); $variable.SetName((const char*)$name.text->chars); SetupFile(&$variable, INPUT); }
 		( 	
 			LL RR EQ 	{ $variable.SetArrayType(Variable::TypedArray); }		LB fstType = type LP fstValue = valueList RP { $variable.AddValue($fstType.type, $fstValue.valueList); }  // array initializer which assumes the size of the value list
@@ -551,9 +659,9 @@ parameterAttribute	returns [ Parameter::Attribute attribute ]
 // default IO for a parameter is input (as a normal function parameter in C)
 parameter	returns [ Parameter parameter ]
 	: 
-	(parameterAttribute 
+	(LL attr = IDENTIFIER RR 
 		{ 
-			$parameter.SetAttribute($parameterAttribute.attribute); 
+			$parameter.SetAttribute((const char*)$attr.text->chars); 
 		} 
 	)?
 	(LL 'feedback' EQ LP feedbackBuffer = expression CO feedbackOffset = expression RP RR
@@ -567,16 +675,11 @@ parameter	returns [ Parameter parameter ]
 			$parameter.SetSlotExpression($slotExpression.tree);
 		}
 	)?
-	(qualifier = IDENTIFIER 
+	(qualifier 
 		{ 
-			$parameter.AddQualifier((const char*)$qualifier.text->chars); 
+			$parameter.AddQualifier($qualifier.str); 
 		} 
 	)* 
-	('const'
-		{
-			$parameter.AddQualifier("const"); 
-		}
-	)?
 	type name = IDENTIFIER 
 	{ $parameter.SetDataType($type.type); $parameter.SetName((const char*)$name.text->chars); SetupFile(&$parameter, INPUT); }	
 	( LL (size = expression { $parameter.SetSizeExpression($size.tree); } )? RR { $parameter.ForceArrayFlag(); } )?
@@ -621,17 +724,20 @@ codeBlock
 function	returns [ Function function ]
 		@init
 		{
+			pANTLR3_COMMON_TOKEN lineToken;
+			pANTLR3_COMMON_TOKEN functionToken;
 			pANTLR3_COMMON_TOKEN startToken;
 			pANTLR3_COMMON_TOKEN endToken;
 		}
 		: (functionAttribute { $function.ConsumeAttribute($functionAttribute.attribute); } )* 
 		('shader' { $function.SetShader(true); })?
-		type IDENTIFIER  { SetupFile(&$function, INPUT); } LP parameterList RP
+		type IDENTIFIER { SetupFile(&$function, INPUT); functionToken = LT(-2); } LP parameterList RP
 		{
 			// save first token
 			startToken = LT(2);
 			
-			$function.SetCodeLine(LT(2)->line );
+			$function.SetFunctionLine(functionToken->line);
+			$function.SetCodeLine(LT(2)->line);
 		}
 		codeBlock
 		{ 
@@ -639,8 +745,9 @@ function	returns [ Function function ]
 			endToken = LT(-2);
 			pANTLR3_TOKEN_STREAM stream = PARSER->getTokenStream(PARSER);
 			
+			
 			// get all text inbetween the two tokens
-			pANTLR3_STRING code = stream->toStringSS(stream, startToken->index, endToken->index);
+			pANTLR3_STRING code = stream->toStringTT(stream, startToken, endToken);
 			if (code->size > 0) $function.SetCode((const char*)code->chars);
 		}
 		{ $function.SetName((const char*)$IDENTIFIER.text->chars); $function.SetReturnType($type.type); $function.SetParameters($parameterList.parameters); } 
@@ -686,8 +793,10 @@ renderState	returns [ RenderState state ]
 
 // a sampler explains how to sample textures
 sampler		returns [ Sampler sampler ]
-	:	'samplerstate' IDENTIFIER { SetupFile(&$sampler, INPUT); } SC					{ $sampler.SetName((const char*)$IDENTIFIER.text->chars); }
-	|	'samplerstate' IDENTIFIER { SetupFile(&$sampler, INPUT); }						{ $sampler.SetName((const char*)$IDENTIFIER.text->chars); }
+	:	(qualifier { $sampler.AddQualifier($qualifier.str); } )*
+		'samplerstate' name = IDENTIFIER { SetupFile(&$sampler, INPUT); } SC					{ $sampler.SetName((const char*)$name.text->chars); }
+	|	(qualifier { $sampler.AddQualifier($qualifier.str); } )*
+		'samplerstate' name = IDENTIFIER { SetupFile(&$sampler, INPUT); }						{ $sampler.SetName((const char*)$name.text->chars); }
 		LB ( samplerRow { $sampler.ConsumeRow($samplerRow.row); } )* RB SC
 	;
 	

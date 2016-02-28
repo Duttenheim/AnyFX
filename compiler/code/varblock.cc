@@ -6,6 +6,7 @@
 #include "parameter.h"
 #include <algorithm>
 #include "typechecker.h"
+#include "shader.h"
 
 namespace AnyFX
 {
@@ -14,11 +15,10 @@ namespace AnyFX
 /**
 */
 VarBlock::VarBlock() :
-    bufferExpression(NULL),
-    bufferCount(1),
 	hasAnnotation(false),
 	shared(false),
-	noSync(false)
+	group(0),
+	push(false)
 {
 	this->symbolType = Symbol::VarblockType;
 }
@@ -34,8 +34,8 @@ VarBlock::~VarBlock()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-VarBlock::AddVariable( const Variable& var )
+void
+VarBlock::AddVariable(const Variable& var)
 {
 	this->variables.push_back(var);
 }
@@ -60,7 +60,7 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 	{
 		const std::string& qualifier = this->qualifiers[i];
 		if (qualifier == "shared") this->shared = true;
-		else if (qualifier == "nosync") this->noSync = true;
+		else if (qualifier == "push") this->push = true;
 		else
 		{  
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -68,21 +68,30 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 		}
 	}
 
-    // evaluate buffer expression
-    if (0 != this->bufferExpression)
-    {
-        DataType bufferExpressionType = this->bufferExpression->EvalType(typechecker);
-        if (bufferExpressionType != DataType::Integer)
-        {
-            std::string message = AnyFX::Format("Varblock buffer size must be an integer, %s\n", this->ErrorSuffix().c_str());
-            typechecker.Error(message);
-        }
-        else
-        {
-            this->bufferCount = this->bufferExpression->EvalInt(typechecker);
-        }
-		delete this->bufferExpression;
-    }
+	for (unsigned i = 0; i < this->qualifierExpressions.size(); i++)
+	{
+		const std::string& qualifier = this->qualifierExpressions[i].name;
+		Expression* expr = this->qualifierExpressions[i].expr;
+		if (qualifier == "group") this->group = expr->EvalUInt(typechecker);
+		else
+		{
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
+		delete expr;
+	}
+
+	// get the binding location and increment the global counter
+	if (typechecker.GetHeader().GetType() == Header::GLSL)
+	{
+		this->binding = Shader::bindingIndices[0];
+		Shader::bindingIndices[0]++;
+	}
+	else if (typechecker.GetHeader().GetType() == Header::SPIRV && !this->push)
+	{
+		this->binding = Shader::bindingIndices[this->group];
+		Shader::bindingIndices[this->group]++;
+	}
 
 	unsigned i;
 	for (i = 0; i < this->variables.size(); i++)
@@ -117,13 +126,21 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 			typechecker.Error(message);
 		}
 	}
+	else if (type == Header::SPIRV)
+	{
+		if (this->shared && this->push)
+		{
+			std::string message = AnyFX::Format("Varblocks can not both qualifiers 'shared' and 'push', %s\n", this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 std::string
-VarBlock::Format(const Header& header, const int index) const
+VarBlock::Format(const Header& header) const
 {
 	std::string formattedCode;
 
@@ -132,10 +149,15 @@ VarBlock::Format(const Header& header, const int index) const
 
     if (this->shared)
     {
-        // varblocks of this type are only available in GLSL3-4 and HLSL4-5
+        // varblocks of this type are only available in GLSL3-4, HLSL4-5 and SPIR-V
 		if (header.GetType() == Header::GLSL)
 		{
-			std::string layout = AnyFX::Format("layout(shared, binding=%d) uniform ", index);
+			std::string layout = AnyFX::Format("layout(shared, binding=%d) uniform ", this->binding);
+			formattedCode.append(layout);
+		}
+		else if (header.GetType() == Header::SPIRV)
+		{
+			std::string layout = AnyFX::Format("layout(std140, set=%d, binding=%d) uniform ", this->group, this->binding);
 			formattedCode.append(layout);
 		}
         else if (header.GetType() == Header::HLSL) formattedCode.append("shared cbuffer ");
@@ -145,26 +167,63 @@ VarBlock::Format(const Header& header, const int index) const
 		// varblocks of this type are only available in GLSL3-4 and HLSL4-5
 		if (header.GetType() == Header::GLSL)
 		{
-			std::string layout = AnyFX::Format("layout(shared, binding=%d) uniform ", index);
+			std::string layout = AnyFX::Format("layout(std430, binding=%d) uniform ", this->binding);
 			formattedCode.append(layout);
+		}
+		else if (header.GetType() == Header::SPIRV)
+		{
+			if (this->push)
+			{
+				std::string layout = AnyFX::Format("layout(push_constant) uniform __PC__ ", this->group, this->binding);
+				formattedCode.append(layout);
+			}
+			else
+			{
+				std::string layout = AnyFX::Format("layout(std430, set=%d, binding=%d) uniform ", this->group, this->binding);
+				formattedCode.append(layout);
+			}
+			
 		}
         else if (header.GetType() == Header::HLSL) formattedCode.append("cbuffer ");
     }
 	
-	formattedCode.append(this->GetName());
-	formattedCode.append("\n{\n");
-
-	unsigned i;
-	for (i = 0; i < this->variables.size(); i++)
+	// hmm, if this is a push constant range, setup as a single instance struct
+	if (this->push)
 	{
-		const Variable& var = this->variables[i];
+		std::vector<std::string> macros;
+		formattedCode.append("\n{\n");
 
-		// format code and add to code
-		formattedCode.append(var.Format(header, true));
+		unsigned i;
+		for (i = 0; i < this->variables.size(); i++)
+		{
+			const Variable& var = this->variables[i];
+
+			// format code and add to code
+			formattedCode.append(var.Format(header, true));
+		}
+
+		// finalize and return
+		formattedCode.append("} ");
+		formattedCode.append(this->GetName());
+		formattedCode.append(";\n\n");
 	}
+	else
+	{
+		formattedCode.append(this->GetName());
+		formattedCode.append("\n{\n");
+
+		unsigned i;
+		for (i = 0; i < this->variables.size(); i++)
+		{
+			const Variable& var = this->variables[i];
+
+			// format code and add to code
+			formattedCode.append(var.Format(header, true));
+		}
 	
-	// finalize and return
-	formattedCode.append("};\n\n");
+		// finalize and return
+		formattedCode.append("};\n\n");
+	}
 	return formattedCode;
 }
 
@@ -176,8 +235,9 @@ VarBlock::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
 	writer.WriteBool(this->shared);
-	writer.WriteBool(this->noSync);
-    writer.WriteUInt(this->bufferCount);
+	writer.WriteUInt(this->binding);
+	writer.WriteUInt(this->group);
+	writer.WriteBool(this->push);
 
 	// write if annotation is used
 	writer.WriteBool(this->hasAnnotation);
