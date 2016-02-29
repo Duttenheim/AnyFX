@@ -10,6 +10,7 @@
 #include "effectannotationstreamloader.h"
 #include <string.h>
 #include "internal/vk/vkeffectrenderstate.h"
+#include "debug.h"
 
 namespace AnyFX
 {

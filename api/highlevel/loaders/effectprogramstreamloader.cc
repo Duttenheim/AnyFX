@@ -14,6 +14,7 @@
 #include "internal/glsl4/glsl4effectprogram.h"
 #include "effectannotationstreamloader.h"
 #include "internal/vk/vkeffectprogram.h"
+#include "debug.h"
 
 namespace AnyFX
 {

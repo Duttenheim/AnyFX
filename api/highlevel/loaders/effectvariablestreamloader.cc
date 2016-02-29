@@ -10,6 +10,7 @@
 #include "internal/glsl4/glsl4effectvariable.h"
 #include "effectannotationstreamloader.h"
 #include "internal/vk/vkeffectvariable.h"
+#include "debug.h"
 
 namespace AnyFX
 {

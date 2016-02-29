@@ -14,6 +14,7 @@
 #include <assert.h>
 #include "effectannotationstreamloader.h"
 #include "internal/vk/vkeffectvarblock.h"
+#include "debug.h"
 
 namespace AnyFX
 {

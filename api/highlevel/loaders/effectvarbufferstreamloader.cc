@@ -12,6 +12,7 @@
 #include "effectannotationstreamloader.h"
 #include "effectvariablestreamloader.h"
 #include "internal/vk/vkeffectvarbuffer.h"
+#include "debug.h"
 
 namespace AnyFX
 {

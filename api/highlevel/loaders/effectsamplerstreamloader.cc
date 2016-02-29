@@ -8,6 +8,7 @@
 #include "effectsampler.h"
 #include "highlevel/effect.h"
 #include "internal/vk/vkeffectsampler.h"
+#include "debug.h"
 
 namespace AnyFX
 {

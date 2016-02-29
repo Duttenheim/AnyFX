@@ -7,6 +7,7 @@
 #include "internal/glsl4/glsl4effectshader.h"
 #include "highlevel/effect.h"
 #include "internal/vk/vkeffectshader.h"
+#include "debug.h"
 
 namespace AnyFX
 {
