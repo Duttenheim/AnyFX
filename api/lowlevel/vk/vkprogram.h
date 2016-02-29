@@ -16,7 +16,8 @@ public:
 	VkProgram();
 	/// destructor
 	virtual ~VkProgram();
-
+	
+private:
 	/// handle loading
 	void OnLoadingDone();
 };
