@@ -7,6 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "base/varblockbase.h"
+#include <vulkan/vulkan.h>
 namespace AnyFX
 {
 struct VkVarblock : public VarblockBase
@@ -16,6 +17,11 @@ public:
 	VkVarblock();
 	/// destructor
 	virtual ~VkVarblock();
+
+	VkDescriptorSetLayoutBinding bindingLayout;
 private:
+
+	/// setup binding layout
+	void OnLoaded();
 };
 } // namespace AnyFX

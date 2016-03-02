@@ -7,6 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "base/variablebase.h"
+#include <vulkan/vulkan.h>
 namespace AnyFX
 {
 struct VkVariable : public VariableBase
@@ -16,6 +17,11 @@ public:
 	VkVariable();
 	/// destructor
 	virtual ~VkVariable();
+
+	VkDescriptorSetLayoutBinding bindingLayout;
 private:
+
+	/// setup binding layout
+	void OnLoaded();
 };
 } // namespace AnyFX

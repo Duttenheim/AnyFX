@@ -20,7 +20,7 @@ public:
 	eastl::string name;
 	unsigned type;
 
-private:
+protected:
 	friend class SubroutineLoader;
 
 	/// callback for when program is done loading

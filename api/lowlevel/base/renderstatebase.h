@@ -72,7 +72,7 @@ public:
 
 	eastl::string name;
 
-private:
+protected:
 	friend class RenderStateLoader;
 
 	/// callback for when program is done loading

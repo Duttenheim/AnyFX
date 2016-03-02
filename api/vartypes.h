@@ -80,6 +80,7 @@ enum VariableType
 	Texture3D,
 	TextureCube,
 	TextureCubeArray,
+	InputAttachment,
 	AtomicCounter,
 	Void,
 	String,

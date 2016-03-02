@@ -54,7 +54,7 @@ public:
 	eastl::map<eastl::string, unsigned> variableBlockOffsets;
 	RenderStateBase* renderState;
 
-private:
+protected:
 	friend class ProgramLoader;
 
 	/// callback for when program is done loading

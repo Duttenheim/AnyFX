@@ -25,7 +25,7 @@ public:
 	eastl::string warning;
 	unsigned localSizes[3];
 
-private:
+protected:
 	friend class ShaderLoader;
 
 	/// callback for when program is done loading

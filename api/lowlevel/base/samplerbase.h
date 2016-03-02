@@ -40,7 +40,7 @@ public:
 	eastl::string name;
 	eastl::vector<VariableBase*> textureVariables;
 
-private:
+protected:
 	friend class SamplerLoader;
 
 	/// callback for when program is done loading

@@ -7,6 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "base/varbufferbase.h"
+#include <vulkan/vulkan.h>
 namespace AnyFX
 {
 struct VkVarbuffer : public VarbufferBase
@@ -16,6 +17,11 @@ public:
 	VkVarbuffer();
 	/// destructor
 	virtual ~VkVarbuffer();
+
+	VkDescriptorSetLayoutBinding bindingLayout;
 private:
+
+	/// setup binding layout
+	void OnLoaded();
 };
 } // namespace AnyFX

@@ -115,12 +115,27 @@ private:
 	unsigned minor;
 
 	eastl::map<eastl::string, ProgramBase*> programs;
+	eastl::vector<ProgramBase*> programsByIndex;
+
 	eastl::map<eastl::string, ShaderBase*> shaders;
+	eastl::vector<ShaderBase*> shadersByIndex;
+
 	eastl::map<eastl::string, VariableBase*> variables;
+	eastl::vector<VariableBase*> variablesByIndex;
+
 	eastl::map<eastl::string, RenderStateBase*> renderstates;
+	eastl::vector<RenderStateBase*> renderstatesByIndex;
+
 	eastl::map<eastl::string, SubroutineBase*> subroutines;
+	eastl::vector<SubroutineBase*> subroutinesByIndex;
+
 	eastl::map<eastl::string, VarblockBase*> varblocks;
+	eastl::vector<VarblockBase*> varblocksByIndex;
+
 	eastl::map<eastl::string, VarbufferBase*> varbuffers;
+	eastl::vector<VarbufferBase*> varbuffersByIndex;
+
 	eastl::map<eastl::string, SamplerBase*> samplers;
+	eastl::vector<SamplerBase*> samplersByIndex;
 };
 } // namespace AnyFX
