@@ -550,8 +550,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	writer.WriteUInt(this->binary[ProgramRow::VertexShader].size());
-	if (this->binary[ProgramRow::VertexShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::VertexShader].front(), this->binary[ProgramRow::VertexShader].size());
+	if (this->binary[ProgramRow::VertexShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::VertexShader], writer);
 
 	writer.WriteInt('HULL');
 	writer.WriteString(this->slotNames[ProgramRow::HullShader]);
@@ -561,8 +560,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	writer.WriteUInt(this->binary[ProgramRow::HullShader].size());
-	if (this->binary[ProgramRow::HullShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::HullShader].front(), this->binary[ProgramRow::HullShader].size());
+	if (this->binary[ProgramRow::HullShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::HullShader], writer);
 
 	writer.WriteInt('DOMA');
 	writer.WriteString(this->slotNames[ProgramRow::DomainShader]);
@@ -572,8 +570,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	writer.WriteUInt(this->binary[ProgramRow::DomainShader].size());
-	if (this->binary[ProgramRow::DomainShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::DomainShader].front(), this->binary[ProgramRow::DomainShader].size());
+	if (this->binary[ProgramRow::DomainShader].size() > 0)	this->WriteBinary(this->binary[ProgramRow::DomainShader], writer);
 
 	writer.WriteInt('GEOM');
 	writer.WriteString(this->slotNames[ProgramRow::GeometryShader]);
@@ -583,8 +580,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	writer.WriteUInt(this->binary[ProgramRow::GeometryShader].size());
-	if (this->binary[ProgramRow::GeometryShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::GeometryShader].front(), this->binary[ProgramRow::GeometryShader].size());
+	if (this->binary[ProgramRow::GeometryShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::GeometryShader], writer);
 
 	writer.WriteInt('PIXL');
 	writer.WriteString(this->slotNames[ProgramRow::PixelShader]);
@@ -594,8 +590,7 @@ Program::Compile(BinWriter& writer)
 		writer.WriteString((*it).first);
 		writer.WriteString((*it).second);
 	}
-	writer.WriteUInt(this->binary[ProgramRow::PixelShader].size());
-	if (this->binary[ProgramRow::PixelShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::PixelShader].front(), this->binary[ProgramRow::PixelShader].size());
+	if (this->binary[ProgramRow::PixelShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::PixelShader], writer);
 
 	writer.WriteInt('COMP');
 	writer.WriteString(this->slotNames[ProgramRow::ComputeShader]);
@@ -605,8 +600,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	writer.WriteUInt(this->binary[ProgramRow::ComputeShader].size());
-	if (this->binary[ProgramRow::ComputeShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::ComputeShader].front(), this->binary[ProgramRow::ComputeShader].size());
+	if (this->binary[ProgramRow::ComputeShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::ComputeShader], writer);
 
 	writer.WriteUInt(this->activeUniformBlocks.size());
 	unsigned i;
@@ -887,6 +881,21 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	}
 	
 	delete program;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+Program::WriteBinary(const std::vector<unsigned>& binary, BinWriter& writer)
+{
+	writer.WriteUInt(binary.size() * sizeof(unsigned));
+	unsigned i;
+	for (i = 0; i < binary.size(); i++)
+	{
+		const unsigned int word = binary[i];
+		writer.WriteBytes((const char*)&word, 4);
+	}
 }
 
 //------------------------------------------------------------------------------

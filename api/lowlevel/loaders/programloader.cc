@@ -161,6 +161,7 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
 
 	// read names of active variables
 	unsigned numActiveVars = reader->ReadUInt();
+	program->activeVariableNames.resize(numActiveVars);
 	for (i = 0; i < numActiveVars; i++)
 	{
 		program->activeVariableNames[i] = reader->ReadString().c_str();

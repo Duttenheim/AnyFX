@@ -44,6 +44,8 @@ private:
 
 	/// constructs a shader function using the given functions
 	void BuildShaders(const Header& header, const std::vector<Function>& functions, std::map<std::string, Shader*>& shaders);
+	/// writes binary to file
+	void WriteBinary(const std::vector<unsigned>& binary, BinWriter& writer);
 
 #pragma region OpenGL
 	/// generates GLSL4 target code
