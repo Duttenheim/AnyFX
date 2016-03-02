@@ -4,6 +4,8 @@
 //------------------------------------------------------------------------------
 #include "variablebase.h"
 
+// disable 'strtok': This function or variable may be unsafe.
+#pragma warning (disable : 4996)
 namespace AnyFX
 {
 

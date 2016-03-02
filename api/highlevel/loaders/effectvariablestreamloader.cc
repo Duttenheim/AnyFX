@@ -118,7 +118,7 @@ EffectVariableStreamLoader::Load(BinReader* reader, Effect* effect, InternalEffe
     // handle shared variables, basically tears the variable apart if its already defined
     if (shared)
     {
-        const eastl::string key = EffectVariable::TypeToString(type) + ":" + name;
+        const eastl::string key = TypeToString(type) + ":" + name;
         if (this->sharedVariables.find(key) != this->sharedVariables.end())
         {
             InternalEffectVariable* sharedVariable = this->sharedVariables[key];
