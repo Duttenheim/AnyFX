@@ -608,6 +608,19 @@ Program::Compile(BinWriter& writer)
 	writer.WriteUInt(this->binary[ProgramRow::ComputeShader].size());
 	if (this->binary[ProgramRow::ComputeShader].size() > 0) writer.WriteBytes((const char*)this->binary[ProgramRow::ComputeShader].front(), this->binary[ProgramRow::ComputeShader].size());
 
+	writer.WriteUInt(this->activeUniformBlocks.size());
+	unsigned i;
+	for (i = 0; i < this->activeUniformBlocks.size(); i++)
+	{
+		writer.WriteString(this->activeUniformBlocks[i]);
+	}
+
+	writer.WriteUInt(this->activeUniforms.size());
+	for (i = 0; i < this->activeUniforms.size(); i++)
+	{
+		writer.WriteString(this->activeUniforms[i]);
+	}
+
 	writer.WriteUInt(this->uniformBufferOffsets.size());
 	std::map<std::string, unsigned>::const_iterator offsetIt;
 	for (offsetIt = this->uniformBufferOffsets.begin(); offsetIt != this->uniformBufferOffsets.end(); offsetIt++)
@@ -711,6 +724,35 @@ Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
 	}
+
+	// build reflection to get uniform stuff
+	assert(program->buildReflection());
+
+	// get uniform offsets and save to program
+	int numVars = program->getNumLiveUniformVariables();
+	int numBlocks = program->getNumLiveUniformBlocks();
+	int i;
+	for (i = 0; i < numBlocks; i++)
+	{
+		int blockIndex = program->getUniformBlockIndex(i);
+		std::string blockName = program->getUniformBlockName(blockIndex);
+		this->activeUniformBlocks.push_back(blockName);
+	}
+
+	for (i = 0; i < numVars; i++)
+	{
+		std::string uniformName = program->getUniformName(i);
+		this->activeUniforms.push_back(uniformName);
+		size_t indexOfArray = uniformName.find("[0]");
+		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
+		int index = program->getUniformIndex(uniformName.c_str());
+		int type = program->getUniformType(index);
+		if (type < 0x8B5D)
+		{
+			unsigned offset = program->getUniformBufferOffset(index);
+			this->uniformBufferOffsets[uniformName] = offset;
+		}
+	}
 	
 	delete program;
 }
@@ -739,6 +781,35 @@ Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
+	}
+
+	// build reflection to get uniform stuff
+	assert(program->buildReflection());
+
+	// get uniform offsets and save to program
+	int numVars = program->getNumLiveUniformVariables();
+	int numBlocks = program->getNumLiveUniformBlocks();
+	int i;
+	for (i = 0; i < numBlocks; i++)
+	{
+		int blockIndex = program->getUniformBlockIndex(i);
+		std::string blockName = program->getUniformBlockName(blockIndex);
+		this->activeUniformBlocks.push_back(blockName);
+	}
+
+	for (i = 0; i < numVars; i++)
+	{
+		std::string uniformName = program->getUniformName(i);
+		this->activeUniforms.push_back(uniformName);
+		size_t indexOfArray = uniformName.find("[0]");
+		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
+		int index = program->getUniformIndex(uniformName.c_str());
+		int type = program->getUniformType(index);
+		if (type < 0x8B5D)
+		{
+			unsigned offset = program->getUniformBufferOffset(index);
+			this->uniformBufferOffsets[uniformName] = offset;
+		}
 	}
 	delete program;
 }
@@ -782,9 +853,18 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	// get uniform offsets and save to program
 	int numVars = program->getNumLiveUniformVariables();
 	int numBlocks = program->getNumLiveUniformBlocks();
-	for (int i = 0; i < numVars; i++)
+	int i;
+	for (i = 0; i < numBlocks; i++)
+	{
+		int blockIndex = program->getUniformBlockIndex(i);
+		std::string blockName = program->getUniformBlockName(blockIndex);
+		this->activeUniformBlocks.push_back(blockName);
+	}
+
+	for (i = 0; i < numVars; i++)
 	{
 		std::string uniformName = program->getUniformName(i);
+		this->activeUniforms.push_back(uniformName);
 		size_t indexOfArray = uniformName.find("[0]");
 		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
 		int index = program->getUniformIndex(uniformName.c_str());

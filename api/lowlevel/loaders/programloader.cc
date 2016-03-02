@@ -151,6 +151,21 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
 	program->shaderBlock.csBinarySize = reader->ReadUInt();
 	program->shaderBlock.csBinary = reader->ReadBytes(program->shaderBlock.csBinarySize);
 
+	// read names of active blocks
+	unsigned numActiveBlocks = reader->ReadUInt();
+	program->activeVarblockNames.resize(numActiveBlocks);
+	for (i = 0; i < numActiveBlocks; i++)
+	{
+		program->activeVarblockNames[i] = reader->ReadString().c_str();
+	}
+
+	// read names of active variables
+	unsigned numActiveVars = reader->ReadUInt();
+	for (i = 0; i < numActiveVars; i++)
+	{
+		program->activeVariableNames[i] = reader->ReadString().c_str();
+	}
+
 	// read variable buffer offsets
 	unsigned numOffsets = reader->ReadUInt();
 	for (i = 0; i < numOffsets; i++)

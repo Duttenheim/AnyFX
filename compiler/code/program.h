@@ -78,6 +78,8 @@ private:
     std::string compileFlags;
 	unsigned patchSize;
 
+	std::vector<std::string> activeUniforms;
+	std::vector<std::string> activeUniformBlocks;
 	std::map<std::string, unsigned> uniformBufferOffsets;
 
 	bool hasAnnotation;

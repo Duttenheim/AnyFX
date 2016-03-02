@@ -51,6 +51,9 @@ public:
 	bool supportsTransformFeedback;
 	unsigned patchSize;
 	eastl::string name;
+
+	eastl::vector<eastl::string> activeVarblockNames;
+	eastl::vector<eastl::string> activeVariableNames;
 	eastl::map<eastl::string, unsigned> variableBlockOffsets;
 	RenderStateBase* renderState;
 
