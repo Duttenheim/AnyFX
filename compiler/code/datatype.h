@@ -79,6 +79,7 @@ public:
 		Texture3D,
 		TextureCube,
 		TextureCubeArray,
+		InputAttachment,
         AtomicCounter,
 		Void,
 		String,

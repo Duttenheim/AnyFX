@@ -14,7 +14,10 @@ namespace AnyFX
 */
 VariableBase::VariableBase() :
 	parentBlock(NULL),
-	byteSize(0)
+	sampler(NULL),
+	byteSize(0),
+	currentValue(NULL),
+	arraySize(1)
 {
 	// empty
 }
@@ -24,7 +27,7 @@ VariableBase::VariableBase() :
 */
 VariableBase::~VariableBase()
 {
-	// empty
+	if (this->currentValue) delete[] this->currentValue;
 }
 
 //------------------------------------------------------------------------------
@@ -38,6 +41,11 @@ VariableBase::OnLoaded()
 	this->signature = typeString + ":" + this->name;
 
 	this->byteSize = TypeToByteSize(this->type) * this->arraySize;
+	if (this->hasDefaultValue)
+	{
+		this->currentValue = new char[this->byteSize];
+		this->SetupDefaultValue(this->defaultValueString);
+	}
 }
 
 //------------------------------------------------------------------------------

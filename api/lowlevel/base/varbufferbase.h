@@ -25,7 +25,7 @@ public:
 	unsigned binding;
 	unsigned set;
 
-private:
+protected:
 	friend class VarbufferLoader;
 
 	/// callback for when program is done loading

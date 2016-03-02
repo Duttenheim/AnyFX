@@ -71,13 +71,14 @@ SamplerLoader::Load(BinReader* reader, ShaderEffect* effect)
 	
 	// read textures
 	unsigned numTextures = reader->ReadInt();
-	eastl::vector<VariableBase*> textureVars;
+	sampler->textureVariables.resize(numTextures);
 	unsigned i;
 	for (i = 0; i < numTextures; i++)
 	{
         eastl::string texture = reader->ReadString().c_str();
 		VariableBase* var = effect->variables[texture];
-		textureVars.push_back(var);		
+		var->sampler = sampler;
+		sampler->textureVariables[i] = var;		
 	}
 
 	sampler->OnLoaded();

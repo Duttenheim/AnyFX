@@ -12,7 +12,7 @@ namespace AnyFX
 */
 ProgramBase::ProgramBase()
 {
-	// empty
+	memset(&this->shaderBlock, 0, sizeof(this->shaderBlock));
 }
 
 //------------------------------------------------------------------------------

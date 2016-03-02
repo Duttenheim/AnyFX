@@ -35,7 +35,7 @@ public:
 	unsigned set;		// used for DX12 and Vulkan, describes the descriptor set binding slot
 	bool push;			// used for DX12 and Vulkan, describes if this block is meant as a transient micro buffer for rapid uniform updates.
 
-private:
+protected:
 	friend class VarblockLoader;
 
 	/// callback for when program is done loading

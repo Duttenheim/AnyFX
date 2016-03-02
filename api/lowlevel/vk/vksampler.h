@@ -7,6 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "base/samplerbase.h"
+#include <vulkan/vulkan.h>
 namespace AnyFX
 {
 struct VkSampler : public SamplerBase
@@ -16,6 +17,11 @@ public:
 	VkSampler();
 	/// destructor
 	virtual ~VkSampler();
+
+	VkSamplerCreateInfo samplerInfo;
 private:
+
+	/// callback for when program is done loading
+	virtual void OnLoaded();
 };
 } // namespace AnyFX

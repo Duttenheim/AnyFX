@@ -234,7 +234,6 @@ Effect::Setup()
 				this->variables.erase(this->variables.begin() + i);
 				i--;
 			}
-
 		}
 		this->varBlocks.insert(this->varBlocks.begin(), this->placeholderVarBlock);
 	}
@@ -338,6 +337,16 @@ Effect::TypeCheck(TypeChecker& typechecker)
 	for (i = 0; i < this->programs.size(); i++)
 	{
 		this->programs[i].TypeCheck(typechecker);
+	}
+
+	// remove variables used as subroutines
+	for (i = 0; i < this->variables.size(); i++)
+	{
+		if (this->header.GetFlags() & Header::NoSubroutines && this->variables[i].IsSubroutine())
+		{
+			this->variables.erase(this->variables.begin() + i);
+			i--;
+		}
 	}
 }
 

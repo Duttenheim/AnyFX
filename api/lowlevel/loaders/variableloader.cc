@@ -96,7 +96,7 @@ VariableLoader::Load(BinReader* reader, ShaderEffect* effect, VarblockBase* varb
 	{
 		defaultValue = reader->ReadString().c_str();
 		var->hasDefaultValue = true;
-		var->SetupDefaultValue(defaultValue);
+		var->defaultValueString = defaultValue;
 	}	
 
 	var->name = name;
