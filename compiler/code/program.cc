@@ -550,7 +550,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	if (this->binary[ProgramRow::VertexShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::VertexShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::VertexShader], writer);
 
 	writer.WriteInt('HULL');
 	writer.WriteString(this->slotNames[ProgramRow::HullShader]);
@@ -560,7 +560,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	if (this->binary[ProgramRow::HullShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::HullShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::HullShader], writer);
 
 	writer.WriteInt('DOMA');
 	writer.WriteString(this->slotNames[ProgramRow::DomainShader]);
@@ -570,7 +570,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	if (this->binary[ProgramRow::DomainShader].size() > 0)	this->WriteBinary(this->binary[ProgramRow::DomainShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::DomainShader], writer);
 
 	writer.WriteInt('GEOM');
 	writer.WriteString(this->slotNames[ProgramRow::GeometryShader]);
@@ -580,7 +580,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	if (this->binary[ProgramRow::GeometryShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::GeometryShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::GeometryShader], writer);
 
 	writer.WriteInt('PIXL');
 	writer.WriteString(this->slotNames[ProgramRow::PixelShader]);
@@ -590,7 +590,7 @@ Program::Compile(BinWriter& writer)
 		writer.WriteString((*it).first);
 		writer.WriteString((*it).second);
 	}
-	if (this->binary[ProgramRow::PixelShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::PixelShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::PixelShader], writer);
 
 	writer.WriteInt('COMP');
 	writer.WriteString(this->slotNames[ProgramRow::ComputeShader]);
@@ -600,7 +600,7 @@ Program::Compile(BinWriter& writer)
         writer.WriteString((*it).first);
         writer.WriteString((*it).second);
     }
-	if (this->binary[ProgramRow::ComputeShader].size() > 0) this->WriteBinary(this->binary[ProgramRow::ComputeShader], writer);
+	this->WriteBinary(this->binary[ProgramRow::ComputeShader], writer);
 
 	writer.WriteUInt(this->activeUniformBlocks.size());
 	unsigned i;
@@ -711,12 +711,15 @@ Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	if (!program->link(messages))
 	{
 		std::string message = program->getInfoLog();
+		generator.Error(message);
 
+		/*
 		// now format errors and warnings to have correct line positions
 		std::stringstream stream(message);
 
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
+		*/
 	}
 
 	// build reflection to get uniform stuff
@@ -769,12 +772,16 @@ Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	if (!program->link(messages))
 	{
 		std::string message = program->getInfoLog();
+		generator.Error(message);
+
+		/*
 
 		// now format errors and warnings to have correct line positions
 		std::stringstream stream(message);
 
 		// handle error, Khronos follow the ATI way...
 		this->GLSLProblemKhronos(generator, stream);
+		*/
 	}
 
 	// build reflection to get uniform stuff
@@ -832,12 +839,13 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	if (!program->link(messages))
 	{
 		std::string message = program->getInfoLog();
+		generator.Error(message);
 
 		// now format errors and warnings to have correct line positions
-		std::stringstream stream(message);
+		//std::stringstream stream(message);
 
 		// handle error, Khronos follow the ATI way...
-		this->GLSLProblemKhronos(generator, stream);
+		//this->GLSLProblemKhronos(generator, stream);
 		return;
 	}
 
