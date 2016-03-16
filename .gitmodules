@@ -9,4 +9,4 @@
 	url = https://github.com/gscept/glew.git
 [submodule "exts/vulkan"]
 	path = exts/vulkan
-	url = https://github.com/KhronosGroup/Vulkan-Docs.git
+	url = git@github.com:KhronosGroup/Vulkan-Docs.git

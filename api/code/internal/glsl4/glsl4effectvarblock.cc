@@ -126,10 +126,10 @@ GLSL4EffectVarblock::SetupSlave(eastl::vector<InternalEffectProgram*> programs, 
 			//glUniformBlockBinding(opengl4Program->programHandle, location, this->uniformBlockBinding);
 			// hmm, this will set the block binding to the same thing each time, but it should be identical for this entire program...
 			glGetActiveUniformBlockiv(opengl4Program->programHandle, location, GL_UNIFORM_BLOCK_BINDING, (GLint*)&this->uniformBlockBinding);
-            glGetActiveUniformBlockiv(opengl4Program->programHandle, location, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&mainBlock->size);
+            //glGetActiveUniformBlockiv(opengl4Program->programHandle, location, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&mainBlock->size);
 
             // setup uniforms (since we have a shared layout, this should be consistent between ALL blocks)
-            this->SetupUniformOffsets(opengl4Program, location);
+            //this->SetupUniformOffsets(opengl4Program, location);
 
             // make active
             mainBlock->active = true;
@@ -277,7 +277,7 @@ GLSL4EffectVarblock::SetupUniformOffsets(GLSL4EffectProgram* program, GLuint blo
 		// ugh, need to remove [0] from arrays...
 		size_t indexOfArray = name.find("[0]");
 		if (indexOfArray != eastl::string::npos) name = name.substr(0, indexOfArray);
-		masterBlock->variablesByName[name]->sharedByteOffset = &masterBlock->uniformOffsets[i];
+		masterBlock->variablesByName[name]->sharedByteOffset = masterBlock->uniformOffsets[i];
 		delete [] buf;
 	}	
 	delete[] indices;

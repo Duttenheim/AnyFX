@@ -45,11 +45,6 @@ InternalEffectVarblock::Setup(eastl::vector<InternalEffectProgram*> programs)
 	this->masterBlock = this;
 	this->bufferHandle = new void*;
     *this->bufferHandle = NULL;
-
-    for (unsigned i = 0; i < this->variables.size(); i++)
-    {
-        this->variables[i]->sharedByteOffset = new unsigned;
-    }
 }
 
 //------------------------------------------------------------------------------

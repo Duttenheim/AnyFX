@@ -221,7 +221,7 @@ protected:
     
     unsigned byteSize;										// byte size
 	unsigned byteOffset;									// byte offset from beginning of parent block
-    unsigned* sharedByteOffset;
+    unsigned sharedByteOffset;
 
 	VariableType type;
 	ImageFormat format;

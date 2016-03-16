@@ -57,7 +57,6 @@ InternalEffectVariable::~InternalEffectVariable()
 		delete [] this->currentValue;
 	}
     this->parentBlock = NULL;
-    if (0 != this->sharedByteOffset) delete this->sharedByteOffset;
 }
 
 //------------------------------------------------------------------------------
