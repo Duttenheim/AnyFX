@@ -9,6 +9,7 @@
 #include "annotable.h"
 #include "shaderbase.h"
 #include "renderstatebase.h"
+#include <EASTL/hash_set.h>
 namespace AnyFX
 {
 struct ProgramBase : public Annotable
@@ -52,8 +53,8 @@ public:
 	unsigned patchSize;
 	eastl::string name;
 
-	eastl::vector<eastl::string> activeVarblockNames;
-	eastl::vector<eastl::string> activeVariableNames;
+	eastl::hash_set<eastl::string> activeVarblockNames;
+	eastl::hash_set<eastl::string> activeVariableNames;
 	eastl::map<eastl::string, unsigned> variableBlockOffsets;
 	RenderStateBase* renderState;
 

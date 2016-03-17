@@ -8,7 +8,8 @@ INCLUDE_DIRECTORIES(${ANYFX_SOURCE_DIR}
 					${ANYFX_SOURCE_DIR}/exts/glslang
 					${ANYFX_SOURCE_DIR}/api
 					${ANYFX_SOURCE_DIR}/api/lowlevel
-					${ANYFX_SOURCE_DIR}/api/highlevel)
+					${ANYFX_SOURCE_DIR}/api/highlevel
+					${VULKAN_INCLUDE_DIR})
 										
 FILE(GLOB SRC "*.cc")
 FILE(GLOB HEAD "*.h")

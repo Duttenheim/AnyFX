@@ -835,7 +835,7 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	if (gps) program->addShader(gps);
 	if (gcs) program->addShader(gcs);
 
-	EShMessages messages = EShMsgDefault;
+	EShMessages messages = (EShMessages)(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 	if (!program->link(messages))
 	{
 		std::string message = program->getInfoLog();
@@ -858,8 +858,7 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	int i;
 	for (i = 0; i < numBlocks; i++)
 	{
-		int blockIndex = program->getUniformBlockIndex(i);
-		std::string blockName = program->getUniformBlockName(blockIndex);
+		std::string blockName = program->getUniformBlockName(i);
 		this->activeUniformBlocks.push_back(blockName);
 	}
 
@@ -869,11 +868,10 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 		this->activeUniforms.push_back(uniformName);
 		size_t indexOfArray = uniformName.find("[0]");
 		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
-		int index = program->getUniformIndex(uniformName.c_str());
-		int type = program->getUniformType(index);
+		int type = program->getUniformType(i);
 		if (type < 0x8B5D)
 		{ 
-			unsigned offset = program->getUniformBufferOffset(index);
+			unsigned offset = program->getUniformBufferOffset(i);
 			this->uniformBufferOffsets[uniformName] = offset;
 		}
 	}

@@ -430,7 +430,7 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	sources[1] = code.c_str();
 	lengths[1] = code.length();
 
-	EShMessages messages = (EShMessages)(EShMsgSuppressWarnings | EShMsgVulkanRules | EShMsgSpvRules);
+	EShMessages messages = (EShMessages)(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 	glslang::TShader* shaderObject = new glslang::TShader(shaderTable[this->shaderType]);
 	shaderObject->setStringsWithLengths(sources, lengths, 2);
 
