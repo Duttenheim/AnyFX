@@ -687,6 +687,10 @@ Program::BuildShaders(const Header& header, const std::vector<Function>& functio
                         shaders[functionNameWithDefines] = shader;
 						this->shaders[i] = shader;
 					}
+					else
+					{
+						this->shaders[i] = shaders[functionNameWithDefines];
+					}
 				}
 			}
 		}
