@@ -67,16 +67,33 @@ EffectProgramStreamLoader::Load(BinReader* reader, Effect* effect)
 
 	// read and set tessellation data
 	bool supportsTessellation = reader->ReadBool();
-	int patchSize = reader->ReadInt();
+	unsigned patchSize = reader->ReadUInt();
+	unsigned numVsInputs = reader->ReadUInt();
+	unsigned numPsOutputs = reader->ReadUInt();
 	internalProgram->supportsTessellation = supportsTessellation;
 	internalProgram->patchSize = patchSize;
+	internalProgram->numVsInputs = numVsInputs;
+	internalProgram->numPsOutputs = numPsOutputs;
+
+	internalProgram->vsInputSlots.resize(internalProgram->numVsInputs);
+	unsigned i;
+	for (i = 0; i < internalProgram->numVsInputs; i++)
+	{
+		internalProgram->vsInputSlots[i] = reader->ReadUInt();
+	}
+
+	internalProgram->psOutputSlots.resize(internalProgram->numPsOutputs);
+	for (i = 0; i < internalProgram->numPsOutputs; i++)
+	{
+		internalProgram->psOutputSlots[i] = reader->ReadUInt();
+	}
 
     // read and set transform feedback support
     bool supportsTransformFeedback = reader->ReadBool();
     internalProgram->supportsTransformFeedback = supportsTransformFeedback;
 
 	int magic;
-    unsigned numSubroutineMappings, i;
+    unsigned numSubroutineMappings;
 	magic = reader->ReadInt();
 	assert('VERT' == magic);
     eastl::string vs = reader->ReadString().c_str();

@@ -25,6 +25,8 @@ InternalEffectProgram::InternalEffectProgram() :
 	linkState(NotLinked),
 	supportsTessellation(false),
 	patchSize(0),
+	numVsInputs(0),
+	numPsOutputs(0),
 	numVariables(0),
 	numVarblocks(0),
 	numVarbuffers(0),

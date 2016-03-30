@@ -127,6 +127,10 @@ protected:
 	bool supportsTessellation;
     bool supportsTransformFeedback;
 	unsigned patchSize;
+	unsigned numVsInputs;
+	eastl::vector<unsigned> vsInputSlots;
+	unsigned numPsOutputs;
+	eastl::vector<unsigned> psOutputSlots;
 
 	void* internalHandle;
 }; 

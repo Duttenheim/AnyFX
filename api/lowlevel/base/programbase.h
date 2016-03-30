@@ -51,6 +51,10 @@ public:
 	bool supportsTessellation;
 	bool supportsTransformFeedback;
 	unsigned patchSize;
+	unsigned numVsInputs;
+	eastl::vector<unsigned> vsInputSlots;
+	unsigned numPsOutputs;
+	eastl::vector<unsigned> psOutputSlots;
 	eastl::string name;
 
 	eastl::hash_set<eastl::string> activeVarblockNames;

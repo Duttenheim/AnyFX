@@ -234,6 +234,13 @@ Function::TypeCheck(TypeChecker& typechecker)
         AnyFX::Parameter& param = this->parameters[i];
         param.TypeCheck(typechecker);
 
+		if (this->IsShader() &&
+			(param.GetIO() == Parameter::NoIO || param.GetIO() == Parameter::InputOutput))
+		{
+			std::string message = Format("Shader parameter '%s' must be either declared with 'out' or 'in', %s\n", param.GetName().c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
+
         if (!param.HasExplicitSlot())
         {
             if (param.GetIO() == Parameter::Input)          param.SetParameterIndex(input++);
@@ -362,17 +369,17 @@ Function::Restore(const Header& header, int index)
 //------------------------------------------------------------------------------
 /**
 */
-std::vector<Parameter*> 
-Function::GetInputParameters()
+const std::vector<const Parameter*> 
+Function::GetInputParameters() const
 {
-	std::vector<Parameter*> result;
+	std::vector<const Parameter*> result;
 	unsigned i;
 	for (i = 0; i < this->parameters.size(); i++)
 	{
-		Parameter& param = this->parameters[i];
-		if (param.GetIO() == Parameter::Input)
+		const Parameter* param = &this->parameters[i];
+		if (param->GetIO() == Parameter::Input || param->GetIO() == Parameter::NoIO)
 		{
-			result.push_back(&param);
+			result.push_back(param);
 		}
 	}
 	return result;
@@ -381,17 +388,17 @@ Function::GetInputParameters()
 //------------------------------------------------------------------------------
 /**
 */
-std::vector<Parameter*> 
-Function::GetOutputParameters()
+const std::vector<const Parameter*>
+Function::GetOutputParameters() const
 {
-	std::vector<Parameter*> result;
+	std::vector<const Parameter*> result;
 	unsigned i;
 	for (i = 0; i < this->parameters.size(); i++)
 	{
-		Parameter& param = this->parameters[i];
-		if (param.GetIO() == Parameter::Output)
+		const Parameter* param = &this->parameters[i];
+		if (param->GetIO() == Parameter::Output || param->GetIO() == Parameter::NoIO)
 		{
-			result.push_back(&param);
+			result.push_back(param);
 		}
 	}
 	return result;

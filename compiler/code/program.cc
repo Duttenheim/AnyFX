@@ -533,7 +533,30 @@ Program::Compile(BinWriter& writer)
 
 	// write tessellation boolean and tessellation patch size
 	writer.WriteBool(this->slotMask[ProgramRow::HullShader]);
-	writer.WriteInt(this->patchSize);
+	writer.WriteUInt(this->patchSize);
+	if (this->slotMask[ProgramRow::VertexShader]) writer.WriteUInt(this->shaders[ProgramRow::VertexShader]->GetFunction().GetInputParameters().size());
+	else										  writer.WriteUInt(0);
+
+	if (this->slotMask[ProgramRow::PixelShader])  writer.WriteUInt(this->shaders[ProgramRow::PixelShader]->GetFunction().GetOutputParameters().size());
+	else										  writer.WriteUInt(0);
+
+	if (this->slotMask[ProgramRow::VertexShader])
+	{
+		const std::vector<const Parameter*> inputs = this->shaders[ProgramRow::VertexShader]->GetFunction().GetInputParameters();
+		for (unsigned i = 0; i < inputs.size(); i++)
+		{
+			writer.WriteUInt(inputs[i]->GetSlot());
+		}
+	}
+
+	if (this->slotMask[ProgramRow::PixelShader])
+	{
+		const std::vector<const Parameter*> outputs = this->shaders[ProgramRow::PixelShader]->GetFunction().GetOutputParameters();
+		for (unsigned i = 0; i < outputs.size(); i++)
+		{
+			writer.WriteUInt(outputs[i]->GetAttribute() - Parameter::Color0);
+		}
+	}
 
     // write geometry shader boolean which tells us we can use transform feedbacks
     writer.WriteBool(this->slotMask[ProgramRow::GeometryShader]);

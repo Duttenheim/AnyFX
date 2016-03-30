@@ -82,9 +82,9 @@ public:
     const int GetFileIndex() const;
 
 	/// constructs a list of only inputs
-	std::vector<Parameter*> GetInputParameters();
+	const std::vector<const Parameter*> GetInputParameters() const;
 	/// constructs a list of only outputs
-	std::vector<Parameter*> GetOutputParameters();
+	const std::vector<const Parameter*> GetOutputParameters() const;
 private:
     friend class Subroutine;
 	friend class Effect;
