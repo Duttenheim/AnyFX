@@ -244,7 +244,8 @@ Shader::Generate(
 				 const std::vector<VarBlock>& blocks,
                  const std::vector<VarBuffer>& buffers,
                  const std::vector<Subroutine>& subroutines,
-				 const std::vector<Function>& functions)
+				 const std::vector<Function>& functions,
+				 const std::vector<std::string>& ppstrings)
 {
 	// clear formatted code
 	this->preamble.clear();
@@ -269,6 +270,11 @@ Shader::Generate(
 		"#define COMPUTE_SHADER\n\n"
 	};
 	this->preamble.append(shaderDefines[this->shaderType]);
+
+	for (unsigned i = 0; i < ppstrings.size(); i++)
+	{
+		this->preamble.append(ppstrings[i] + "\n");
+	}
 
     // add compile flags
     std::string tempFlags = this->compileFlags;
