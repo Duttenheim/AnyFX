@@ -92,7 +92,8 @@ public:
 		const std::vector<VarBlock>& blocks, 
         const std::vector<VarBuffer>& buffers,
         const std::vector<Subroutine>& subroutines,
-		const std::vector<Function>& functions);
+		const std::vector<Function>& functions,
+		const std::vector<std::string>& ppstrings);
 
 private:
 	friend class Program;

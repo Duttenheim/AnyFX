@@ -19,10 +19,13 @@ options
 
 @lexer::members
 {
+std::vector<std::string> uncaughtPreprocessorDirectives;
+#include <iostream>
 
 int preprocessorRowLexer = 0;
 std::string includeFileNameLexer = "";
-#include <iostream>
+
+
 
 // delete custom data
 void deleteTokenIncludeFile(void* custom)
@@ -96,6 +99,7 @@ EmitPreprocessedToken(pANTLR3_LEXER lexer)
 
 @lexer::includes
 {
+#include <vector>
 #include <string>
 }
 
@@ -110,6 +114,7 @@ EmitPreprocessedToken(pANTLR3_LEXER lexer)
 @parser::members
 {
 	
+extern std::vector<std::string> uncaughtPreprocessorDirectives;
 // setup function which binds the compiler state to the current AST node
 void SetupFile(AnyFX::Compileable* comp, pANTLR3_TOKEN_STREAM stream, int index = -1)
 {
@@ -243,11 +248,16 @@ fragment
 PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|'_'|AND|SC|COL|DOT|' '|'-')*
 		;
 
+fragment
+PPDIRECTIVE : (~(LP|RP))*
+			;
+
 // since the lexer also needs to be able to handle preprocessor tokens, we define this rule which will do exactly the same as the 'preprocessor' parser equal, but for the lexer
 PREPROCESSOR
 	@init
 	{
 		std::string file;
+		std::string preprocess;
 	}
 	: NU 'line' WS includeLine = INTEGERLITERAL WS QO (data = PATH {file.append((const char*)$data->getText($data)->chars);}) QO WS
 	{
@@ -255,6 +265,10 @@ PREPROCESSOR
 		LEXER->input->line = line;
 		includeFileNameLexer = file;
 		$channel = HIDDEN;
+	}
+	| NU 'passthrough' WS LP (directive = PPDIRECTIVE { uncaughtPreprocessorDirectives.push_back((const char*)$directive.text->chars); }) RP WS
+	{
+		
 	}
 	;
 	
@@ -276,7 +290,12 @@ boolean returns [ bool val ]
 	
 // main entry point
 entry		returns [ Effect returnEffect ]
-	:	effect { $returnEffect = $effect.effect; } EOF
+	:	effect 
+	{ 
+		$effect.effect.SetPreprocessorPassthrough(uncaughtPreprocessorDirectives);
+		uncaughtPreprocessorDirectives.clear();
+		$returnEffect = $effect.effect; 
+	} EOF
 	;
 	
 // entry point for effect, call this function to begin parsing
