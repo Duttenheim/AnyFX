@@ -251,25 +251,44 @@ PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|'_'|AND|SC|COL|DOT|' '|'-
 fragment
 PPDIRECTIVE : (~(LP|RP))*
 			;
+			
+fragment
+LINE : 'line' ;
+
+fragment
+PT : 'passthrough' ;
+	 
+fragment
+UNKNOWNPP : (IDENTIFIER|INTEGERLITERAL|QO PATH QO|COL);
 
 // since the lexer also needs to be able to handle preprocessor tokens, we define this rule which will do exactly the same as the 'preprocessor' parser equal, but for the lexer
 PREPROCESSOR
 	@init
 	{
+		std::vector<std::string> args;
+		std::string directive;
 		std::string file;
 		std::string preprocess;
 	}
-	: NU 'line' WS includeLine = INTEGERLITERAL WS QO (data = PATH {file.append((const char*)$data->getText($data)->chars);}) QO WS
+	@after
 	{
-		int line = atoi((const char*)$includeLine.text->chars);
-		LEXER->input->line = line;
-		includeFileNameLexer = file;
-		$channel = HIDDEN;
+		if (directive == "line")
+		{
+			int line = atoi(args[0].c_str());
+			LEXER->input->line = line;
+			includeFileNameLexer = args[1];
+			$channel = HIDDEN;
+		}
+		else if (directive == "passthrough")
+		{
+			std::string argstring;
+			for (unsigned i = 0; i < args.size(); i++) argstring += args[i];
+			uncaughtPreprocessorDirectives.push_back(argstring);
+		}
 	}
-	| NU 'passthrough' WS LP (directive = PPDIRECTIVE { uncaughtPreprocessorDirectives.push_back((const char*)$directive.text->chars); }) RP WS
-	{
-		
-	}
+	: NU 
+	type = IDENTIFIER { directive = (const char*)$type.text->chars; }
+	((' ')+ pp = UNKNOWNPP { args.push_back((const char*)$pp.text->chars); })* ('\r'|'\n')
 	;
 	
 WS	: ( '\t' | ' ' | '\r' | '\n' | '\u000C' )+ { $channel = HIDDEN; };
