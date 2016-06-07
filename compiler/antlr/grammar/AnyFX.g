@@ -259,7 +259,7 @@ fragment
 PT : 'passthrough' ;
 	 
 fragment
-UNKNOWNPP : (IDENTIFIER|INTEGERLITERAL|QO PATH QO|COL);
+UNKNOWNPP : (IDENTIFIER|INTEGERLITERAL|QO PATH QO|COL|LP .* RP);
 
 // since the lexer also needs to be able to handle preprocessor tokens, we define this rule which will do exactly the same as the 'preprocessor' parser equal, but for the lexer
 PREPROCESSOR
@@ -277,14 +277,21 @@ PREPROCESSOR
 			int line = atoi(args[0].c_str());
 			LEXER->input->line = line;
 			includeFileNameLexer = args[1];
-			$channel = HIDDEN;
 		}
 		else if (directive == "passthrough")
 		{
 			std::string argstring;
 			for (unsigned i = 0; i < args.size(); i++) argstring += args[i];
+			argstring = argstring.substr(1, argstring.length() - 2);
 			uncaughtPreprocessorDirectives.push_back(argstring);
 		}
+		else
+		{
+			std::string argstring = "#" + directive + " ";
+			for (unsigned i = 0; i < args.size(); i++) argstring += args[i];
+			uncaughtPreprocessorDirectives.push_back(argstring);
+		}
+		$channel = HIDDEN;
 	}
 	: NU 
 	type = IDENTIFIER { directive = (const char*)$type.text->chars; }
