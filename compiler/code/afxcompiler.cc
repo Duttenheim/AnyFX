@@ -158,7 +158,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
         parser = AnyFXParserNew(tokens);
 
         // create new effect
-        Effect effect = parser->entry(parser);
+        EffectEntryPoint effect = parser->entry(parser);
 
         // stop the process if lexing or parsing fails
         if (!lexerError && !parserError)
@@ -340,139 +340,7 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
 void
 AnyFXBeginCompile()
 {
-	//ShInitialize();
 	glslang::InitializeProcess();
-	/*
-#if WIN32
-    HDC hDc;
-    HGLRC hRc;      
-    HACCEL hAccel;
-    HINSTANCE hInst;
-    HWND hWnd;
-
-    ACCEL acc[1];
-    hAccel = CreateAcceleratorTable(acc, 1);
-    hInst = GetModuleHandle(0);
-
-    HICON icon = LoadIcon(NULL, IDI_APPLICATION);
-    // register window class
-    WNDCLASSEX wndClass;
-    ZeroMemory(&wndClass, sizeof(wndClass));
-    wndClass.cbSize        = sizeof(wndClass);
-    wndClass.style         = CS_DBLCLKS | CS_OWNDC;
-    wndClass.lpfnWndProc   = AnyFXWinProc;
-    wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof(void*);   // used to hold 'this' pointer
-    wndClass.hInstance     = hInst;
-    wndClass.hIcon         = icon;
-    wndClass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH) GetStockObject(NULL_BRUSH);
-    wndClass.lpszMenuName  = NULL;
-    wndClass.lpszClassName = "AnyFX::Compiler";
-    wndClass.hIconSm       = NULL;
-    RegisterClassEx(&wndClass);
-
-    DWORD windowStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE;
-    DWORD extendedStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-
-    RECT		windowRect;				// Grabs Rectangle Upper Left / Lower Right Values
-    windowRect.left=(long)0;			// Set Left Value To 0
-    windowRect.right=(long)0;		// Set Right Value To Requested Width
-    windowRect.top=(long)0;				// Set Top Value To 0
-    windowRect.bottom=(long)0;		// Set Bottom Value To Requested Height
-    AdjustWindowRectEx(&windowRect, windowStyle, FALSE, extendedStyle);		// Adjust Window To True Requested Size
-
-    // open window
-    hWnd = CreateWindow("AnyFX::Compiler",
-        "AnyFX Compiler",					
-        windowStyle,					
-        0,								
-        0,								
-        windowRect.right-windowRect.left,						
-        windowRect.bottom-windowRect.top,						
-        NULL,							
-        NULL,                             
-        hInst,                      
-        NULL);          
-
-
-    PIXELFORMATDESCRIPTOR pfd =
-    {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
-        PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
-        32,                        //Colordepth of the framebuffer.
-        0, 0, 0, 0, 0, 0,
-        0,
-        0,
-        0,
-        0, 0, 0, 0,
-        24,                       //Number of bits for the depthbuffer
-        8,                        //Number of bits for the stencilbuffer
-        0,                        //Number of Aux buffers in the framebuffer.
-        PFD_MAIN_PLANE,
-        0,
-        0, 0, 0
-    };
-
-    hDc = GetDC(hWnd);
-    int pixelFormat = ChoosePixelFormat(hDc, &pfd);
-    SetPixelFormat(hDc, pixelFormat, &pfd);
-    hRc = wglCreateContext(hDc);
-    wglMakeCurrent(hDc, hRc);
-#elif __linux__
-    dsp = XOpenDisplay(NULL);
-    if (dsp == NULL)
-    {
-        Emit("Could not connect to X.\n");
-    }
-    root = DefaultRootWindow(dsp);
-    vi = glXChooseVisual(dsp, 0, attrs);
-    if (vi == NULL)
-    {
-        Emit("Could not create visual.\n");
-    }
-    cmap = XCreateColormap(dsp, root, vi->visual, AllocNone);
-    swa.colormap = cmap;
-    swa.event_mask = ExposureMask | KeyPressMask;
-    win = XCreateWindow(dsp, root, 0, 0, 1024, 768, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
-    XStoreName(dsp, win, "AnyFX Compiler");
-    XMapWindow(dsp, win);
-    glc = glXCreateContext(dsp, vi, NULL, GL_TRUE);
-    glXMakeCurrent(dsp, win, glc);
-
-    XNextEvent(dsp, &xev);
-
-    if (xev.type == Expose)
-    {
-        XGetWindowAttributes(dsp, win, &gwa);
-        glXSwapBuffers(dsp, win);
-    }
-#elif APPLE
-    CGLChoosePixelFormat(attribs, &pix, &npix); 
-    CGLCreateContext(pix, NULL, &ctx); 
-    CGLSetCurrentContext(ctx);
-#endif
-
-	if (glewInitialized != GLEW_OK)
-	{
-		glewInitialized = glewInit();
-	}
-
-#ifndef __ANYFX_COMPILER_LIBRARY__
-	if (glewInitialized != GLEW_OK)
-    {
-        Emit("Glew failed to initialize!\n");
-    }
-
-    printf("AnyFX OpenGL capability report:\n");
-    printf("Vendor:   %s\n", glGetString(GL_VENDOR)); 
-    printf("Renderer: %s\n", glGetString(GL_RENDERER)); 
-    printf("Version:  %s\n", glGetString(GL_VERSION)); 
-    printf("GLSL:     %s\n\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-#endif
-	*/
 }
 
 //------------------------------------------------------------------------------
@@ -483,18 +351,4 @@ void
 AnyFXEndCompile()
 {
 	glslang::FinalizeProcess();
-	//ShFinalize();
-	/*
-#if (WIN32)
-    DestroyWindow(hWnd);
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(hRc);
-#elif (__linux__)
-    glXMakeCurrent(dsp, None, NULL);
-    glXDestroyContext(dsp, glc);
-    XDestroyWindow(dsp, win);
-    XCloseDisplay(dsp);
-#elif (APPLE)
-#endif
-	*/
 }

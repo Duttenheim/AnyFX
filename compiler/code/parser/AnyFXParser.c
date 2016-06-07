@@ -270,10 +270,10 @@ static
  bool
 	boolean    (pAnyFXParser ctx);
 static 
- Effect
+ EffectEntryPoint
 	entry    (pAnyFXParser ctx);
 static 
- Effect
+ EffectEntryPoint
 	effect    (pAnyFXParser ctx);
 static 
  DataType
@@ -2672,15 +2672,15 @@ boolean(pAnyFXParser ctx)
  * $ANTLR start entry
  * antlr/grammar/AnyFX.g:311:1: entry returns [ Effect returnEffect ] : effect EOF ;
  */
-static Effect
+static EffectEntryPoint
 entry(pAnyFXParser ctx)
 {
-    Effect returnEffect;
+    EffectEntryPoint returnEffect;
 
 
-    Effect effect1;
+    EffectEntryPoint effect1;
     #undef	RETURN_TYPE_effect1
-    #define	RETURN_TYPE_effect1 Effect
+    #define	RETURN_TYPE_effect1 EffectEntryPoint
 
     /* Initialize rule variables
      */
@@ -2750,10 +2750,10 @@ entry(pAnyFXParser ctx)
  * $ANTLR start effect
  * antlr/grammar/AnyFX.g:321:1: effect returns [ Effect effect ] : ( variable | constant | renderState | function | program | structure | varblock | varbuffer | subroutine | sampler )* ;
  */
-static Effect
+static EffectEntryPoint
 effect(pAnyFXParser ctx)
 {
-    Effect effect;
+    EffectEntryPoint effect;
 
 
     Variable variable2;

@@ -40,7 +40,7 @@ public:
 	void Compile(BinWriter& writer);
 
 private:
-	friend class Effect;
+	friend class EffectEntryPoint;
 
 	/// constructs a shader function using the given functions
 	void BuildShaders(const Header& header, const std::vector<Function>& functions, std::map<std::string, Shader*>& shaders);

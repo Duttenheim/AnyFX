@@ -167,7 +167,7 @@ public:
 
 private:
     friend class VarBlock;
-	friend class Effect;
+	friend class EffectEntryPoint;
 
     /// evaluates array size
     void EvaluateArraySize(TypeChecker& typechecker);

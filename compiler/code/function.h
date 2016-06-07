@@ -83,7 +83,7 @@ public:
 	std::vector<Parameter*> GetOutputParameters();
 private:
     friend class Subroutine;
-	friend class Effect;
+	friend class EffectEntryPoint;
 
 	/// restores function (should only be applied if function is not bound as a shader)
 	void Restore(const Header& header, int index);

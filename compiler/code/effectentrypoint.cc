@@ -2,7 +2,7 @@
 //  effect.cc
 //  (C) 2013 Gustav Sterbrant
 //------------------------------------------------------------------------------
-#include "./effect.h"
+#include "./effectentrypoint.h"
 #include <assert.h>
 #include "constant.h"
 
@@ -12,7 +12,7 @@ namespace AnyFX
 //------------------------------------------------------------------------------
 /**
 */
-Effect::Effect()
+EffectEntryPoint::EffectEntryPoint()
 {
 	// empty
 }
@@ -20,7 +20,7 @@ Effect::Effect()
 //------------------------------------------------------------------------------
 /**
 */
-Effect::~Effect()
+EffectEntryPoint::~EffectEntryPoint()
 {
 	unsigned i;
 	for (i = 0; i < programs.size(); i++)
@@ -96,7 +96,7 @@ Effect::~Effect()
 /**
 */
 void
-Effect::AddProgram(const Program& program)
+EffectEntryPoint::AddProgram(const Program& program)
 {
 	this->programs.push_back(program);
 }
@@ -105,7 +105,7 @@ Effect::AddProgram(const Program& program)
 /**
 */
 void
-Effect::AddVariable(const Variable& var)
+EffectEntryPoint::AddVariable(const Variable& var)
 {
 	this->variables.push_back(var);
 }
@@ -114,7 +114,7 @@ Effect::AddVariable(const Variable& var)
 /**
 */
 void
-Effect::AddConstant(const Constant& constant)
+EffectEntryPoint::AddConstant(const Constant& constant)
 {
 	this->constants.push_back(constant);
 }
@@ -123,7 +123,7 @@ Effect::AddConstant(const Constant& constant)
 /**
 */
 void
-Effect::AddRenderState(const RenderState& state)
+EffectEntryPoint::AddRenderState(const RenderState& state)
 {
 	this->renderStates.push_back(state);
 }
@@ -132,7 +132,7 @@ Effect::AddRenderState(const RenderState& state)
 /**
 */
 void
-Effect::AddFunction(const Function& function)
+EffectEntryPoint::AddFunction(const Function& function)
 {
 	this->functions.push_back(function);
 }
@@ -141,7 +141,7 @@ Effect::AddFunction(const Function& function)
 /**
 */
 void
-Effect::AddStructure(const Structure& structure)
+EffectEntryPoint::AddStructure(const Structure& structure)
 {
 	this->structures.push_back(structure);
 }
@@ -150,7 +150,7 @@ Effect::AddStructure(const Structure& structure)
 /**
 */
 void
-Effect::AddVarBlock(const VarBlock& varBlock)
+EffectEntryPoint::AddVarBlock(const VarBlock& varBlock)
 {
 	this->varBlocks.push_back(varBlock);
 }
@@ -159,7 +159,7 @@ Effect::AddVarBlock(const VarBlock& varBlock)
 /**
 */
 void
-Effect::AddVarBuffer(const VarBuffer& varBuffer)
+EffectEntryPoint::AddVarBuffer(const VarBuffer& varBuffer)
 {
     this->varBuffers.push_back(varBuffer);
 }
@@ -168,7 +168,7 @@ Effect::AddVarBuffer(const VarBuffer& varBuffer)
 /**
 */
 void
-Effect::AddSubroutine(const Subroutine& subroutine)
+EffectEntryPoint::AddSubroutine(const Subroutine& subroutine)
 {
     this->subroutines.push_back(subroutine);
 }
@@ -177,7 +177,7 @@ Effect::AddSubroutine(const Subroutine& subroutine)
 /**
 */
 void
-Effect::AddSampler(const Sampler& sampler)
+EffectEntryPoint::AddSampler(const Sampler& sampler)
 {
 	this->samplers.push_back(sampler);
 }
@@ -186,7 +186,7 @@ Effect::AddSampler(const Sampler& sampler)
 /**
 */
 void
-Effect::SetPreprocessorPassthrough(const std::vector<std::string>& pps)
+EffectEntryPoint::SetPreprocessorPassthrough(const std::vector<std::string>& pps)
 {
 	this->passthroughPPs = pps;
 }
@@ -195,7 +195,7 @@ Effect::SetPreprocessorPassthrough(const std::vector<std::string>& pps)
 /**
 */
 void 
-Effect::Setup()
+EffectEntryPoint::Setup()
 {
 	assert(this->header.GetType() != Header::InvalidType);
 
@@ -273,7 +273,7 @@ Effect::Setup()
 /**
 */
 void
-Effect::TypeCheck(TypeChecker& typechecker)
+EffectEntryPoint::TypeCheck(TypeChecker& typechecker)
 {
 	this->header.TypeCheck(typechecker);
 
@@ -354,7 +354,7 @@ Effect::TypeCheck(TypeChecker& typechecker)
 /**
 */
 void
-Effect::Generate(Generator& generator)
+EffectEntryPoint::Generate(Generator& generator)
 {
 	// typecheck all shaders
 	std::map<std::string, Shader*>::iterator it;
@@ -377,7 +377,7 @@ Effect::Generate(Generator& generator)
 /**
 */
 void
-Effect::Compile(BinWriter& writer)
+EffectEntryPoint::Compile(BinWriter& writer)
 {
 	assert(this->header.GetType() != Header::InvalidType);
 

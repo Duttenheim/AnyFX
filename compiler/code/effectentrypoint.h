@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class Effect
+    @class EffectEntryPoint
     
     Main parser entry point, contains complete effect.
     
@@ -25,14 +25,14 @@
 namespace AnyFX
 {
 
-class Effect : public Compileable
+class EffectEntryPoint : public Compileable
 {
 public:
 
 	/// constructor
-	Effect();
+	EffectEntryPoint();
 	/// destructor
-	virtual ~Effect();
+	virtual ~EffectEntryPoint();
 
 	/// sets the header object
 	void SetHeader(const Header& header);
@@ -96,7 +96,7 @@ private:
 /**
 */
 inline void
-Effect::SetHeader(const Header& header)
+EffectEntryPoint::SetHeader(const Header& header)
 {
 	this->header = header;
 }
@@ -105,7 +105,7 @@ Effect::SetHeader(const Header& header)
 /**
 */
 inline const Header&
-Effect::GetHeader() const
+EffectEntryPoint::GetHeader() const
 {
 	return this->header;
 }

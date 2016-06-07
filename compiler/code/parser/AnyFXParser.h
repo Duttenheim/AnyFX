@@ -209,7 +209,7 @@ has the callable functions (rules) shown below,
 #include <stack>
 
 #include "../../code/compileable.h"
-#include "../../code/effect.h"
+#include "../../code/effectentrypoint.h"
 #include "../../code/header.h"
 #include "../../code/datatype.h"
 #include "../../code/parameter.h"
@@ -300,10 +300,10 @@ struct AnyFXParser_Ctx_struct
      bool
      (*boolean)	(struct AnyFXParser_Ctx_struct * ctx);
 
-     Effect
+     EffectEntryPoint
      (*entry)	(struct AnyFXParser_Ctx_struct * ctx);
 
-     Effect
+     EffectEntryPoint
      (*effect)	(struct AnyFXParser_Ctx_struct * ctx);
 
      DataType
