@@ -139,7 +139,7 @@ void SetupFile(AnyFX::Compileable* comp, pANTLR3_TOKEN_STREAM stream, int index 
 #include <stack>
 
 #include "../../code/compileable.h"
-#include "../../code/effect.h"
+#include "../../code/effectentrypoint.h"
 #include "../../code/header.h"
 #include "../../code/datatype.h"
 #include "../../code/parameter.h"
@@ -315,7 +315,7 @@ boolean returns [ bool val ]
 	;
 	
 // main entry point
-entry		returns [ Effect returnEffect ]
+entry		returns [ EffectEntryPoint returnEffect ]
 	:	effect 
 	{ 
 		$effect.effect.SetPreprocessorPassthrough(uncaughtPreprocessorDirectives);
@@ -325,7 +325,7 @@ entry		returns [ Effect returnEffect ]
 	;
 	
 // entry point for effect, call this function to begin parsing
-effect	returns [ Effect effect ]
+effect	returns [ EffectEntryPoint effect ]
 	:  
 		(
 			variable { $effect.AddVariable($variable.variable); } 
@@ -338,6 +338,7 @@ effect	returns [ Effect effect ]
 			| varbuffer { $effect.AddVarBuffer($varbuffer.buffer); }
 			| subroutine { $effect.AddSubroutine($subroutine.subroutine); }
 			| sampler { $effect.AddSampler($sampler.sampler); }
+			| SC
 		)*
 	;
 	
