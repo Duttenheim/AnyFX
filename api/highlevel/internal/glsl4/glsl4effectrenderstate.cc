@@ -82,7 +82,31 @@ static const GLenum opengl4PolygonModeTable[] =
 	GL_POINT
 };
 
+static const GLenum opengl4WindingTable[] =
+{
+	GL_CW,
+	GL_CCW
+};
 
+static const GLenum opengl4LogicOpTable[] =
+{
+	GL_CLEAR,
+	GL_AND,
+	GL_AND_REVERSE,
+	GL_COPY,
+	GL_AND_INVERTED,
+	GL_NOOP,
+	GL_XOR,
+	GL_OR,
+	GL_NOR,
+	GL_EQUIV,
+	GL_INVERT,
+	GL_OR_REVERSE,
+	GL_COPY_INVERTED,
+	GL_OR_INVERTED,
+	GL_NAND,
+	GL_SET
+};
 
 // set global state to a sane default
 unsigned GLSL4GlobalRenderState::polygonMode = GL_INVALID_ENUM;
@@ -94,9 +118,15 @@ unsigned GLSL4GlobalRenderState::depthFunc = GL_INVALID_ENUM;
 bool GLSL4GlobalRenderState::scissorEnabled = false;
 bool GLSL4GlobalRenderState::multisampleEnabled = false;
 bool GLSL4GlobalRenderState::alphaToCoverageEnabled = false;
+bool GLSL4GlobalRenderState::alphaToOneEnabled = false;
 bool GLSL4GlobalRenderState::polygonOffsetEnabled = false;
 int GLSL4GlobalRenderState::polygonOffsetFactor = 0;
 int GLSL4GlobalRenderState::polygonOffsetUnits = 0;
+float GLSL4GlobalRenderState::lineWidth = 1.0f;
+float GLSL4GlobalRenderState::minSampleShading = 1.0f;
+float GLSL4GlobalRenderState::minDepthBounds = 0;
+float GLSL4GlobalRenderState::maxDepthBounds = FLT_MAX;
+int GLSL4GlobalRenderState::windingMode = GL_CW;
 
 bool GLSL4GlobalRenderState::stencilEnabled = false;
 unsigned GLSL4GlobalRenderState::stencilBackOp[3] = { GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM };
@@ -112,7 +142,13 @@ unsigned GLSL4GlobalRenderState::alphaSrcBlends[InternalEffectRenderState::MaxNu
 unsigned GLSL4GlobalRenderState::alphaDstBlends[InternalEffectRenderState::MaxNumRenderTargets] = { GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM };
 unsigned GLSL4GlobalRenderState::blendOps[InternalEffectRenderState::MaxNumRenderTargets] = { GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM };
 unsigned GLSL4GlobalRenderState::alphaBlendOps[InternalEffectRenderState::MaxNumRenderTargets] = { GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM };
+bool GLSL4GlobalRenderState::logicOpEnabled = false;
+int GLSL4GlobalRenderState::logicOp = GL_SET;
 
+// ugly macro which checks if variable has to change, and does so if required, must be within begin-end, and specific code can happen in between
+#define BEGIN_DIRTY(var, val) if (GLSL4GlobalRenderState::var != val) { GLSL4GlobalRenderState::var = val; 
+#define BEGIN_DIRTY2(var1, var2, val1, val2) if (GLSL4GlobalRenderState::var1 != val1 || GLSL4GlobalRenderState::var2 != val2) { GLSL4GlobalRenderState::var1 = val1; GLSL4GlobalRenderState::var2 = val2; 
+#define END_DIRTY }
 //------------------------------------------------------------------------------
 /**
 */
@@ -473,5 +509,35 @@ GLSL4EffectRenderState::Apply()
 
     // apply multisampling
     ApplyMultisample(this->renderSettings.multisampleEnabled);
+
+	BEGIN_DIRTY(lineWidth, this->renderSettings.lineWidth)
+		glLineWidth(this->renderSettings.lineWidth);
+	END_DIRTY
+
+	BEGIN_DIRTY(minSampleShading, this->renderSettings.minSampleShading);
+		glMinSampleShading(this->renderSettings.minSampleShading);
+	END_DIRTY
+
+	BEGIN_DIRTY2(minDepthBounds, maxDepthBounds, this->renderSettings.minDepthBounds, this->renderSettings.maxDepthBounds)
+		glDepthBoundsEXT(this->renderSettings.minDepthBounds, this->renderSettings.maxDepthBounds);
+	END_DIRTY
+
+	BEGIN_DIRTY(windingMode, this->renderSettings.windingMode);
+		glFrontFace(opengl4WindingTable[this->renderSettings.windingMode]);
+	END_DIRTY
+	
+	BEGIN_DIRTY(alphaToOneEnabled, this->renderSettings.alphaToOneEnabled)
+		if (this->renderSettings.alphaToOneEnabled) glEnable(GL_SAMPLE_ALPHA_TO_ONE);
+		else										glDisable(GL_SAMPLE_ALPHA_TO_ONE);
+	END_DIRTY
+
+	BEGIN_DIRTY(logicOpEnabled, this->renderSettings.logicOpEnabled)
+		if (this->renderSettings.logicOpEnabled) glEnable(GL_LOGIC_OP);
+		else									 glDisable(GL_LOGIC_OP);
+	END_DIRTY
+
+	BEGIN_DIRTY(logicOp, this->renderSettings.logicOp)
+			glLogicOp(opengl4LogicOpTable[this->renderSettings.logicOp]);
+	END_DIRTY
 }
 } // namespace AnyFX

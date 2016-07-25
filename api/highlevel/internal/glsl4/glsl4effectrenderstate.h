@@ -40,9 +40,14 @@ struct GLSL4GlobalRenderState
     static bool          scissorEnabled;
     static bool          multisampleEnabled;
     static bool          alphaToCoverageEnabled;
+	static bool          alphaToOneEnabled;
 	static bool			 polygonOffsetEnabled;
 	static int			 polygonOffsetFactor;
 	static int			 polygonOffsetUnits;
+	static float		 lineWidth;
+	static float		 minSampleShading;
+	static float		 minDepthBounds, maxDepthBounds;
+	static int			 windingMode;
 
     // stencil stuff
     static bool          stencilEnabled;
@@ -61,6 +66,8 @@ struct GLSL4GlobalRenderState
     static unsigned      alphaDstBlends[InternalEffectRenderState::MaxNumRenderTargets];
     static unsigned      blendOps[InternalEffectRenderState::MaxNumRenderTargets];
     static unsigned      alphaBlendOps[InternalEffectRenderState::MaxNumRenderTargets];
+	static bool			 logicOpEnabled;
+	static int			 logicOp;
 };
 
 } // namespace AnyFX
