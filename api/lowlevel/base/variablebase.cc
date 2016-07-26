@@ -41,10 +41,14 @@ VariableBase::OnLoaded()
 	this->signature = typeString + ":" + this->name;
 
 	this->byteSize = TypeToByteSize(this->type) * this->arraySize;
+	this->currentValue = new char[this->byteSize];
 	if (this->hasDefaultValue)
 	{
-		this->currentValue = new char[this->byteSize];
 		this->SetupDefaultValue(this->defaultValueString);
+	}
+	else
+	{
+		memset(this->currentValue, 0, this->byteSize);
 	}
 }
 
