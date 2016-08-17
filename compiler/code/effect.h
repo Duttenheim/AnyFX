@@ -69,6 +69,14 @@ public:
 	/// compile effect
 	void Compile(BinWriter& writer);
 
+	/// set debug output
+	void SetDebugOutputPath(const std::string& debugOutput);
+
+	/// align value to nearest power of two
+	static unsigned AlignToPow(unsigned num, unsigned pow);
+	/// calculate offset of variable using shared/std140 declared in GLSL/SPIR-V
+	static unsigned GetAlignmentGLSL(const DataType& type, unsigned arraySize, unsigned& alignedSize, unsigned& stride, unsigned& elementStride, std::vector<unsigned>& suboffsets, const bool& std140, TypeChecker& typechecker);
+
 private:
 	Header header;
 	std::vector<Program> programs;
@@ -86,13 +94,15 @@ private:
 
 	RenderState placeholderRenderState;
     VarBlock placeholderVarBlock;
+
+	std::string debugOutput;
 }; 
 
 //------------------------------------------------------------------------------
 /**
 */
 inline void 
-Effect::SetHeader( const Header& header )
+Effect::SetHeader(const Header& header)
 {
 	this->header = header;
 }
@@ -106,6 +116,23 @@ Effect::GetHeader() const
 	return this->header;
 }
 
-} // namespace AnyFX
+//------------------------------------------------------------------------------
+/**
+*/
+inline void
+Effect::SetDebugOutputPath(const std::string& debugOutput)
+{
+	this->debugOutput = debugOutput;
+}
 
+//------------------------------------------------------------------------------
+/**
+*/
+inline unsigned
+Effect::AlignToPow(unsigned num, unsigned pow)
+{
+	return ((num + pow - 1) & ~(pow - 1));
+}
+
+} // namespace AnyFX
 //------------------------------------------------------------------------------

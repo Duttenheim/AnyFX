@@ -46,11 +46,16 @@ StreamLoader::Load()
 
 	// read magic integer
 	int magic = this->reader->ReadInt();
+	int major = this->reader->ReadInt();
+	int minor = this->reader->ReadInt();
 
-	if (magic == 'AFX1')
+	// check magic is right, then check version numbering
+	if (magic == 'ANFX' &&
+		major <= 2 &&
+		minor <= 1)
 	{
 		// load header, this must always come first!
-		magic = this->reader->ReadInt();
+		int magic = this->reader->ReadInt();
 		assert(magic == 'HEAD');
 		int profile = this->reader->ReadInt();
 		int major = this->reader->ReadInt();
@@ -80,7 +85,6 @@ StreamLoader::Load()
 				unsigned numShaders = this->reader->ReadUInt();
 				if (numShaders > 0)
 				{
-
 					unsigned i;
 					for (i = 0; i < numShaders; i++)
 					{
@@ -155,6 +159,7 @@ StreamLoader::Load()
 						assert(effect->variables.find(var->name) == effect->variables.end());
 						effect->variables[var->name] = var;
 						effect->variablesByIndex.push_back(var);
+						effect->variablesByGroup[var->set].push_back(var);
 					}
 				}				
 			}
@@ -190,6 +195,7 @@ StreamLoader::Load()
 						assert(effect->varblocks.find(varblock->name) == effect->varblocks.end());
 						effect->varblocks[varblock->name] = varblock;
 						effect->varblocksByIndex.push_back(varblock);
+						effect->varblocksByGroup[varblock->set].push_back(varblock);
 
 						// copy old variables to newly resized array
 						size_t curNumVars = effect->GetNumVariables();
@@ -200,6 +206,7 @@ StreamLoader::Load()
 							assert(effect->variables.find(vars[j]->name) == effect->variables.end());
 							effect->variables[vars[j]->name] = vars[j];
 							effect->variablesByIndex.push_back(vars[j]);
+							effect->variablesByGroup[vars[j]->set].push_back(vars[j]);				// not a bug, this variable belong to the varblocks state
 						}
 
 						vars.clear();
@@ -218,6 +225,7 @@ StreamLoader::Load()
 						assert(effect->varbuffers.find(buffer->name) == effect->varbuffers.end());
 						effect->varbuffers[buffer->name] = buffer;
 						effect->varbuffersByIndex.push_back(buffer);
+						effect->varbuffersByGroup[buffer->set].push_back(buffer);
 					}
 				}
             }

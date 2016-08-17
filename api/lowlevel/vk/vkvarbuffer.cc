@@ -30,6 +30,12 @@ void
 VkVarbuffer::OnLoaded()
 {
 	VarbufferBase::OnLoaded();
+
+	// add set-binding to signature
+	char buf[64];
+	sprintf_s(buf, sizeof(buf), "[%d-%d]", this->set, this->binding);
+	this->signature += buf;
+
 	this->bindingLayout.binding = this->binding;
 	this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	this->bindingLayout.descriptorCount = 1;

@@ -173,6 +173,15 @@ ShaderEffect::GetVariables() const
 //------------------------------------------------------------------------------
 /**
 */
+const eastl::vector<VariableBase*>&
+ShaderEffect::GetVariables(const unsigned group)
+{
+	return this->variablesByGroup[group];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 bool
 ShaderEffect::HasVariable(const eastl::string& name)
 {
@@ -210,6 +219,15 @@ ShaderEffect::GetVarblocks() const
 //------------------------------------------------------------------------------
 /**
 */
+const eastl::vector<VarblockBase*>&
+ShaderEffect::GetVarblocks(const unsigned group)
+{
+	return this->varblocksByGroup[group];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 bool
 ShaderEffect::HasVarblock(const eastl::string& name)
 {
@@ -242,6 +260,15 @@ const eastl::vector<VarbufferBase*>&
 ShaderEffect::GetVarbuffers() const
 {
 	return this->varbuffersByIndex;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+const eastl::vector<VarbufferBase*>&
+ShaderEffect::GetVarbuffers(const unsigned group)
+{
+	return this->varbuffersByGroup[group];
 }
 
 //------------------------------------------------------------------------------

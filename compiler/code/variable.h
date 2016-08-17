@@ -137,9 +137,9 @@ public:
 	bool IsUniform() const;
 
 	/// sets the type of a variable
-	void SetVarType(const DataType& type);
+	void SetDataType(const DataType& type);
 	/// get variable type
-	const DataType& GetVarType() const;
+	const DataType& GetDataType() const;
 
 	/// set variable access mode
 	void SetAccess(const AccessMode& mode);
@@ -159,6 +159,7 @@ public:
 private:
     friend class VarBlock;
 	friend class Effect;
+	friend class Structure;
 
     /// evaluates array size
     void EvaluateArraySize(TypeChecker& typechecker);
@@ -280,7 +281,7 @@ Variable::IsUniform() const
 /**
 */
 inline void
-Variable::SetVarType(const DataType& type)
+Variable::SetDataType(const DataType& type)
 {
 	this->type = type;
 }
@@ -289,7 +290,7 @@ Variable::SetVarType(const DataType& type)
 /**
 */
 inline const DataType& 
-Variable::GetVarType() const
+Variable::GetDataType() const
 {
 	return this->type;
 }

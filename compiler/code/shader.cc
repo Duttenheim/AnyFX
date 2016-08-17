@@ -13,6 +13,7 @@
 #include "util.h"
 #include "structure.h"
 #include "varblock.h"
+#include "sampler.h"
 #include "typechecker.h"
 #include "generator.h"
 #include "constant.h"
@@ -35,7 +36,7 @@ DefaultResources.maxVertexAttribs =64											;
 DefaultResources.maxVertexUniformComponents =4096								;
 DefaultResources.maxVaryingFloats =64											;
 DefaultResources.maxVertexTextureImageUnits =32									;
-DefaultResources.maxCombinedTextureImageUnits =80								;
+DefaultResources.maxCombinedTextureImageUnits =65535							;
 DefaultResources.maxTextureImageUnits =32										;
 DefaultResources.maxFragmentUniformComponents =4096								;
 DefaultResources.maxDrawBuffers =32												;
@@ -134,7 +135,8 @@ Shader::Shader() :
 	hlslShader(0),
 	codeOffset(0),
 	binary(NULL),
-	binarySize(0)
+	binarySize(0),
+	binaryValid(false)
 {
 	// empty
 }
@@ -183,6 +185,7 @@ Shader::Generate(
 				 const std::vector<Constant>& constants,
 				 const std::vector<VarBlock>& blocks,
                  const std::vector<VarBuffer>& buffers,
+				 const std::vector<Sampler>& samplers,
                  const std::vector<Subroutine>& subroutines,
 				 const std::vector<Function>& functions)
 {
@@ -216,10 +219,10 @@ Shader::Generate(
 	const std::string shaderDefines[] =
 	{
 		"#define VERTEX_SHADER\n\n",
-		"#define FRAGMENT_SHADER\n\n",
 		"#define GEOMETRY_SHADER\n\n",
 		"#define HULL_SHADER\n\n",
 		"#define DOMAIN_SHADER\n\n",
+		"#define FRAGMENT_SHADER\n\n",
 		"#define COMPUTE_SHADER\n\n"
 	};
 	this->preamble.append(shaderDefines[this->shaderType]);
@@ -254,6 +257,12 @@ Shader::Generate(
 	{
 		const Structure& structure = structures[i];
 		this->preamble.append(structure.Format(header));
+	}
+
+	for (i = 0; i < samplers.size(); i++)
+	{
+		const Sampler& sampler = samplers[i];
+		this->preamble.append(sampler.Format(header));
 	}
 
 	for (i = 0; i < vars.size(); i++)
@@ -313,14 +322,12 @@ Shader::Generate(
 	switch (header.GetType())
 	{
 	case Header::GLSL:
-		this->CompileGLSL(
-			this->GenerateGLSL(&generator, header.GetMajor(), header.GetMinor()), 
-			&generator);
+		this->CompileGLSL(this->GenerateGLSL(&generator, header.GetMajor(), header.GetMinor()), &generator);
+		this->binaryValid = false;
 		break;
 	case Header::SPIRV:
-		this->CompileSPIRV(
-			this->GenerateGLSL(&generator, 4, 5),
-			&generator);
+		this->CompileSPIRV(this->GenerateGLSL(&generator, 4, 5), &generator);
+		this->binaryValid = true;
 		break;
 	case Header::HLSL:
 		break;
@@ -378,14 +385,6 @@ Shader::CompileGLSL(const std::string& code, Generator* generator)
 	{
 		std::string message = shaderObject->getInfoLog();
 		generator->Error(message);
-
-		/*
-		// now format errors and warnings to have correct line positions
- 		std::stringstream stream(message);
-
-		// handle error, Khronos follow the ATI way...
-		this->GLSLProblemKhronos(generator, stream);
-		*/
 	}
 	
 	this->glslShader = shaderObject;
@@ -440,14 +439,6 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	{
 		std::string message = shaderObject->getInfoLog();
 		generator->Error(message);
-
-		/*
-		// now format errors and warnings to have correct line positions
-		std::stringstream stream(message);
-
-		// handle error, Khronos follow the ATI way...
-		this->GLSLProblemKhronos(generator, stream);
-		*/
 	}
 
 	this->glslShader = shaderObject;
@@ -455,7 +446,7 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	delete[] lengths;
 
 	// formatted code is left empty since SPIR-V use a binary representation
-	this->formattedCode = "";
+	this->formattedCode = this->preamble + code;
 }
 
 //------------------------------------------------------------------------------
@@ -466,7 +457,10 @@ Shader::Compile(BinWriter& writer)
 {
 	writer.WriteInt(this->shaderType);
 	writer.WriteString(this->name);
-	writer.WriteString(this->formattedCode);
+
+	// if we have no binary, write shader code directly
+	if (!binaryValid) writer.WriteString(this->formattedCode);
+	else              writer.WriteString("");
 
     if (this->shaderType == ProgramRow::ComputeShader)
     {

@@ -22,6 +22,8 @@ public:
 
 	/// set output stream
 	void SetPath(const std::string& path);
+	/// get output stream
+	const std::string& GetPath() const;
 	/// opens writer
 	bool Open();
 	/// closes writer
@@ -57,10 +59,19 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-BinWriter::SetPath( const std::string& path )
+inline void
+BinWriter::SetPath(const std::string& path)
 {
 	this->path = path;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+BinWriter::GetPath() const
+{
+	return this->path;
 }
 
 //------------------------------------------------------------------------------

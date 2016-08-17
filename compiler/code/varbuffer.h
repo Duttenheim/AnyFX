@@ -47,7 +47,10 @@ public:
 	std::string Format(const Header& header) const;
 
 private:
+	friend class Effect;
 	std::vector<Variable> variables;
+	std::map<std::string, unsigned> offsetsByName;
+	unsigned alignedSize;
 
 	bool shared;
 	unsigned group;

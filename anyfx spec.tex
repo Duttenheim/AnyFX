@@ -7,6 +7,7 @@
 \usepackage[parfill]{parskip}
 \usepackage{listings}
 \usepackage{graphicx,xcolor}
+\usepackage{hyperref}
 \definecolor{shadercolor}{rgb}{1,0.8,0.3}
 
 \lstdefinestyle{FX}
@@ -57,7 +58,7 @@
 {\endminipage}
 
 \begin{document}
-\title{The AnyFX Effects Language specification, version 2.0}
+\title{The AnyFX Effects Language specification, version 2.1}
 \author{Gustav Sterbrant}
 \date{}
 \maketitle
@@ -180,6 +181,11 @@ Variables are declared using the syntax:
 
 Here, \textbf{type} can be any of the entries in Table ~\ref{table:vartypes}. For future reference, whenever the \textbf{type} keyword is encountered, it is assumed to be any value in this table. Variables supports qualifiers, and the two currently existing qualifiers are image format qualifiers and data access qualifiers. Variables can also use the \textit{group(N)} qualifier which dictates which descriptor set (Vulkan and DX12) they belong to. This makes them update together with every other variable in such a set. N here is the number of the descriptor set.
 
+\subsubsection{Groups}
+\textit{Variables}, \textit{Varblocks} and \textit{Varbuffers} all share the \textit{group(X)} syntax, which divides the variables into update groups. The purpose of update groups is to determine, on a shader level, which variables are supposed to be updated at the same time. Think of it as having several layers of updates, first you apply camera settings which is group 0, render pass variables as group 1, material settings as group 2, and object settings as group 3. This allows you to only incrementally update group 3 once per draw, but retain group 0, 1 and 2 since you know their settings should endure. AnyFX supports retrieving variables associated to a group.
+
+In Vulkan this is directly implemented into the API and is directly represented as a VkDescriptorSet.
+
 \clearpage
 \begin{table}[hp]
 \centering
@@ -223,6 +229,9 @@ Here, \textbf{type} can be any of the entries in Table ~\ref{table:vartypes}. Fo
 	\textbf{matrix 4x2 (float[8])} & mat4x2 & float4x2 \\ \hline
 	\textbf{matrix 4x3 (float[12])} & mat4x3 & float4x3 \\ \hline
 	\textbf{matrix 4x4 (float[16])} & mat4x4 (alternatively mat4) & float4x4 \\ \hline
+	\textbf{texture handle (uint)} & textureHandle \\ \hline
+	\textbf{image handle (uint)} & imageHandle \\ \hline
+	\textbf{sampler handle (uint)} & samplerHandle \\ \hline
 	\textbf{1D sampled texture object} & sampler1D & Texture1D \\ \hline
 	\textbf{1D sampled texture object array} & sampler1DArray & Texture1DArray \\ \hline
 	\textbf{2D sampled texture object} & sampler2D & Texture2D \\ \hline
@@ -257,7 +266,9 @@ Here, \textbf{type} can be any of the entries in Table ~\ref{table:vartypes}. Fo
 \end{table}
 \clearpage
 
-\textbf{NOTE:} The texture differ from samplers in Vulkan because they do not have immutable samplers. Instead, samplers are objects within the shader which can be used to sample textures using different sampler settings within the shader code. 
+\textbf{NOTE:} The texture differs from samplers in Vulkan because they do not have immutable samplers. Instead, samplers are objects within the shader which can be used to sample textures using different sampler settings within the shader code. 
+
+The values suffixed with \textit{Handle} denotes a standard unsigned integer, however it is retrievable in the API as a special type, so that the implementation can determine if the unsigned integer is to be used to index textures, images or samplers from respective arrays.
 
 Note that we have two sets of definitions at the moment, one for OpenGL and one for DirectX. AnyFX doesn't care about which 'style' you use, although it will throw a warning if compiled with a mismatching profile, so as to inform the user that they are using a perhaps confusing variable syntax. An example of this would be:
 
@@ -1137,7 +1148,9 @@ samplerstate DefaultSampler
 
 This feature is of course only available and useful on platforms where samplers are not separate shader objects and has to be assigned. If a sampler is assigned to a texture which was already assigned by another sampler, the last defined sampler will take precedence. 
 
-A sampler can use the fields declared in Table~\ref{table:sampler}. The \textit{Texture} field is only necessary for implementations where the sampler is purely CPU-located. In HLSL, this field is still valid, although it serves no purpose since the texture-sampler coupling is done when sampling the texture rather than before rendering occurs. However, for GLSL and other languages in which a sampler needs a texture to have any use at all, the \textit{Texture} field has to be defined. The \textit{AddressU/V/W} field can be provided with any value in the Table~\ref{table:addressmode}. The \textit{Filter} field can be provided with any value in Table~\ref{table:filtermode}. All filter modes which begins with \textit{Comparison} turns the sampler into a comparison sampler, meaning it will produce no result unless it is used as a comparison sampler in the shader code. This can be used for hardware-accelerated shadow mapping, for example. The values in Table~\ref{table:sampler} in bold font represent enumeration values defined in the tables listed above.
+A sampler can use the fields declared in Table~\ref{table:sampler}. The \textit{Texture} field is only necessary for implementations where the sampler is purely CPU-located. In HLSL, this field is still valid, although it serves no purpose since the texture-sampler coupling is done when sampling the texture in the shader rather than before rendering occurs. However, for GLSL and other languages in which a sampler needs a texture to have any use at all, the \textit{Texture} field has to be defined. The \textit{AddressU/V/W} field can be provided with any value in the Table~\ref{table:addressmode}. The \textit{Filter} field can be provided with any value in Table~\ref{table:filtermode}. All filter modes which begins with \textit{Comparison} turns the sampler into a comparison sampler, meaning it will produce no result unless it is used as a comparison sampler in the shader code. This can be used for hardware-accelerated shadow mapping, for example. The values in Table~\ref{table:sampler} in bold font represent enumeration values defined in the tables listed above.
+
+In Vulkan, an empty \textit{Samplers} list for a \textit{samplerstate} results in a sampler uniform, which allows it to be dynamically or immutably bound.
 
 The filter mode \textit{Anisotropic} is equal to \textit{MinMagMipLinear}
 
@@ -1302,10 +1315,11 @@ This class only contains information about a subroutine, but doesn't provide any
 \subsection{Annotations}
 \textit{EffectProgram}, \textit{EffectRenderState} and \textit{EffectVariable} has annotations, which can be get through \textit{GetAnnotationX} where X is the type of annotation data requested. The type of data here can be \textit{Int}, \textit{Bool}, \textit{Float}, \textit{Double}, \textit{String}. All annotation getter methods must be provided with a string which should be the name of the string declared in the original source file. If a type is mismatched with the function, the behavior is undefined so be cautious with this. 
 
+\clearpage
 \section{Low-level API}
 The low-level API is meant only for shader reflection, meaning that all the intelligence handled by the high-level API must now be managed by the host application. This allows for a more fine grained control, although it also loses some of the ease-of-access functionality otherwise provided by the high-level API. To keep the low-level API as simple as possible, all classes are exposed as having public member variables.
 
-All classes use the \textit{Base} suffix to describe they are a base version of an implementation class. This is for potential setup routines which may simplify the setup procedure.
+All classes use the \textit{Base} suffix to describe they are a base version of an implementation class. This is because the low-level API initializes the object as being of the type related to the compiled API, meaning if you compile for OpenGL4, then the implementation will be of the OpenGL4 kind. It shouldn't matter to the implementation, but it is completely safe to cast the class with the suffix \textit{Base} to the class representing the implementation if required.
 
 \subsection{Initialization}
 The low-level API is initialized almost the same way as the other one, and simply provides a secondary code path through the effect factory.
@@ -1344,6 +1358,14 @@ Encapsulates information about subroutines, their names and their signatures.
 \subsection{Annotations}
 All of the shader symbols described above are, just like in the high-level API, annotable, meaning one can address them different metadata and can properly retrieve them in the API. This is useful for flagging your symbols and give them custom 'qualifiers'. 
 
+\clearpage
+\section{Low-level implementation hints}
+AnyFX was developed to work with the Nebula Trifid Game engine \url{https://github.com/gscept/nebula-trifid}, but is designed as a bring-your-own-engine type shading subsystem. However, because the new rendering APIs (DX12, Vulkan and Metal) are designed as more direct, and thus requires the rendering engine direct access to the shading subsystem, which was the motivation for the low-level API.
+
+\subsection{Using groups}
+The \textit{group} syntax is used to subdivide the set of variables, varblocks and varbuffers into chunks which will be updated incrementally. Using this feature allows us to implement a shader state, which can cherry pick which variable groups said shader state should update when applying. Consider defining a shader state which treats all groups. Now, this shader state will, when applied, override any variables applied earlier. Because if this, applying variables per frame, such as view matrices, will be effectively overriden by the later shader state. Groups solve this by allowing the implementation to separate variable updates, allowing a shader state to explicitly only treat a few groups.
+
+\clearpage
 \section{Notepad++}
 Included within the AnyFX library is a Notepad++ UDL language definition for all your syntax highlighting delight. 
 

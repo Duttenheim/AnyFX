@@ -56,6 +56,7 @@ public:
 	unsigned numPsOutputs;
 	eastl::vector<unsigned> psOutputSlots;
 	eastl::string name;
+	bool valid;
 
 	eastl::hash_set<eastl::string> activeVarblockNames;
 	eastl::hash_set<eastl::string> activeVariableNames;

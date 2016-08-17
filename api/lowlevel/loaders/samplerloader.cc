@@ -53,6 +53,8 @@ SamplerLoader::Load(BinReader* reader, ShaderEffect* effect)
 	// get name
     eastl::string name = reader->ReadString().c_str();
 	sampler->name = name;
+	sampler->binding = reader->ReadUInt();
+	sampler->set = reader->ReadUInt();
 
 	sampler->samplerSettings.filterMode =			(FilterMode)reader->ReadInt();
 	sampler->samplerSettings.addressU =				(AddressMode)reader->ReadInt();

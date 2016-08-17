@@ -92,9 +92,9 @@ RenderStateLoader::Load(BinReader* reader, ShaderEffect* effect)
 	bool alphaToCoverageEnabled = reader->ReadBool();
 	bool alphaToOneEnabled = reader->ReadBool();
 	bool multisampleEnabled = reader->ReadBool();
+	bool polygonOffsetEnabled = reader->ReadBool();
 	bool rasterizerDiscardEnabled = reader->ReadBool();
 	bool logicOpEnabled = reader->ReadBool();
-	bool polygonOffsetEnabled = reader->ReadBool();
 
 	renderState->renderSettings.depthEnabled				= depthEnabled;
 	renderState->renderSettings.depthWriteEnabled			= depthWrite;

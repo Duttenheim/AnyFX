@@ -142,11 +142,11 @@ void
 Variable::TypeCheck(TypeChecker& typechecker)
 {
 	// if type is user defined, check if symbol is defined
-	if (this->GetVarType().GetType() == DataType::UserType)
+	if (this->GetDataType().GetType() == DataType::UserType)
 	{
-		if (!typechecker.HasSymbol(this->GetVarType().GetName()))
+		if (!typechecker.HasSymbol(this->GetDataType().GetName()))
 		{
-			std::string msg = AnyFX::Format("Undefined type '%s', %s\n", this->GetVarType().GetName().c_str(), this->ErrorSuffix().c_str());
+			std::string msg = AnyFX::Format("Undefined type '%s', %s\n", this->GetDataType().GetName().c_str(), this->ErrorSuffix().c_str());
 			typechecker.Error(msg);
 		}
 	}
@@ -178,13 +178,11 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	{
 		if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
 		{
-			this->binding = Shader::bindingIndices[2];
-			Shader::bindingIndices[2]++;
+			this->binding = Shader::bindingIndices[2]++;
 		}
 		else if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
 		{
-			this->binding = Shader::bindingIndices[3];
-			Shader::bindingIndices[3]++;
+			this->binding = Shader::bindingIndices[3]++;
 		}
 		
 	}
@@ -192,8 +190,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	{
 		if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::TextureCubeArray)
 		{
-			this->binding = Shader::bindingIndices[this->group];
-			Shader::bindingIndices[this->group]++;
+			this->binding = Shader::bindingIndices[this->group]++;
 		}
 	}
 
@@ -253,7 +250,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	}
 
     // groupshared is not valid on textures or images
-    if (this->GetVarType().GetType() >= DataType::Sampler1D && this->GetVarType().GetType() <= DataType::AtomicCounter)
+    if (this->GetDataType().GetType() >= DataType::Sampler1D && this->GetDataType().GetType() <= DataType::AtomicCounter)
     {
         if (this->qualifierFlags & Variable::GroupShared)
         {
@@ -465,6 +462,7 @@ Variable::Format(const Header& header, bool inVarblock) const
 			if (this->qualifierFlags & Bindless) formattedCode.append(AnyFX::Format("layout(binding=%d, bindless_sampler) ", this->binding));
 			else								 formattedCode.append(AnyFX::Format("layout(binding=%d) ", this->binding));
 		}
+
 		else if (this->type.GetType() >= DataType::Matrix2x2 && this->type.GetType() <= DataType::Matrix4x4 && inVarblock)
 		{
 			formattedCode.append("layout(column_major) ");
@@ -480,7 +478,7 @@ Variable::Format(const Header& header, bool inVarblock) const
 			formattedCode.append(this->FormatImageAccess(header));
 			formattedCode.append(" ");
 		}
-		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
+		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::TextureCubeArray)
 		{
 			formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d) ", this->group, this->binding));
 		}
@@ -498,7 +496,7 @@ Variable::Format(const Header& header, bool inVarblock) const
 		else                                    formattedCode.append("uniform ");
 	}
 
-	formattedCode.append(DataType::ToProfileType(this->GetVarType(), header.GetType()));
+	formattedCode.append(DataType::ToProfileType(this->GetDataType(), header.GetType()));
 	formattedCode.append(" ");
 	formattedCode.append(this->GetName());
 	if (this->isArray)

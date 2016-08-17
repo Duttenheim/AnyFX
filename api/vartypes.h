@@ -53,6 +53,10 @@ enum VariableType
 	Matrix4x2,
 	Matrix4x3,
 	Matrix4x4,
+	AtomicCounter,
+	TextureHandle,
+	ImageHandle,
+	SamplerHandle,
 	Sampler1D,
 	Sampler1DArray,
 	Sampler2D,
@@ -81,7 +85,6 @@ enum VariableType
 	TextureCube,
 	TextureCubeArray,
 	InputAttachment,
-	AtomicCounter,
 	Void,
 	String,
 	UserType,
@@ -165,6 +168,14 @@ TypeToString(const VariableType& type)
 		return "m43";
 	case Matrix4x4:
 		return "m44";
+	case AtomicCounter:
+		return "ac";
+	case TextureHandle:
+		return "th";
+	case ImageHandle:
+		return "ih";
+	case SamplerHandle:
+		return "sh";
 	case Sampler1D:
 		return "s1d";
 	case Sampler1DArray:
@@ -236,6 +247,9 @@ TypeToByteSize(const VariableType& type)
 		return 3 * sizeof(double);
 	case Double4:
 		return 4 * sizeof(double);
+	case TextureHandle:
+	case ImageHandle:
+	case SamplerHandle:
 	case UInteger:
 	case Integer:
 		return sizeof(int);

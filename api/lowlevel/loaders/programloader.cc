@@ -200,36 +200,42 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
 	{
 		ShaderBase* vertexShader = effect->GetShader(vs);
 		program->shaderBlock.vs = vertexShader;
+		program->valid = true;
 	}
 	
 	if (!ps.empty())
 	{
 		ShaderBase* pixelShader = effect->GetShader(ps);
 		program->shaderBlock.ps = pixelShader;
+		if (!vs.empty()) program->valid = true;
 	}
 	
 	if (!hs.empty())
 	{
 		ShaderBase* hullShader = effect->GetShader(hs);
 		program->shaderBlock.hs = hullShader;
+		if (!vs.empty()) program->valid = true;
 	}
 
 	if (!ds.empty())
 	{
 		ShaderBase* domainShader = effect->GetShader(ds);
 		program->shaderBlock.ds = domainShader;
+		if (!vs.empty() && !hs.empty()) program->valid = true;
 	}
 
 	if (!gs.empty())
 	{
 		ShaderBase* geometryShader = effect->GetShader(gs);
 		program->shaderBlock.gs = geometryShader;
+		if (!vs.empty()) program->valid = true;
 	}
 
 	if (!cs.empty())
 	{
 		ShaderBase* computeShader = effect->GetShader(cs);
 		program->shaderBlock.cs = computeShader;
+		program->valid = true;
 	}
 
 	// assert there is a render state

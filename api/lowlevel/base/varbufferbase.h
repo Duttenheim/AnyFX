@@ -2,6 +2,15 @@
 //------------------------------------------------------------------------------
 /**
 	Implements a basic variable buffer.
+
+	Variable buffers are defined in GLSL/SPIR-V as a shader storage buffer, and DX as a RWStructuredBuffer.
+
+	Provides a list of offsets per variable into the buffer, which is oblivious of whether or not
+	the variable is used in any shader, although variable buffers are usually directly mappable from CPU memory.
+
+	Also provides a size and aligned size, the aligned size being a layout specific padded size,
+	while size is just the plain byte size. If the aligned size is primitively implemented, then
+	it will be the same as the ordinary size.
 	
 	(C) 2016 Individual contributors, see AUTHORS file
 */
@@ -18,9 +27,12 @@ public:
 	virtual ~VarbufferBase();
 
 	eastl::string name;
+	eastl::string signature;
+	unsigned alignedSize;
 	unsigned size;
 	bool isShared;
 	bool active;
+	eastl::map<eastl::string, unsigned> offsetsByName;
 
 	unsigned binding;
 	unsigned set;

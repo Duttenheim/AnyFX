@@ -177,20 +177,6 @@ Function::TypeCheck(TypeChecker& typechecker)
 	// remove any mcpp #line markers in the source code (because they have file paths in them)
 	size_t pos = this->code.find("#line");
 
-	/*
-	while (pos != this->code.npos)
-	{
-		size_t line = this->code.find('\n', pos);
-		//std::istringstream stream(this->code);
-		//std::string line = stream.getline()
-		//size_t stringBegin = line.find_first_of('"');
-		//size_t stringEnd = line.find_last_of('"') + 1;
-		this->code = this->code.replace(pos, line - pos, "");
-		//this->code.erase(std::remove(this->code.begin() + pos, this->code.begin() + line, '\n'), this->code.begin() + line);
-		pos = this->code.find("#line");
-	}
-	*/
-
 	// make sure no parameter has an equal attribute
 	unsigned i;
 

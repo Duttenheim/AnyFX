@@ -8,6 +8,7 @@
 #include "typechecker.h"
 #include <float.h>
 #include "variable.h"
+#include "shader.h"
 
 namespace AnyFX
 {
@@ -16,7 +17,9 @@ namespace AnyFX
 /**
 */
 Sampler::Sampler() :
-	numEntries(0)
+	numEntries(0),
+	group(0),
+	binding(0)
 {	
 	this->symbolType = Symbol::SamplerType;
 
@@ -213,6 +216,7 @@ Sampler::TypeCheck(TypeChecker& typechecker)
 {
 	// add render state, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
+	const Header& header = typechecker.GetHeader();
 
 	unsigned i;
 	for (i = 0; i < this->invalidFlags.size(); i++)
@@ -265,10 +269,39 @@ Sampler::TypeCheck(TypeChecker& typechecker)
 		}
 	}
 
-	if (this->textureList.GetNumTextures() == 0)
+	for (unsigned i = 0; i < this->qualifierExpressions.size(); i++)
 	{
-		std::string err = AnyFX::Format("Sampler must be supplied with texture identifier, %s\n", this->ErrorSuffix().c_str());
-		typechecker.Error(err);
+		const std::string& qualifier = this->qualifierExpressions[i].name;
+		Expression* expr = this->qualifierExpressions[i].expr;
+		if (qualifier == "group") this->group = expr->EvalUInt(typechecker);
+		else
+		{
+			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
+			AnyFX::Emit(message.c_str());
+		}
+		delete expr;
+	}
+
+	unsigned numTextures = this->textureList.GetNumTextures();
+	if (numTextures == 0)
+	{
+		// OpenGL doesn't use samplers as objects, so we must provide a binding here
+		if (header.GetType() == Header::GLSL)
+		{
+			std::string err = AnyFX::Format("Sampler state must be supplied with at least one texture/sampler identifier, %s\n", this->ErrorSuffix().c_str());
+			typechecker.Error(err);
+		}
+		else
+		{
+			if (header.GetType() == Header::SPIRV)
+			{
+				this->binding = Shader::bindingIndices[this->group]++;
+			}
+			else
+			{
+				this->binding = Shader::bindingIndices[4]++;
+			}
+		}
 	}
 	else
 	{
@@ -276,7 +309,7 @@ Sampler::TypeCheck(TypeChecker& typechecker)
 
 		// throw a warning if the number of textures in a sampler exceeds 1, since it will result in multiple 
 		// sampler_state declarations and the names may collide with previously defined samplers
-		if (typechecker.GetHeader().GetType() == Header::HLSL && typechecker.GetHeader().GetMajor() <= 3)
+		if (header.GetType() == Header::HLSL && header.GetMajor() <= 3)
 		{
 			std::string warn = AnyFX::Format("Sampler '%s' uses multiple texture definitions, compiler will generate multiple samplers, one for each texture with a number succeeding the name. This object will generate samplers %s%d-%s%d, %s\n", this->name.c_str(), this->name.c_str(), 0, this->name.c_str(), numTextures, this->ErrorSuffix().c_str());
 			typechecker.Warning(warn);
@@ -294,7 +327,7 @@ Sampler::TypeCheck(TypeChecker& typechecker)
 				if (textureObject->GetType() >= Symbol::VariableType)
 				{
 					Variable* var = (Variable*)textureObject;
-					if (!(var->GetVarType().GetType() >= DataType::Sampler1D && var->GetVarType().GetType() <= DataType::SamplerCubeArray))
+					if (!(var->GetDataType().GetType() >= DataType::Sampler1D && var->GetDataType().GetType() <= DataType::SamplerCubeArray))
 					{
 						std::string err = AnyFX::Format("Variable '%s' is not a texture variable, %s\n", textureObject->GetName().c_str(), this->ErrorSuffix().c_str());
 						typechecker.Error(err);
@@ -317,6 +350,8 @@ void
 Sampler::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
+	writer.WriteUInt(this->binding);
+	writer.WriteUInt(this->group);
 
 	unsigned i;
 	for (i = 0; i < SamplerRow::NumEnumFlags; i++)
@@ -348,7 +383,7 @@ Sampler::Compile(BinWriter& writer)
 	for (i = 0; i < numTextures; i++)
 	{
 		writer.WriteString(this->textureList.GetTexture(i));
-	}
+	}		
 }
 
 //------------------------------------------------------------------------------
@@ -410,6 +445,12 @@ Sampler::Format(const Header& header) const
 				res = AnyFX::Format("sampler_state %s%d\n{\n%s\n};\n", this->GetName().c_str(), i, contents.c_str());
 			}
 		}
+	}
+	else if (header.GetType() == Header::SPIRV && this->textureList.GetNumTextures() == 0 && !this->reserved)
+	{
+		std::string contents;
+		contents.append(AnyFX::Format("layout(set=%d, binding=%d) uniform sampler %s;\n", this->group, this->binding, this->name.c_str()));
+		res = contents;
 	}
 	return res;
 }

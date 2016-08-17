@@ -7,6 +7,8 @@
 #include <algorithm>
 #include "typechecker.h"
 #include "shader.h"
+#include "structure.h"
+#include "effect.h"
 
 namespace AnyFX
 {
@@ -18,6 +20,7 @@ VarBlock::VarBlock() :
 	hasAnnotation(false),
 	shared(false),
 	group(0),
+	binding(0),
 	push(false)
 {
 	this->symbolType = Symbol::VarblockType;
@@ -48,6 +51,7 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 {
 	// add varblock, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
+	const Header& header = typechecker.GetHeader();
 
 	// type check annotation
 	if (this->hasAnnotation)
@@ -82,21 +86,23 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 	}
 
 	// get the binding location and increment the global counter
-	if (typechecker.GetHeader().GetType() == Header::GLSL)
+	if (header.GetType() == Header::GLSL)
 	{
 		this->binding = Shader::bindingIndices[0];
 		Shader::bindingIndices[0]++;
 	}
-	else if (typechecker.GetHeader().GetType() == Header::SPIRV && !this->push)
+	else if (header.GetType() == Header::SPIRV && !this->push)
 	{
 		this->binding = Shader::bindingIndices[this->group];
 		Shader::bindingIndices[this->group]++;
 	}
 
+	unsigned offset = 0;
 	unsigned i;
 	for (i = 0; i < this->variables.size(); i++)
 	{
         Variable& var = this->variables[i];
+		var.group = this->group;
         if (var.GetArrayType() == Variable::UnsizedArray)
         {
             std::string message = AnyFX::Format("Varblocks cannot contain variables of unsized type! (%s), %s\n", var.GetName().c_str(), this->ErrorSuffix().c_str());
@@ -105,9 +111,51 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 
         // since TypeCheck might modify the variable, we must replace the old one. 
 		var.TypeCheck(typechecker);
-	}
 
-	const Header& header = typechecker.GetHeader();
+		// handle offset later, now we know array size
+		unsigned alignedSize = 0;
+		unsigned stride = 0;
+		unsigned elementStride = 0;
+		unsigned alignment = 0;
+		std::vector<unsigned> suboffsets;
+		if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
+			alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, true, typechecker);
+
+		// if we have a struct, we need to unroll it, and calculate the offsets
+		const DataType& type = var.GetDataType();
+
+		// align offset with current alignment
+		offset = Effect::AlignToPow(offset, alignment);
+
+		// avoid adding actual struct
+		if (type.GetType() == DataType::UserType)
+		{
+			// unroll structures to generate variables with proper names, they should come in the same order as the suboffsets
+			Structure* structure = dynamic_cast<Structure*>(typechecker.GetSymbol(type.GetName()));
+			std::vector<Variable> subvars;
+			structure->Unroll(var.GetName(), subvars, typechecker);
+
+			// add suboffsets to this offset
+			assert(subvars.size() == suboffsets.size());
+			unsigned j;
+			for (j = 0; j < suboffsets.size(); j++)
+			{
+				// append structure offset to base
+				this->offsetsByName[subvars[j].GetName()] = offset + suboffsets[j];
+			}
+		}
+		else
+		{
+			// add offset to list
+			this->offsetsByName[var.GetName()] = offset;
+		}
+
+		// offset should be size of struct, round of
+		offset += alignedSize;
+	}
+	// aligned size must be the sum of all offsets
+	this->alignedSize = offset;
+
 	Header::Type type = header.GetType();
 	int major = header.GetMajor();
 	if (type == Header::GLSL)
@@ -167,7 +215,7 @@ VarBlock::Format(const Header& header) const
 		// varblocks of this type are only available in GLSL3-4 and HLSL4-5
 		if (header.GetType() == Header::GLSL)
 		{
-			std::string layout = AnyFX::Format("layout(std430, binding=%d) uniform ", this->binding);
+			std::string layout = AnyFX::Format("layout(std140, binding=%d) uniform ", this->binding);
 			formattedCode.append(layout);
 		}
 		else if (header.GetType() == Header::SPIRV)
@@ -179,7 +227,7 @@ VarBlock::Format(const Header& header) const
 			}
 			else
 			{
-				std::string layout = AnyFX::Format("layout(std430, set=%d, binding=%d) uniform ", this->group, this->binding);
+				std::string layout = AnyFX::Format("layout(std140, set=%d, binding=%d) uniform ", this->group, this->binding);
 				formattedCode.append(layout);
 			}
 			
@@ -234,6 +282,7 @@ void
 VarBlock::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
+	writer.WriteUInt(this->alignedSize);
 	writer.WriteBool(this->shared);
 	writer.WriteUInt(this->binding);
 	writer.WriteUInt(this->group);
@@ -257,6 +306,15 @@ VarBlock::Compile(BinWriter& writer)
 	{
 		this->variables[i].Compile(writer);
 	}
+
+	// write offsets
+	writer.WriteUInt(this->offsetsByName.size());
+	std::map<std::string, unsigned>::const_iterator it = this->offsetsByName.begin();
+	for (; it != this->offsetsByName.end(); it++)
+	{
+		writer.WriteString((*it).first);
+		writer.WriteUInt((*it).second);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -266,7 +324,7 @@ VarBlock::Compile(BinWriter& writer)
 bool
 VarblockParamCompare(const Variable& v1, const Variable& v2)
 {
-	return v1.GetByteSize() * v1.GetArraySize() > v2.GetByteSize() * v1.GetArraySize();
+	return v1.GetByteSize() * v1.GetArraySize() < v2.GetByteSize() * v1.GetArraySize();
 }
 
 //------------------------------------------------------------------------------

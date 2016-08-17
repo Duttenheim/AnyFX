@@ -408,6 +408,9 @@ type		returns [ DataType type ]
 		else if (typeString == "short") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::Short); }
 		else if (typeString == "string") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::String); }
 		else if (typeString == "void") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::Void); }
+		else if (typeString == "textureHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::TextureHandle); }
+		else if (typeString == "imageHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::ImageHandle); }
+		else if (typeString == "samplerHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::SamplerHandle); }
 		
 		
 		// HLSL types
@@ -583,7 +586,7 @@ valueSingleList	returns [ ValueList valueList ]
 variable	returns [ Variable variable ]
 	:	
 		(qualifier { $variable.AddQualifier($qualifier.str); } | qualifierExpression { $variable.AddQualifierExpression($qualifierExpression.q); })*
-		declType = type name = IDENTIFIER { $variable.SetVarType($declType.type); $variable.SetName((const char*)$name.text->chars); SetupFile(&$variable, INPUT); }
+		declType = type name = IDENTIFIER { $variable.SetDataType($declType.type); $variable.SetName((const char*)$name.text->chars); SetupFile(&$variable, INPUT); }
 		( 	
 			LL RR EQ 	{ $variable.SetArrayType(Variable::TypedArray); }		LB fstType = type LP fstValue = valueList RP { $variable.AddValue($fstType.type, $fstValue.valueList); }  // array initializer which assumes the size of the value list
 														  ( CO cntType = type LP cntValue = valueList RP { $variable.AddValue($cntType.type, $cntValue.valueList); } )* RB 
@@ -793,9 +796,9 @@ renderState	returns [ RenderState state ]
 
 // a sampler explains how to sample textures
 sampler		returns [ Sampler sampler ]
-	:	(qualifier { $sampler.AddQualifier($qualifier.str); } )*
+	:	(qualifier { $sampler.AddQualifier($qualifier.str); } | qualifierExpression { $sampler.AddQualifierExpression($qualifierExpression.q); } )*
 		'samplerstate' name = IDENTIFIER { SetupFile(&$sampler, INPUT); } SC					{ $sampler.SetName((const char*)$name.text->chars); }
-	|	(qualifier { $sampler.AddQualifier($qualifier.str); } )*
+	|	(qualifier { $sampler.AddQualifier($qualifier.str); } | qualifierExpression { $sampler.AddQualifierExpression($qualifierExpression.q); }  )*
 		'samplerstate' name = IDENTIFIER { SetupFile(&$sampler, INPUT); }						{ $sampler.SetName((const char*)$name.text->chars); }
 		LB ( samplerRow { $sampler.ConsumeRow($samplerRow.row); } )* RB SC
 	;

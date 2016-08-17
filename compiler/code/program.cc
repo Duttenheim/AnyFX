@@ -739,14 +739,6 @@ Program::LinkGLSL4(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	{
 		std::string message = program->getInfoLog();
 		generator.Error(message);
-
-		/*
-		// now format errors and warnings to have correct line positions
-		std::stringstream stream(message);
-
-		// handle error, Khronos follow the ATI way...
-		this->GLSLProblemKhronos(generator, stream);
-		*/
 	}
 
 	// build reflection to get uniform stuff
@@ -800,15 +792,6 @@ Program::LinkGLSL3(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	{
 		std::string message = program->getInfoLog();
 		generator.Error(message);
-
-		/*
-
-		// now format errors and warnings to have correct line positions
-		std::stringstream stream(message);
-
-		// handle error, Khronos follow the ATI way...
-		this->GLSLProblemKhronos(generator, stream);
-		*/
 	}
 
 	// build reflection to get uniform stuff
@@ -867,12 +850,6 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	{
 		std::string message = program->getInfoLog();
 		generator.Error(message);
-
-		// now format errors and warnings to have correct line positions
-		//std::stringstream stream(message);
-
-		// handle error, Khronos follow the ATI way...
-		//this->GLSLProblemKhronos(generator, stream);
 		return;
 	}
 
@@ -896,11 +873,8 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 		size_t indexOfArray = uniformName.find("[0]");
 		if (indexOfArray != std::string::npos) uniformName = uniformName.substr(0, indexOfArray);
 		int type = program->getUniformType(i);
-		if (type < 0x8B5D)
-		{ 
-			unsigned offset = program->getUniformBufferOffset(i);
-			this->uniformBufferOffsets[uniformName] = offset;
-		}
+		unsigned offset = program->getUniformBufferOffset(i);
+		if (offset != -1) this->uniformBufferOffsets[uniformName] = offset;
 	}
 
 	glslang::TShader* shaders[] = { gvs, ghs, gds, ggs, gps, gcs };

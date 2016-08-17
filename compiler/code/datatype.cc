@@ -157,6 +157,11 @@ DataType::ToGLSLType( const DataType& type )
 		return "textureCube";
 	case TextureCubeArray:
 		return "textureCubeArray";
+	case TextureHandle:
+	case ImageHandle:
+	case SamplerHandle:
+		return "uint";
+	
 	case Void:
 		return "void";
 	case UserType:
@@ -269,6 +274,10 @@ DataType::ToHLSLType(const DataType& type)
 		return "RWTexture2DArray";
 	case Image3D:
 		return "RWTexture3D";
+	case TextureHandle:
+	case ImageHandle:
+	case SamplerHandle:
+		return "uint";
 	case Void:
 		return "void";
 	case UserType:
@@ -292,8 +301,8 @@ DataType::ToHLSLType(const DataType& type)
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-DataType::ToProfileType( const DataType& dtype, const Header::Type& ttype )
+std::string
+DataType::ToProfileType(const DataType& dtype, const Header::Type& ttype)
 {
 	switch (ttype)
 	{
@@ -418,6 +427,12 @@ DataType::ToSignature(const DataType& type)
 		return "ima2dms";
 	case Image2DMSArray:
 		return "ima2dmsa";
+	case TextureHandle:
+		return "th";
+	case ImageHandle:
+		return "ih";
+	case SamplerHandle:
+		return "sh";
 	case Void:
 		return "v";
 	case UserType:
@@ -556,6 +571,12 @@ DataType::ToString(const DataType& type)
 		return "texture [Cube]";
 	case TextureCubeArray:
 		return "texture [Cube-Array]";
+	case TextureHandle:
+		return "texture handle [uint]";
+	case ImageHandle:
+		return "image handle [uint]";
+	case SamplerHandle:
+		return "sampler handle [uint]";
 	case Void:
 		return "void";
 	case String:
@@ -582,6 +603,9 @@ DataType::ToVectorSize(const DataType& type)
 	case UInteger:
 	case Short:
 	case Bool:
+	case TextureHandle:
+	case ImageHandle:
+	case SamplerHandle:
 		return 1;
 	case Float2:
 	case Double2:
@@ -683,6 +707,9 @@ DataType::ToByteSize(const DataType& type)
         return 4 * sizeof(double);
     case DataType::UInteger:
     case DataType::Integer:
+	case DataType::TextureHandle:
+	case DataType::ImageHandle:
+	case DataType::SamplerHandle:
         return sizeof(int);
     case DataType::UInteger2:
     case DataType::Integer2:
@@ -767,6 +794,9 @@ DataType::ToPrimitiveType(const DataType& type)
 	case DataType::Double4:
 		ret.type = DataType::Double;
 
+	case DataType::TextureHandle:
+	case DataType::ImageHandle:
+	case DataType::SamplerHandle:
 	case DataType::UInteger:
 	case DataType::UInteger2:
 	case DataType::UInteger3:
@@ -809,6 +839,68 @@ DataType::ToPrimitiveType(const DataType& type)
 		ret.type = DataType::Integer;
 	}
 	return ret;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+DataType::Dimensions
+DataType::ToDimensions(const DataType& type)
+{
+	switch (type.type)
+	{
+	case Double:
+	case Float:
+	case Integer:
+	case UInteger:
+	case Short:
+	case Bool:
+	case TextureHandle:
+	case ImageHandle:
+	case SamplerHandle:
+		return { 1, 1 };
+	case Float2:
+	case Double2:
+	case Integer2:
+	case UInteger2:
+	case Short2:
+	case Bool2:
+		return  { 2, 1 };
+	case Double3:
+	case Float3:
+	case Integer3:
+	case UInteger3:
+	case Short3:
+	case Bool3:
+		return  { 3, 1 };
+	case Double4:
+	case Float4:
+	case Integer4:
+	case UInteger4:
+	case Short4:
+	case Bool4:
+		return  { 4, 1 };
+	case Matrix2x2:
+		return  { 2, 2 };
+	case Matrix2x3:
+		return { 2, 3 };
+	case Matrix2x4:
+		return { 2, 4 };
+	case Matrix3x2:
+		return { 3, 2 };
+	case Matrix3x3:
+		return { 3, 3 };
+	case Matrix3x4:
+		return { 3, 4 };
+	case Matrix4x2:
+		return { 4, 2 };
+	case Matrix4x3:
+		return { 4, 3 };
+	case Matrix4x4:
+		return { 4, 4 };
+	default:
+		return { 0, 0 };
+	}
 }
 
 } // namespace AnyFX

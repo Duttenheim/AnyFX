@@ -53,8 +53,8 @@ BinWriter::Close()
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteInt( int val )
+void
+BinWriter::WriteInt(int val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(int));
@@ -63,8 +63,8 @@ BinWriter::WriteInt( int val )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteUInt( unsigned val )
+void
+BinWriter::WriteUInt(unsigned val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(unsigned));
@@ -73,8 +73,8 @@ BinWriter::WriteUInt( unsigned val )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteBool( bool val )
+void
+BinWriter::WriteBool(bool val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(bool));
@@ -83,8 +83,8 @@ BinWriter::WriteBool( bool val )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteFloat( float val )
+void
+BinWriter::WriteFloat(float val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(float));
@@ -93,8 +93,8 @@ BinWriter::WriteFloat( float val )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteDouble( double val )
+void
+BinWriter::WriteDouble(double val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(double));
@@ -103,8 +103,8 @@ BinWriter::WriteDouble( double val )
 //------------------------------------------------------------------------------
 /**
 */
-void 
-BinWriter::WriteShort( short val )
+void
+BinWriter::WriteShort(short val)
 {
 	// convert to char* and write
 	this->output.write((const char*)&val, sizeof(short));

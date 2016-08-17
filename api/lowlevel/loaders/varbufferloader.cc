@@ -51,6 +51,8 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 
 	// start loading
 	eastl::string name = reader->ReadString().c_str();
+	unsigned alignedSize = reader->ReadUInt();
+	unsigned size = reader->ReadUInt();
 	bool shared = reader->ReadBool();
 	unsigned binding = reader->ReadUInt();
 	unsigned set = reader->ReadUInt();
@@ -63,11 +65,19 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 		loader.Load(reader, varbuffer);
 	}
 
-	// load size of buffer
-	unsigned size = reader->ReadUInt();
+	// load offsets
+	unsigned numOffsets = reader->ReadUInt();
+	unsigned i;
+	for (i = 0; i < numOffsets; i++)
+	{
+		eastl::string name = reader->ReadString().c_str();
+		unsigned offset = reader->ReadUInt();
+		varbuffer->offsetsByName[name] = offset;
+	}
 
 	// load internal buffer
 	varbuffer->name = name;
+	varbuffer->alignedSize = alignedSize;
 	varbuffer->size = size;
 	varbuffer->isShared = shared;
 	varbuffer->set = set;

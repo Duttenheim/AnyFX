@@ -39,6 +39,7 @@ public:
 	std::string Format(const Header& header) const;
 
 private:
+	friend class Effect;
 
 	struct InvalidValueContainer
 	{
@@ -62,6 +63,8 @@ private:
 
 	bool hasTextures;
 	SamplerTextureList textureList;
+	unsigned binding;
+	unsigned group;
 
 	bool hasAnnotation;	
 	Annotation annotation;

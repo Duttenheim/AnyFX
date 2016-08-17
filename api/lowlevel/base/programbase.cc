@@ -13,7 +13,8 @@ namespace AnyFX
 ProgramBase::ProgramBase() :
 	patchSize(0),
 	numVsInputs(0),
-	numPsOutputs(0)
+	numPsOutputs(0),
+	valid(false)
 {
 	memset(&this->shaderBlock, 0, sizeof(this->shaderBlock));
 }

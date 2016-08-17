@@ -171,6 +171,12 @@ AnyFXCompile(const std::string& file, const std::string& output, const std::stri
             effect.SetHeader(header);
             effect.Setup();
 
+			// set debug output dump if flag is supplied
+			if (header.GetFlags() & Header::OutputGeneratedShaders)
+			{
+				effect.SetDebugOutputPath(output);
+			}
+
             // create type checker
             TypeChecker typeChecker;
 

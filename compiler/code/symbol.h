@@ -47,7 +47,6 @@ public:
     /// get if symbol is reserved
     const bool IsReserved() const;
 
-
 	/// returns type of symbol
 	const Type& GetType() const;
 

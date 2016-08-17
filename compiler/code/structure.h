@@ -12,6 +12,7 @@
 #include <vector>
 #include "parameter.h"
 #include "symbol.h"
+#include "variable.h"
 namespace AnyFX
 {
 
@@ -33,6 +34,8 @@ public:
 
 	/// format structure to fit target language
 	std::string Format(const Header& header) const;
+	/// unroll struct into list of variables (converts parameters to variables)
+	void Unroll(const std::string& name, std::vector<Variable>& vars, TypeChecker& typechecker);
 
 	/// type checks structure
 	void TypeCheck(TypeChecker& typechecker);

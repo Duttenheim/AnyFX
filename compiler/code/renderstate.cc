@@ -54,7 +54,7 @@ RenderState::RenderState() :
 	this->drawBoolFlags[RenderStateRow::AlphaToCoverageEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::AlphaToOneEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::PolygonOffsetEnabled] = false;
-	this->drawBoolFlags[RenderStateRow::RasterizerDiscardEnabled] = true;
+	this->drawBoolFlags[RenderStateRow::RasterizerDiscardEnabled] = false;
 	this->drawBoolFlags[RenderStateRow::LogicOpEnabled] = false;
 
 	this->drawIntFlags[RenderStateRow::StencilFrontRef] = 0;
@@ -843,7 +843,7 @@ RenderState::TypeCheck(TypeChecker& typechecker)
 /**
 */
 void 
-RenderState::Compile( BinWriter& writer )
+RenderState::Compile(BinWriter& writer)
 {
 	// write name
 	writer.WriteString(this->name);

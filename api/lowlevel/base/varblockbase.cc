@@ -12,7 +12,10 @@ namespace AnyFX
 /**
 */
 VarblockBase::VarblockBase() :
-	byteSize(0)
+	byteSize(0),
+	binding(0),
+	set(0),
+	push(false)
 {
 	// empty
 }
@@ -43,24 +46,18 @@ VarblockBase::OnLoaded()
 	{
 		this->byteSize += this->variables[i]->byteSize;
 	}
-}
 
-//------------------------------------------------------------------------------
-/**
-*/
-void
-VarblockBase::SetupSignature()
-{
-	this->signature.append(this->name + "{ ");
+	// create a signature for the varblock
+	this->signature.append(this->name + "{");
+
 	// format signature by retrieving all variable signatures and making a string mask
-	unsigned i;
 	for (i = 0; i < this->variables.size(); i++)
 	{
 		VariableBase* variable = this->variables[i];
 		this->signature.append(variable->signature);
 		this->signature.append(";");
 	}
-	this->signature.append(" }");
+	this->signature.append("}");
 }
 
 } // namespace AnyFX

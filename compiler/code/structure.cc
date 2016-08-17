@@ -54,7 +54,6 @@ Structure::CalculateSize() const
     for (i = 0; i < this->parameters.size(); i++)
     {
         const Parameter& param = this->parameters[i];
-        
         sum += DataType::ToByteSize(param.GetDataType());
     }
     return sum;
@@ -114,6 +113,41 @@ Structure::Format(const Header& header) const
 /**
 */
 void
+Structure::Unroll(const std::string& name, std::vector<Variable>& vars, TypeChecker& typechecker)
+{
+	unsigned i;
+	for (i = 0; i < this->parameters.size(); i++)
+	{
+		const Parameter& param = this->parameters[i];
+
+		// if we have a struct in struct, unroll inner struct (recursively)
+		const DataType& type = param.GetDataType();
+
+		// unroll if struct
+		if (type.GetType() == DataType::UserType)
+		{
+			Structure* str = dynamic_cast<Structure*>(typechecker.GetSymbol(type.GetName()));
+			str->Unroll(name + "." + param.GetName(), vars, typechecker);
+		}
+		else
+		{
+			// create variable from structure parameter
+			Variable var;
+			var.SetName(name + "." + param.GetName());
+			var.SetDataType(type);
+			var.SetLine(param.GetLine());
+			var.SetFile(param.GetFile());
+			var.isArray = param.IsArray();
+			var.arraySize = param.GetArraySize();
+			vars.push_back(var);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
 Structure::TypeCheck(TypeChecker& typechecker)
 {
 	// attempt to add structure, if this fails, we must stop type checking for this structure
@@ -125,6 +159,13 @@ Structure::TypeCheck(TypeChecker& typechecker)
         std::string msg = AnyFX::Format("Recursive inclusion of structures detected, %s\n", this->ErrorSuffix().c_str());
         typechecker.Error(msg);
     }
+
+	unsigned i;
+	for (i = 0; i < this->parameters.size(); i++)
+	{
+		Parameter& param = this->parameters[i];
+		param.TypeCheck(typechecker);
+	}
 }
 
 

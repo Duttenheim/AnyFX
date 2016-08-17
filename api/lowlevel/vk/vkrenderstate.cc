@@ -88,13 +88,14 @@ static const VkCullModeFlags vkCullTable[] =
 {
 	VK_CULL_MODE_BACK_BIT,
 	VK_CULL_MODE_FRONT_BIT,
-	VK_CULL_MODE_FRONT_AND_BACK
+	VK_CULL_MODE_NONE
 };
 
+// in reality, this order should be reversed, but this is the GL convention
 static const VkFrontFace vkFaceTable[] =
 {
-	VK_FRONT_FACE_CLOCKWISE,
-	VK_FRONT_FACE_COUNTER_CLOCKWISE,
+	VK_FRONT_FACE_COUNTER_CLOCKWISE,		
+	VK_FRONT_FACE_CLOCKWISE	
 };
 
 static const VkPolygonMode vkPolygonModeTable[] =

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "typechecker.h"
 #include "shader.h"
+#include "effect.h"
 
 namespace AnyFX
 {
@@ -15,10 +16,12 @@ namespace AnyFX
 /**
 */
 VarBuffer::VarBuffer() :
+	alignedSize(0),
 	size(0),
 	shared(false),
 	hasAnnotation(false),
-	group(0)
+	group(0),
+	binding(0)
 {
 	this->symbolType = Symbol::VarbufferType;
 }
@@ -83,13 +86,11 @@ VarBuffer::TypeCheck(TypeChecker& typechecker)
 	// get the binding location and increment the global counter
 	if (typechecker.GetHeader().GetType() == Header::GLSL)
 	{
-		this->binding = Shader::bindingIndices[1];
-		Shader::bindingIndices[1]++;
+		this->binding = Shader::bindingIndices[1]++;
 	}
 	else if (typechecker.GetHeader().GetType() == Header::SPIRV)
 	{
-		this->binding = Shader::bindingIndices[this->group];
-		Shader::bindingIndices[this->group]++;
+		this->binding = Shader::bindingIndices[this->group]++;
 	}
 
     const Header& header = typechecker.GetHeader();
@@ -107,6 +108,7 @@ VarBuffer::TypeCheck(TypeChecker& typechecker)
         }
     }
 
+	unsigned offset = 0;
 	unsigned i;
 	for (i = 0; i < this->variables.size(); i++)
 	{
@@ -119,7 +121,48 @@ VarBuffer::TypeCheck(TypeChecker& typechecker)
 
 		var.TypeCheck(typechecker);
 		this->size += var.GetByteSize() * var.GetArraySize();
+
+		// handle offset later, now we know array size
+		unsigned alignedSize = 0;
+		unsigned stride = 0;
+		unsigned elementStride = 0;
+		unsigned alignment = 0;
+		std::vector<unsigned> suboffsets;
+		if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
+			alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, false, typechecker);
+
+		// if we have a struct, we need to unroll it, and calculate the offsets
+		const DataType& type = var.GetDataType();
+
+		// avoid adding actual struct
+		if (type.GetType() == DataType::UserType)
+		{
+			// unroll structures to generate variables with proper names, they should come in the same order as the suboffsets
+			Structure* structure = dynamic_cast<Structure*>(typechecker.GetSymbol(type.GetName()));
+			std::vector<Variable> subvars;
+			structure->Unroll(var.GetName(), subvars, typechecker);
+
+			// add suboffsets to this offset
+			assert(subvars.size() == suboffsets.size());
+			unsigned j;
+			for (j = 0; j < suboffsets.size(); j++)
+			{
+				// append structure offset to base
+				this->offsetsByName[subvars[j].GetName()] = offset + suboffsets[j];
+			}
+		}
+		else
+		{
+			// add offset to list
+			this->offsetsByName[var.GetName()] = offset;
+		}
+
+		// offset should be size of struct, round of
+		offset += alignedSize;
+		offset = Effect::AlignToPow(offset, alignment);
 	}
+
+	this->alignedSize = offset;
 }
 
 //------------------------------------------------------------------------------
@@ -166,6 +209,8 @@ void
 VarBuffer::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
+	writer.WriteUInt(this->alignedSize);
+	writer.WriteUInt(this->size);
 	writer.WriteBool(this->shared);
 	writer.WriteUInt(this->binding);
 	writer.WriteUInt(this->group);
@@ -179,8 +224,14 @@ VarBuffer::Compile(BinWriter& writer)
 		this->annotation.Compile(writer);
 	}	
 
-	// compile size
-	writer.WriteUInt(this->size);
+	// write offsets
+	writer.WriteUInt(this->offsetsByName.size());
+	std::map<std::string, unsigned>::const_iterator it = this->offsetsByName.begin();
+	for (; it != this->offsetsByName.end(); it++)
+	{
+		writer.WriteString((*it).first);
+		writer.WriteUInt((*it).second);
+	}
 }
 
 //------------------------------------------------------------------------------

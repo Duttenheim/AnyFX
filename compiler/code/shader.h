@@ -29,6 +29,7 @@ class Function;
 class Constant;
 class VarBuffer;
 class Subroutine;
+class Sampler;
 class Shader : public Compileable
 {
 public:
@@ -51,6 +52,9 @@ public:
 	/// gets shader name
 	const std::string& GetName() const;
 
+	/// returns formatted code, is only viable after compilation is done
+	const std::string& GetCompiledCode() const;
+
 	/// set compile flags for this shader
 	void SetCompileFlags(const std::string& flags);
 
@@ -72,12 +76,22 @@ public:
 		const std::vector<Constant>& constants,
 		const std::vector<VarBlock>& blocks, 
         const std::vector<VarBuffer>& buffers,
+		const std::vector<Sampler>& samplers,
         const std::vector<Subroutine>& subroutines,
 		const std::vector<Function>& functions);
 
 	/// static function which resets all bindings
 	static void ResetBindings();
-	static unsigned bindingIndices[64]; // each binding index is a slot for a descriptor set in Vulkan
+
+	// each binding index is a slot for a descriptor set in Vulkan, or is statically assigned in other languages
+	/*
+		0: varblocks
+		1: varbuffers
+		2: samplers (texture-sampler combos)
+		3: images (read-write textures)
+		4: sampler objects
+	*/
+	static unsigned bindingIndices[64]; 
 private:
 	friend class Program;
 
@@ -137,6 +151,7 @@ private:
 	void* hlslShader;
 	char* binary;
 	unsigned binarySize;
+	bool binaryValid;
 
 	std::string preamble;
     std::map<int, std::pair<std::string, std::string> > indexToFileMap;
@@ -179,6 +194,15 @@ inline const std::string&
 Shader::GetName() const
 {
 	return this->name;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+Shader::GetCompiledCode() const
+{
+	return this->formattedCode;
 }
 
 //------------------------------------------------------------------------------

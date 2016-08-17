@@ -52,6 +52,7 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
 	}
 
 	eastl::string name = reader->ReadString().c_str();
+	unsigned alignedSize = reader->ReadUInt();
 	bool shared = reader->ReadBool();
 	unsigned binding = reader->ReadUInt();
 	unsigned set = reader->ReadUInt();
@@ -75,18 +76,27 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
 		VariableBase* var = variableLoader.Load(reader, effect, varblock);
 		varblock->variables.push_back(var);
 		varblock->variablesByName[var->name] = var;
-		
+
 		// make sure to flag this variable as internal to the varblock
 		vars.push_back(var);
 	}
 
+	// load offsets
+	unsigned numOffsets = reader->ReadUInt();
+	for (i = 0; i < numOffsets; i++)
+	{
+		eastl::string name = reader->ReadString().c_str();
+		unsigned offset = reader->ReadUInt();
+		varblock->offsetsByName[name] = offset;
+	}
+
     // set internal variables
 	varblock->name = name;
+	varblock->alignedSize = alignedSize;
 	varblock->isShared = shared;
 	varblock->set = set;
 	varblock->binding = binding;
 	varblock->push = push;
-	varblock->SetupSignature();
 
 	varblock->OnLoaded();
 	return varblock;

@@ -30,7 +30,7 @@ Parameter::Parameter() :
 	isConst(false),
 	sizeExpression(NULL),
 	isArray(false),
-	arraySize(0),
+	arraySize(1),
 	parentShader(NULL)
 {
 	// empty
@@ -157,7 +157,7 @@ Parameter::Format(const Header& header, unsigned& input, unsigned& output) const
 
 		if (this->isArray)
 		{
-			if (this->arraySize > 0)
+			if (this->arraySize > 1)
 			{
 				std::string number = AnyFX::Format("%d", this->arraySize);
 				formattedCode.append("[");
@@ -271,6 +271,11 @@ Parameter::TypeCheck(TypeChecker& typechecker)
             }            
 			delete this->slotExpression;
         }
+		else if (type == Header::SPIRV && shaderType == ProgramRow::VertexShader && (this->GetIO() == Parameter::Input || this->GetIO() == Parameter::InputOutput))
+		{
+			std::string message = AnyFX::Format("SPIR-V requires specific slot to be assigned explicitly in input to vertex shader, for vertex attributes to be consistently mapped on the API side, shader '%s', parameter '%s', %s\n", this->parentShader->GetName().c_str(), this->GetName().c_str(), this->ErrorSuffix().c_str());
+			typechecker.Error(message);
+		}
 
 		if (shaderType == ProgramRow::VertexShader)
 		{

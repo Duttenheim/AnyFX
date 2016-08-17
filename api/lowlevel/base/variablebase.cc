@@ -14,10 +14,15 @@ namespace AnyFX
 */
 VariableBase::VariableBase() :
 	parentBlock(NULL),
+	isInVarblock(false),
+	isArray(false),
+	hasDefaultValue(false),
 	sampler(NULL),
 	byteSize(0),
 	currentValue(NULL),
-	arraySize(1)
+	arraySize(1),
+	binding(0),
+	set(0)
 {
 	// empty
 }

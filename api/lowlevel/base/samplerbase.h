@@ -38,6 +38,8 @@ public:
 	} samplerSettings;
 
 	eastl::string name;
+	unsigned binding;
+	unsigned set;
 	eastl::vector<VariableBase*> textureVariables;
 
 protected:

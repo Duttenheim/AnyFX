@@ -10,7 +10,9 @@ namespace AnyFX
 //------------------------------------------------------------------------------
 /**
 */
-VarbufferBase::VarbufferBase()
+VarbufferBase::VarbufferBase() :
+	binding(0),
+	set(0)
 {
 	// empty
 }
@@ -29,7 +31,7 @@ VarbufferBase::~VarbufferBase()
 void
 VarbufferBase::OnLoaded()
 {
-	// empty, override in subclass
+	this->signature = this->name;
 }
 
 } // namespace AnyFX

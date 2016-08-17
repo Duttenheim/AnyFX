@@ -93,6 +93,7 @@ Annotation::TypeCheck(TypeChecker& typechecker)
 				this->values[i].floatValue = this->values[i].expr->EvalFloat(typechecker);
 				break;
 			case DataType::String:	// skip strings, because otherwise we will delete the string outside the switch
+				if (this->values[i].stringValue == NULL) typechecker.Error(AnyFX::Format("Annotation type 'string' doesn't match value, at %s\n", this->ErrorSuffix().c_str()));
 				continue;
 			}
 			delete this->values[i].expr;

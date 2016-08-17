@@ -60,6 +60,8 @@ public:
 	VariableBase* GetVariable(const eastl::string& name);
 	/// returns variables as a list
 	const eastl::vector<VariableBase*>& GetVariables() const;
+	/// returns varbuffers based on group
+	const eastl::vector<VariableBase*>& GetVariables(const unsigned group);
 	/// returns true if variable exists
 	bool HasVariable(const eastl::string& name);
 
@@ -69,6 +71,8 @@ public:
 	VarblockBase* GetVarblock(const eastl::string& name);
 	/// returns varblocks as a list
 	const eastl::vector<VarblockBase*>& GetVarblocks() const;
+	/// returns varbuffers based on group
+	const eastl::vector<VarblockBase*>& GetVarblocks(const unsigned group);
 	/// returns true if varblock exists
 	bool HasVarblock(const eastl::string& name);
 
@@ -78,6 +82,8 @@ public:
 	VarbufferBase* GetVarbuffer(const eastl::string& name);
 	/// returns varbuffer as a list
 	const eastl::vector<VarbufferBase*>& GetVarbuffers() const;
+	/// returns varbuffers based on group
+	const eastl::vector<VarbufferBase*>& GetVarbuffers(const unsigned group);
 	/// returns true if varbuffer exists
 	bool HasVarbuffer(const eastl::string& name);
 
@@ -121,6 +127,7 @@ private:
 	eastl::vector<ShaderBase*> shadersByIndex;
 
 	eastl::map<eastl::string, VariableBase*> variables;
+	eastl::map<unsigned, eastl::vector<VariableBase*>> variablesByGroup;
 	eastl::vector<VariableBase*> variablesByIndex;
 
 	eastl::map<eastl::string, RenderStateBase*> renderstates;
@@ -130,9 +137,11 @@ private:
 	eastl::vector<SubroutineBase*> subroutinesByIndex;
 
 	eastl::map<eastl::string, VarblockBase*> varblocks;
+	eastl::map<unsigned, eastl::vector<VarblockBase*>> varblocksByGroup;
 	eastl::vector<VarblockBase*> varblocksByIndex;
 
 	eastl::map<eastl::string, VarbufferBase*> varbuffers;
+	eastl::map<unsigned, eastl::vector<VarbufferBase*>> varbuffersByGroup;
 	eastl::vector<VarbufferBase*> varbuffersByIndex;
 
 	eastl::map<eastl::string, SamplerBase*> samplers;

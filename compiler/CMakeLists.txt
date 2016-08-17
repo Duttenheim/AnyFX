@@ -80,6 +80,7 @@ ENDIF()
 		OGLCompiler
 		OSDependent
 		SPIRV
+		HLSL
 		mcpp)
 		
 	TARGET_LINK_LIBRARIES(compiler
@@ -90,6 +91,7 @@ ENDIF()
 		OGLCompiler
 		OSDependent
 		SPIRV
+		HLSL
 		${OPENGL_LIBS})
 		
 SET_DEFAULT_OUTPUT(compiler)

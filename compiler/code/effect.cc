@@ -5,6 +5,12 @@
 #include "./effect.h"
 #include <assert.h>
 #include "constant.h"
+#include <algorithm>
+
+#define VERSION_MAJOR 2
+#define VERSION_MINOR 1
+
+#define ROUND_TO_POW(n, p) ((n + p - 1) & ~(p - 1))
 
 namespace AnyFX
 {
@@ -228,7 +234,7 @@ Effect::Setup()
 		{
 			AnyFX::Variable& var = this->variables[i];
 			var.Preprocess();
-			if (var.GetVarType().GetType() < DataType::Sampler1D && var.IsUniform())
+			if (var.GetDataType().GetType() < DataType::Sampler1D && var.IsUniform())
 			{
 				this->placeholderVarBlock.AddVariable(var);
 				this->variables.erase(this->variables.begin() + i);
@@ -245,11 +251,34 @@ Effect::Setup()
 			var.Preprocess();
 		}
 	}
+
+	// if header has default group number, use it
+	const std::string& defaultSet = this->header.GetValue("/DEFAULTSET");
+	unsigned defaultSetIdx = 0;
+	if (defaultSet != "/DEFAULTSET")
+	{
+		defaultSetIdx = std::stoi(defaultSet);
+	}
     
 	// sort all variables in varblocks
 	for (i = 0; i < this->varBlocks.size(); i++)
 	{
-		this->varBlocks[i].SortVariables();
+		this->varBlocks[i].group = defaultSetIdx;
+	}
+
+	for (i = 0; i < this->variables.size(); i++)
+	{
+		this->variables[i].group = defaultSetIdx;
+	}
+
+	for (i = 0; i < this->samplers.size(); i++)
+	{
+		this->samplers[i].group = defaultSetIdx;
+	}
+
+	for (i = 0; i < this->varBuffers.size(); i++)
+	{
+		this->varBuffers[i].group = defaultSetIdx;
 	}
 
 	// now, finalize all shaders, this adds all structures, varblocks and functions into all shaders, making sure they compile properly
@@ -326,6 +355,7 @@ Effect::TypeCheck(TypeChecker& typechecker)
 
 	for (i = 0; i < this->varBlocks.size(); i++)
 	{
+		this->varBlocks[i].SortVariables();
 		this->varBlocks[i].TypeCheck(typechecker);
 	}
 
@@ -358,15 +388,26 @@ Effect::Generate(Generator& generator)
 {
 	// typecheck all shaders
 	std::map<std::string, Shader*>::iterator it;
+	unsigned i = 0;
 	for (it = this->shaders.begin(); it != this->shaders.end(); it++)
 	{
 		Shader* shader = it->second;
 
 		// generate code for shaders
-		shader->Generate(generator, this->variables, this->structures, this->constants, this->varBlocks, this->varBuffers, this->subroutines, this->functions);
+		shader->Generate(generator, this->variables, this->structures, this->constants, this->varBlocks, this->varBuffers, this->samplers, this->subroutines, this->functions);
+
+		// output generated code if we flag it
+		if (this->header.GetFlags() & Header::OutputGeneratedShaders)
+		{
+			BinWriter out;
+			out.SetPath(AnyFX::Format("%s_%d%s", this->debugOutput.c_str(), i++, "_debug.txt"));
+			out.Open();
+			const std::string compiled = shader->GetCompiledCode();
+			out.WriteBytes(compiled.c_str(), compiled.length());
+			out.Close();
+		}
 	}
 
-	unsigned i;
 	for (i = 0; i < this->programs.size(); i++)
 	{
 		this->programs[i].Generate(generator);
@@ -382,7 +423,9 @@ Effect::Compile(BinWriter& writer)
 	assert(this->header.GetType() != Header::InvalidType);
 
 	// write magic number
-	writer.WriteInt('AFX1');
+	writer.WriteInt('ANFX');
+	writer.WriteInt(VERSION_MAJOR);
+	writer.WriteInt(VERSION_MINOR);
 
 	// write header, vital!
 	this->header.Compile(writer);
@@ -487,6 +530,112 @@ Effect::Compile(BinWriter& writer)
     {
         this->varBuffers[i].Compile(writer);
     }
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+unsigned
+Effect::GetAlignmentGLSL(const DataType& type, unsigned arraySize, unsigned& alignedSize, unsigned& stride, unsigned& elementStride, std::vector<unsigned>& suboffsets, const bool& std140, TypeChecker& typechecker)
+{
+	DataType::Dimensions dims = DataType::ToDimensions(type);
+	unsigned byteSize = DataType::ToByteSize(DataType::ToPrimitiveType(type));
+	unsigned vectorSize = DataType::ToVectorSize(type);
+	const unsigned vec4alignment = 16;
+	unsigned alignment = 0;
+
+	// calculate alignment per element
+	unsigned elementAlignment = 0;
+	switch (dims.x)
+	{
+	case 0:		// this happens if we have structs
+		break;
+	case 1:
+		elementAlignment = byteSize;
+		alignedSize = byteSize;
+		break;
+	case 2:
+		elementAlignment = byteSize * 2;
+		alignedSize = byteSize * 2;
+		break;
+	default:	// this holds true for both 3, and 4 element vectors
+		elementAlignment = byteSize * 4;
+		alignedSize = byteSize * 4;
+		break;
+	}
+
+	unsigned unusedStride;
+	unsigned unusedElementStride;
+
+	// no array
+	if (arraySize == 1)
+	{
+		if (type.GetType() == DataType::UserType) // struct
+		{
+			Structure* structure = dynamic_cast<Structure*>(typechecker.GetSymbol(type.GetName()));
+			assert(structure != 0);
+			const std::vector<Parameter>& params = structure->GetParameters();
+			unsigned i;
+			unsigned maxAlignment = std140 ? vec4alignment : 0;
+			alignedSize = 0;
+			for (i = 0; i < params.size(); i++)
+			{
+				const Parameter& param = params[i];
+				const DataType& memberType = param.GetDataType();
+				unsigned memberSize;
+				unsigned memberAlignment = Effect::GetAlignmentGLSL(memberType, param.GetArraySize(), memberSize, stride, unusedElementStride, suboffsets, std140, typechecker);
+				maxAlignment = std::max(maxAlignment, memberAlignment);
+				alignedSize = AlignToPow(alignedSize, memberAlignment);
+				if (memberType.GetType() != DataType::UserType) suboffsets.push_back(stride);
+				alignedSize += memberSize;
+				stride = AlignToPow(alignedSize, memberAlignment);
+			}
+
+			// align all suboffsets
+			for (i = 0; i < suboffsets.size(); i++) suboffsets[i] = AlignToPow(suboffsets[i], maxAlignment);
+
+			alignedSize = AlignToPow(alignedSize, maxAlignment);
+			alignment = maxAlignment;
+		}
+		else if (type.GetType() >= DataType::Matrix2x2 && type.GetType() <= DataType::Matrix4x4) // matrix types
+		{
+			switch (dims.x)
+			{
+			case 1:
+				elementAlignment = byteSize;
+				alignedSize = byteSize;
+				break;
+			case 2:
+				elementAlignment = byteSize * 2;
+				alignedSize = byteSize * 2;
+				break;
+			default:	// this holds true for both 3, and 4 element vectors
+				elementAlignment = byteSize * 4;
+				alignedSize = byteSize * 4;
+				break;
+			}
+
+			// all matrices are column major
+			if (std140) alignment = std::max(elementAlignment, vec4alignment);
+			alignedSize = AlignToPow(alignedSize, alignment);
+			elementStride = alignedSize;
+			alignedSize *= dims.y;
+		}
+		else // vector or scalar types
+		{
+			alignment = elementAlignment;
+		}
+	}
+	else // array
+	{
+		// get alignment for non-array
+		alignment = Effect::GetAlignmentGLSL(type, 1, alignedSize, unusedStride, unusedElementStride, suboffsets, std140, typechecker);
+		if (std140) alignment = std::max(alignment, vec4alignment);
+		alignedSize = AlignToPow(alignedSize, alignment);
+		elementStride = alignedSize;
+		alignedSize *= arraySize;
+	}
+	return alignment;
 }
 
 } // namespace AnyFX

@@ -19,6 +19,7 @@ public:
 	virtual ~VkSampler();
 
 	VkSamplerCreateInfo samplerInfo;
+	VkDescriptorSetLayoutBinding bindingLayout;
 private:
 
 	/// callback for when program is done loading

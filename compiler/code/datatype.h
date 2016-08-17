@@ -52,6 +52,10 @@ public:
 		Matrix4x2,
 		Matrix4x3,
 		Matrix4x4,
+		AtomicCounter,
+		TextureHandle,
+		ImageHandle,
+		SamplerHandle,
 		Sampler1D,
 		Sampler1DArray,
 		Sampler2D,
@@ -80,7 +84,6 @@ public:
 		TextureCube,
 		TextureCubeArray,
 		InputAttachment,
-        AtomicCounter,
 		Void,
 		String,
 		UserType,
@@ -97,6 +100,11 @@ public:
 		Generic,
 
 		NumStyles
+	};
+
+	struct Dimensions
+	{
+		unsigned x, y;
 	};
 
 	/// constructor
@@ -130,6 +138,8 @@ public:
     static unsigned ToByteSize(const DataType& type);
 	/// returns the primitive type of a data type
 	static DataType ToPrimitiveType(const DataType& type);
+	/// returns the primitive type as dimensions
+	static Dimensions ToDimensions(const DataType& type);
 
 	/// formats type to signature
 	static std::string ToSignature(const DataType& type);

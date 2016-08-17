@@ -116,6 +116,12 @@ VkSampler::OnLoaded()
 		VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,	// fixme
 		VK_FALSE							// fixme
 	};
+
+	this->bindingLayout.binding = this->binding;
+	this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+	this->bindingLayout.descriptorCount = 1;
+	this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL;
+	this->bindingLayout.pImmutableSamplers = VK_NULL_HANDLE;
 }
 
 } // namespace AnyFX

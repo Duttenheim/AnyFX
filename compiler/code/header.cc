@@ -5,6 +5,8 @@
 #include "header.h"
 #include "util.h"
 #include "typechecker.h"
+#include <sstream>
+#include <iostream>
 
 namespace AnyFX
 {
@@ -214,8 +216,28 @@ Header::SetFlags(const std::vector<std::string>& defines)
 {
 	for (unsigned i = 0; i < defines.size(); i++)
 	{
-		if (defines[i] == "/NOSUB")			this->flags |= NoSubroutines;
-		else if (defines[i] == "/GBLOCK")	this->flags |= PutGlobalVariablesInBlock;
+		const std::string& str = defines[i];
+		if (str == "/NOSUB" || str == "/N")		this->flags |= NoSubroutines;
+		else if (str == "/GBLOCK" || str == "/G")	this->flags |= PutGlobalVariablesInBlock;
+		else if (str == "/OUTPUT" || str == "/O") this->flags |= OutputGeneratedShaders;
+		else
+		{
+			if (str[0] == '/')
+			{
+				std::stringstream ss(str);
+				std::string item;
+				std::vector<std::string> tokens;
+				while (std::getline(ss, item, ' '))
+				{
+					tokens.push_back(item);
+				}
+
+				if (tokens.size() == 2)
+				{
+					this->values[tokens[0]] = tokens[1];
+				}
+			}			
+		}
 	}
 }
 
