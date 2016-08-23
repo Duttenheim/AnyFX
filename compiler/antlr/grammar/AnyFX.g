@@ -196,6 +196,7 @@ NOTEQ:			'!=';
 LOGICAND:		'&&';
 LOGICOR:		'||';
 MOD:			'%';
+UNDERSC:		'_';
 	
 ADD: 			'+';
 SUB: 			'-';
@@ -236,11 +237,11 @@ fragment
 ALPHABET	: ('A'..'Z'|'a'..'z');
 
 // Identifier, must begin with alphabetical token, but can be followed by integer literal or underscore
-IDENTIFIER			: ALPHABET (ALPHABET|INTEGERLITERAL|'_')*;
+IDENTIFIER			: ALPHABET (ALPHABET|INTEGERLITERAL|UNDERSC)*;
 
 // Acceptable file path
 fragment
-PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|'_'|AND|SC|COL|DOT|' '|'-')*
+PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|UNDERSC|AND|SC|COL|DOT|' '|'-')*
 		;
 
 // since the lexer also needs to be able to handle preprocessor tokens, we define this rule which will do exactly the same as the 'preprocessor' parser equal, but for the lexer

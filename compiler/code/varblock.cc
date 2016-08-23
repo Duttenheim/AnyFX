@@ -119,7 +119,13 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 		unsigned alignment = 0;
 		std::vector<unsigned> suboffsets;
 		if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
-			alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, true, typechecker);
+		{
+			// if we have a push constant, use std430, otherwise std140
+			if (this->push)
+				alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, false, typechecker);
+			else
+				alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, true, typechecker);
+		}
 
 		// if we have a struct, we need to unroll it, and calculate the offsets
 		const DataType& type = var.GetDataType();
@@ -222,7 +228,7 @@ VarBlock::Format(const Header& header) const
 		{
 			if (this->push)
 			{
-				std::string layout = AnyFX::Format("layout(push_constant) uniform __PC__ ", this->group, this->binding);
+				std::string layout = AnyFX::Format("layout(push_constant) uniform __PC__ ");
 				formattedCode.append(layout);
 			}
 			else

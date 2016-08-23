@@ -212,6 +212,8 @@ Shader::Generate(
 		this->preamble.append("#define gl_InstanceID gl_InstanceIndex\n");
 		this->preamble.append("#define gl_VertexID gl_VertexIndex\n");
 		this->preamble.append("#extension GL_GOOGLE_cpp_style_line_directive : enable\n");
+		this->preamble.append("#extension GL_ARB_separate_shader_objects : enable\n");
+		this->preamble.append("#extension GL_ARB_shading_language_420pack : enable\n");
 		this->preamble.append("#define SPIRV\n");
 	}
 

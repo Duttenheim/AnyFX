@@ -551,15 +551,15 @@ Effect::GetAlignmentGLSL(const DataType& type, unsigned arraySize, unsigned& ali
 	case 0:		// this happens if we have structs
 		break;
 	case 1:
-		elementAlignment = byteSize;
+		alignment = byteSize;
 		alignedSize = byteSize;
 		break;
 	case 2:
-		elementAlignment = byteSize * 2;
+		alignment = byteSize * 2;
 		alignedSize = byteSize * 2;
 		break;
 	default:	// this holds true for both 3, and 4 element vectors
-		elementAlignment = byteSize * 4;
+		alignment = byteSize * 4;
 		alignedSize = byteSize * 4;
 		break;
 	}
@@ -602,28 +602,24 @@ Effect::GetAlignmentGLSL(const DataType& type, unsigned arraySize, unsigned& ali
 			switch (dims.x)
 			{
 			case 1:
-				elementAlignment = byteSize;
+				alignment = byteSize;
 				alignedSize = byteSize;
 				break;
 			case 2:
-				elementAlignment = byteSize * 2;
+				alignment = byteSize * 2;
 				alignedSize = byteSize * 2;
 				break;
 			default:	// this holds true for both 3, and 4 element vectors
-				elementAlignment = byteSize * 4;
+				alignment = byteSize * 4;
 				alignedSize = byteSize * 4;
 				break;
 			}
 
 			// all matrices are column major
-			if (std140) alignment = std::max(elementAlignment, vec4alignment);
+			if (std140) alignment = std::max(alignment, vec4alignment);
 			alignedSize = AlignToPow(alignedSize, alignment);
 			elementStride = alignedSize;
 			alignedSize *= dims.y;
-		}
-		else // vector or scalar types
-		{
-			alignment = elementAlignment;
 		}
 	}
 	else // array
