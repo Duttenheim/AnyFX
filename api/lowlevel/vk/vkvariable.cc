@@ -42,7 +42,7 @@ VkVariable::OnLoaded()
 		this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		this->bindingLayout.descriptorCount = this->arraySize;
 		this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL;
-		this->bindingLayout.pImmutableSamplers = VK_NULL_HANDLE;
+		this->bindingLayout.pImmutableSamplers = NULL;
 	}
 	else if (this->type >= Image1D && this->type <= ImageCubeArray)
 	{
@@ -50,7 +50,7 @@ VkVariable::OnLoaded()
 		this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		this->bindingLayout.descriptorCount = this->arraySize;
 		this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL;
-		this->bindingLayout.pImmutableSamplers = VK_NULL_HANDLE;
+		this->bindingLayout.pImmutableSamplers = NULL;
 	}
 	else if (this->type >= Texture1D && this->type <= TextureCubeArray)
 	{
@@ -58,7 +58,15 @@ VkVariable::OnLoaded()
 		this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 		this->bindingLayout.descriptorCount = this->arraySize;
 		this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL;
-		this->bindingLayout.pImmutableSamplers = VK_NULL_HANDLE;
+		this->bindingLayout.pImmutableSamplers = NULL;
+	}
+	else if (this->type == InputAttachment)
+	{
+		this->bindingLayout.binding = this->binding;
+		this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+		this->bindingLayout.descriptorCount = this->arraySize;
+		this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+		this->bindingLayout.pImmutableSamplers = NULL;
 	}
 }
 

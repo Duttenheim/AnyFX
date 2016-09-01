@@ -26,7 +26,8 @@ Variable::Variable() :
 	isUniform(true),
 	hasAnnotation(false),
 	group(0),
-	binding(0)
+	binding(0),
+	index(0)
 {
 	this->symbolType = Symbol::VariableType;
 }
@@ -165,6 +166,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 		const std::string& qualifier = this->qualifierExpressions[i].name;
 		Expression* expr = this->qualifierExpressions[i].expr;
 		if (qualifier == "group") this->group = expr->EvalUInt(typechecker);
+		else if (qualifier == "index") this->index = expr->EvalUInt(typechecker);
 		else
 		{
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -485,6 +487,10 @@ Variable::Format(const Header& header, bool inVarblock) const
 		else if (this->type.GetType() >= DataType::Matrix2x2 && this->type.GetType() <= DataType::Matrix4x4 && inVarblock)
 		{
 			formattedCode.append("layout(column_major) ");
+		}
+		else if (this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
+		{
+			formattedCode.append(AnyFX::Format("layout(input_attachment_index=%d, set=%d, binding=%d)", this->index, this->group, this->binding));
 		}
 	}
 

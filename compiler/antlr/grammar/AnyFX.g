@@ -394,6 +394,7 @@ qualifierValued returns [ std::string str ]
 	str = std::string((const char*)code->chars);
 }
 	: 'group'
+	| 'index'
 	;
 
 // all types are declared in this expression
@@ -412,7 +413,12 @@ type		returns [ DataType type ]
 		else if (typeString == "textureHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::TextureHandle); }
 		else if (typeString == "imageHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::ImageHandle); }
 		else if (typeString == "samplerHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::SamplerHandle); }
-		
+		else if (typeString == "inputAttachment") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachment); }
+		else if (typeString == "inputAttachmentMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentMS); }
+		else if (typeString == "inputAttachmentInteger") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentInteger); }
+		else if (typeString == "inputAttachmentIntegerMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentIntegerMS); }
+		else if (typeString == "inputAttachmentUInteger") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentUInteger); }
+		else if (typeString == "inputAttachmentUIntegerMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentUIntegerMS); }		
 		
 		// HLSL types
 		else if (typeString == "float2") { $type.SetStyle(DataType::HLSL); $type.SetType(DataType::Float2); }
