@@ -194,6 +194,10 @@ Variable::TypeCheck(TypeChecker& typechecker)
 		{
 			this->binding = Shader::bindingIndices[this->group]++;
 		}
+		else if (this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
+		{
+			this->binding = Shader::bindingIndices[this->group]++;
+		}
 	}
 
     // check to see that the user type is valid to be used with a variable
@@ -490,7 +494,9 @@ Variable::Format(const Header& header, bool inVarblock) const
 		}
 		else if (this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
 		{
-			formattedCode.append(AnyFX::Format("layout(input_attachment_index=%d, set=%d, binding=%d)", this->index, this->group, this->binding));
+			// make sure to only generate input attachments for fragment shaders
+			formattedCode.append("#ifdef FRAGMENT_SHADER\n");
+			formattedCode.append(AnyFX::Format("layout(input_attachment_index=%d, set=%d, binding=%d) ", this->index, this->group, this->binding));
 		}
 	}
 
@@ -513,6 +519,10 @@ Variable::Format(const Header& header, bool inVarblock) const
 		formattedCode.append("]");
 	}
 	formattedCode.append(";\n");
+
+	// input attachments are only available in fragment shaders in SPIR-V
+	if (header.GetType() == Header::SPIRV && this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
+		formattedCode.append("#endif //FRAGMENT_SHADER\n");
 	return formattedCode;
 }
 

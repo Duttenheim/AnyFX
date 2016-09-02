@@ -187,7 +187,8 @@ Shader::Generate(
                  const std::vector<VarBuffer>& buffers,
 				 const std::vector<Sampler>& samplers,
                  const std::vector<Subroutine>& subroutines,
-				 const std::vector<Function>& functions)
+				 const std::vector<Function>& functions,
+				 const std::vector<std::string>& passthroughPPs)
 {
 	// clear formatted code
 	this->preamble.clear();
@@ -228,6 +229,22 @@ Shader::Generate(
 		"#define COMPUTE_SHADER\n\n"
 	};
 	this->preamble.append(shaderDefines[this->shaderType]);
+
+	// define all macros sent with passthrough
+	for (unsigned i = 0; i < passthroughPPs.size(); i++)
+	{
+		static const char magic[] = "#shader_";
+		std::string pp = passthroughPPs[i];
+		const char* ptr = std::strstr(pp.c_str(), magic);
+		if (ptr == pp.c_str())
+		{
+			this->preamble.append("#" + pp.substr(sizeof(magic)-1) + "\n");
+		}
+		else
+		{
+			this->preamble.append(pp + "\n");
+		}		
+	}
 
     // add compile flags
     std::string tempFlags = this->compileFlags;

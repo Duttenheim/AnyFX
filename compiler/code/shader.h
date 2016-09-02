@@ -78,7 +78,8 @@ public:
         const std::vector<VarBuffer>& buffers,
 		const std::vector<Sampler>& samplers,
         const std::vector<Subroutine>& subroutines,
-		const std::vector<Function>& functions);
+		const std::vector<Function>& functions,
+		const std::vector<std::string>& passthroughPPs);
 
 	/// static function which resets all bindings
 	static void ResetBindings();

@@ -65,7 +65,7 @@ VkVariable::OnLoaded()
 		this->bindingLayout.binding = this->binding;
 		this->bindingLayout.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 		this->bindingLayout.descriptorCount = this->arraySize;
-		this->bindingLayout.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+		this->bindingLayout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		this->bindingLayout.pImmutableSamplers = NULL;
 	}
 }
