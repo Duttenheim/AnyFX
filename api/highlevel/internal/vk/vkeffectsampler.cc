@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "vkeffectsampler.h"
 #include "vkeffectvariable.h"
+#include "vkeffectprogram.h"
 #include "effectsampler.h"
 #include "vkcontext.h"
 

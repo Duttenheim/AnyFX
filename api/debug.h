@@ -16,7 +16,7 @@ namespace AnyFX
 //------------------------------------------------------------------------------
 /**
 */
-inline void __cdecl
+inline void
 Error(const char* msg, ...)
 {
 	va_list argList;

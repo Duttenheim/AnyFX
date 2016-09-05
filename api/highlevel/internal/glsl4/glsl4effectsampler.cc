@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "glsl4effectsampler.h"
 #include "glsl4effectvariable.h"
+#include "glsl4effectprogram.h"
 #include <assert.h>
 
 namespace AnyFX

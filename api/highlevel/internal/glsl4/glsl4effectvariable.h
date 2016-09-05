@@ -14,6 +14,8 @@
 #include "EASTL/hash_map.h"
 namespace AnyFX
 {
+class GLSL4EffectSampler;
+class GLSL4EffectProgram;
 class InternalEffectProgram;
 class GLSL4EffectVariable : public InternalEffectVariable
 {

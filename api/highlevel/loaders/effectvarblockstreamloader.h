@@ -9,7 +9,7 @@
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"
-#include "internal/internaleffectvarblock.h"
+#include "highlevel/internal/internaleffectvarblock.h"
 #include "EASTL/vector.h"
 #include "EASTL/map.h"
 #include "EASTL/string.h"

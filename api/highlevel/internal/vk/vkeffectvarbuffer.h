@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 namespace AnyFX
 {
+class VkEffectProgram;
 class VkEffectVarbuffer : public InternalEffectVarbuffer
 {
 public:

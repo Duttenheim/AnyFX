@@ -14,6 +14,9 @@
 #define GL4_MULTIBIND 1
 namespace AnyFX
 {
+class GLSL4EffectVariable;
+class GLSL4EffectVarblock;
+class GLSL4EffectVarbuffer;
 class GLSL4EffectProgram : public InternalEffectProgram
 {
 public:
