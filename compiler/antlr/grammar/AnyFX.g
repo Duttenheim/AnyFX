@@ -19,7 +19,7 @@ options
 
 @lexer::members
 {
-
+std::vector<std::string> uncaughtPreprocessorDirectives;
 int preprocessorRowLexer = 0;
 std::string includeFileNameLexer = "";
 #include <iostream>
@@ -97,6 +97,7 @@ EmitPreprocessedToken(pANTLR3_LEXER lexer)
 @lexer::includes
 {
 #include <string>
+#include <vector>
 }
 
 // parser API hooks
@@ -110,6 +111,7 @@ EmitPreprocessedToken(pANTLR3_LEXER lexer)
 @parser::members
 {
 	
+extern std::vector<std::string> uncaughtPreprocessorDirectives;
 // setup function which binds the compiler state to the current AST node
 void SetupFile(AnyFX::Compileable* comp, pANTLR3_TOKEN_STREAM stream, int index = -1)
 {
@@ -243,20 +245,55 @@ IDENTIFIER			: ALPHABET (ALPHABET|INTEGERLITERAL|UNDERSC)*;
 fragment
 PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|UNDERSC|AND|SC|COL|DOT|' '|'-')*
 		;
+		
+fragment
+PPDIRECTIVE : (~(LP|RP))*
+			;
+			
+fragment
+LINE : 'line' ;
+
+fragment
+PT : 'passthrough' ;
+	 
+fragment
+UNKNOWNPP : (IDENTIFIER|INTEGERLITERAL|COL|LP .* RP);
 
 // since the lexer also needs to be able to handle preprocessor tokens, we define this rule which will do exactly the same as the 'preprocessor' parser equal, but for the lexer
 PREPROCESSOR
 	@init
 	{
+		std::vector<std::string> args;
+		std::string directive;
 		std::string file;
+		std::string preprocess;
 	}
-	: NU 'line' WS includeLine = INTEGERLITERAL WS QO (data = PATH {file.append((const char*)$data->getText($data)->chars);}) QO WS
+	@after
 	{
-		int line = atoi((const char*)$includeLine.text->chars);
-		LEXER->input->line = line;
-		includeFileNameLexer = file;
-		//$channel = HIDDEN;
+		if (directive == "line")
+		{
+			int line = atoi(args[0].c_str());
+			LEXER->input->line = line;
+			includeFileNameLexer = args[1];
+		}
+		else if (directive == "passthrough")
+		{
+			std::string argstring;
+			for (unsigned i = 0; i < args.size(); i++) argstring += args[i];
+			argstring = argstring.substr(1, argstring.length() - 2);
+			uncaughtPreprocessorDirectives.push_back(argstring);
+		}
+		else
+		{
+			std::string argstring = "#" + directive + " ";
+			for (unsigned i = 0; i < args.size(); i++) argstring += args[i];
+			uncaughtPreprocessorDirectives.push_back(argstring);
+		}
+		$channel = HIDDEN;
 	}
+	: NU 
+	type = IDENTIFIER { directive = (const char*)$type.text->chars; }
+	((' ')+ (pp = UNKNOWNPP | QO pp = PATH QO) { args.push_back((const char*)$pp.text->chars); })* ('\r'|'\n')
 	;
 	
 WS	: ( '\t' | ' ' | '\r' | '\n' | '\u000C' )+ { $channel = HIDDEN; };
@@ -277,7 +314,12 @@ boolean returns [ bool val ]
 	
 // main entry point
 entry		returns [ Effect returnEffect ]
-	:	effect { $returnEffect = $effect.effect; } EOF
+	:	effect 
+	{ 
+		$effect.effect.SetPreprocessorPassthrough(uncaughtPreprocessorDirectives);
+		uncaughtPreprocessorDirectives.clear();
+		$returnEffect = $effect.effect; 
+	} EOF
 	;
 	
 // entry point for effect, call this function to begin parsing
@@ -394,6 +436,7 @@ qualifierValued returns [ std::string str ]
 	str = std::string((const char*)code->chars);
 }
 	: 'group'
+	| 'index'
 	;
 
 // all types are declared in this expression
@@ -412,7 +455,12 @@ type		returns [ DataType type ]
 		else if (typeString == "textureHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::TextureHandle); }
 		else if (typeString == "imageHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::ImageHandle); }
 		else if (typeString == "samplerHandle") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::SamplerHandle); }
-		
+		else if (typeString == "inputAttachment") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachment); }
+		else if (typeString == "inputAttachmentMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentMS); }
+		else if (typeString == "inputAttachmentInteger") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentInteger); }
+		else if (typeString == "inputAttachmentIntegerMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentIntegerMS); }
+		else if (typeString == "inputAttachmentUInteger") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentUInteger); }
+		else if (typeString == "inputAttachmentUIntegerMS") { $type.SetStyle(DataType::Generic); $type.SetType(DataType::InputAttachmentUIntegerMS); }		
 		
 		// HLSL types
 		else if (typeString == "float2") { $type.SetStyle(DataType::HLSL); $type.SetType(DataType::Float2); }

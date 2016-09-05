@@ -26,7 +26,8 @@ Variable::Variable() :
 	isUniform(true),
 	hasAnnotation(false),
 	group(0),
-	binding(0)
+	binding(0),
+	index(0)
 {
 	this->symbolType = Symbol::VariableType;
 }
@@ -165,6 +166,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 		const std::string& qualifier = this->qualifierExpressions[i].name;
 		Expression* expr = this->qualifierExpressions[i].expr;
 		if (qualifier == "group") this->group = expr->EvalUInt(typechecker);
+		else if (qualifier == "index") this->index = expr->EvalUInt(typechecker);
 		else
 		{
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -189,6 +191,10 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	else if (typechecker.GetHeader().GetType() == Header::SPIRV)
 	{
 		if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::TextureCubeArray)
+		{
+			this->binding = Shader::bindingIndices[this->group]++;
+		}
+		else if (this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
 		{
 			this->binding = Shader::bindingIndices[this->group]++;
 		}
@@ -486,6 +492,12 @@ Variable::Format(const Header& header, bool inVarblock) const
 		{
 			formattedCode.append("layout(column_major) ");
 		}
+		else if (this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
+		{
+			// make sure to only generate input attachments for fragment shaders
+			formattedCode.append("#ifdef FRAGMENT_SHADER\n");
+			formattedCode.append(AnyFX::Format("layout(input_attachment_index=%d, set=%d, binding=%d) ", this->index, this->group, this->binding));
+		}
 	}
 
 	// add GLSL uniform qualifier
@@ -507,6 +519,10 @@ Variable::Format(const Header& header, bool inVarblock) const
 		formattedCode.append("]");
 	}
 	formattedCode.append(";\n");
+
+	// input attachments are only available in fragment shaders in SPIR-V
+	if (header.GetType() == Header::SPIRV && this->type.GetType() >= DataType::InputAttachment && this->type.GetType() <= DataType::InputAttachmentUIntegerMS)
+		formattedCode.append("#endif //FRAGMENT_SHADER\n");
 	return formattedCode;
 }
 

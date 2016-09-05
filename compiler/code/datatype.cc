@@ -32,8 +32,8 @@ DataType::~DataType()
 //------------------------------------------------------------------------------
 /**
 */
-std::string 
-DataType::ToGLSLType( const DataType& type )
+std::string
+DataType::ToGLSLType(const DataType& type)
 {
 	switch (type.type)
 	{
@@ -139,6 +139,18 @@ DataType::ToGLSLType( const DataType& type )
 		return "imageCube";
 	case ImageCubeArray:
 		return "imageCubeArray";
+	case InputAttachment:
+		return "subpassInput";
+	case InputAttachmentMS:
+		return "subpassInputMS";
+	case InputAttachmentInteger:
+		return "isubpassInput";
+	case InputAttachmentIntegerMS:
+		return "isubpassInputMS";
+	case InputAttachmentUInteger:
+		return "usubpassInput";
+	case InputAttachmentUIntegerMS:
+		return "usubpassInputMS";
 	case Texture1D:
 		return "texture1D";
 	case Texture1DArray:
@@ -292,6 +304,12 @@ DataType::ToHLSLType(const DataType& type)
 		return "undefined";
 	case Image2DMSArray:
 		return "undefined";
+	case InputAttachment:
+	case InputAttachmentMS:
+	case InputAttachmentInteger:
+	case InputAttachmentIntegerMS:
+	case InputAttachmentUInteger:
+	case InputAttachmentUIntegerMS:
 	case Undefined:
 	default:
 		return "undefined";
@@ -427,6 +445,18 @@ DataType::ToSignature(const DataType& type)
 		return "ima2dms";
 	case Image2DMSArray:
 		return "ima2dmsa";
+	case InputAttachment:
+		return "ia";
+	case InputAttachmentMS:
+		return "iams";
+	case InputAttachmentInteger:
+		return "iai";
+	case InputAttachmentIntegerMS:
+		return "iaims";
+	case InputAttachmentUInteger:
+		return "iau";
+	case InputAttachmentUIntegerMS:
+		return "iaums";
 	case TextureHandle:
 		return "th";
 	case ImageHandle:
@@ -571,6 +601,18 @@ DataType::ToString(const DataType& type)
 		return "texture [Cube]";
 	case TextureCubeArray:
 		return "texture [Cube-Array]";
+	case InputAttachment:
+		return "input attachment";
+	case InputAttachmentMS:
+		return "input attachment [Multisample]";
+	case InputAttachmentInteger:
+		return "input attachment [Integer]";
+	case InputAttachmentIntegerMS:
+		return "input attachment [Integer multisample]";
+	case InputAttachmentUInteger:
+		return "input attachment [Unsigned integer]";
+	case InputAttachmentUIntegerMS:
+		return "input attachment [Unsigned integer multisample]";
 	case TextureHandle:
 		return "texture handle [uint]";
 	case ImageHandle:
@@ -673,6 +715,12 @@ DataType::ToVectorSize(const DataType& type)
 	case TextureCubeArray:
 	case Texture2DMS:
 	case Texture2DMSArray:
+	case InputAttachment:
+	case InputAttachmentMS:
+	case InputAttachmentInteger:
+	case InputAttachmentIntegerMS:
+	case InputAttachmentUInteger:
+	case InputAttachmentUIntegerMS:
 	case Void:
 	case UserType:
 	case Undefined:

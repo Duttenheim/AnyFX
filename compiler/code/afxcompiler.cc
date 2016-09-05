@@ -86,16 +86,17 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
 
 	std::string vend = "-DVENDOR=" + vendor;
 
-    const unsigned numargs = 4 + defines.size();
+    const unsigned numargs = 5 + defines.size();
     std::string* args = new std::string[numargs];
 	args[0] = std::string("-C");
 	args[1] = std::string("-W 0");
-	args[2] = vend.c_str();
+	args[2] = std::string("-a");
+	args[3] = vend.c_str();
     //args[2] = "-I" + curDir;
     unsigned i;
     for (i = 0; i < defines.size(); i++)
     {
-        args[3 + i] = defines[i].c_str();
+        args[4 + i] = defines[i].c_str();
     }
     args[numargs-1] = file;
 

@@ -191,6 +191,9 @@ private:
 	// the binding unit for this variable
 	unsigned group;
 	unsigned binding;
+
+	// index used if variable is an input attachment
+	unsigned index;
 }; 
 
 //------------------------------------------------------------------------------

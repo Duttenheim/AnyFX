@@ -60,6 +60,9 @@ public:
 	/// add sampler
 	void AddSampler(const Sampler& sampler);
 
+	/// set the vector of passthrough macros
+	void SetPreprocessorPassthrough(const std::vector<std::string>& pps);
+
 	/// sets up effect using given header
 	void Setup();
 	/// type check effect
@@ -90,6 +93,7 @@ private:
     std::vector<Subroutine> subroutines;
 	std::vector<Sampler> samplers;
 
+	std::vector<std::string> passthroughPPs;
 	std::map<std::string, Shader*> shaders;
 
 	RenderState placeholderRenderState;
