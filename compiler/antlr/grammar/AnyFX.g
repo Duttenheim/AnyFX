@@ -200,10 +200,10 @@ LOGICOR:		'||';
 MOD:			'%';
 UNDERSC:		'_';
 	
-ADD: 			'+';
-SUB: 			'-';
-DIV: 			'/';
-MUL: 			'*';
+ADD_OP:			'+';
+SUB_OP:			'-';
+DIV_OP:			'/';
+MUL_OP:         '*';
 
 fragment
 INTEGER: ('0'..'9');
@@ -243,7 +243,7 @@ IDENTIFIER			: ALPHABET (ALPHABET|INTEGERLITERAL|UNDERSC)*;
 
 // Acceptable file path
 fragment
-PATH	: (DIV|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|UNDERSC|AND|SC|COL|DOT|' '|'-')*
+PATH	: (DIV_OP|FORWARDSLASH|ALPHABET|INTEGERLITERAL|LP|RP|UNDERSC|AND|SC|COL|DOT|' '|'-')*
 		;
 		
 fragment
@@ -1057,7 +1057,7 @@ binaryexp3			returns [ Expression* tree ]
 						tree = 0;
 					}
 					:					
-					e1 = binaryexp2 { $tree = $e1.tree; $tree->SetLine(LT(1)->line); $tree->SetPosition(LT(1)->charPosition); } ( op = ( ADD | SUB ) e2 = binaryexp2
+					e1 = binaryexp2 { $tree = $e1.tree; $tree->SetLine(LT(1)->line); $tree->SetPosition(LT(1)->charPosition); } ( op = ( ADD_OP | SUB_OP ) e2 = binaryexp2
 					{ 
 						Expression* lhs = 0;
 												
@@ -1085,7 +1085,7 @@ binaryexp2			returns [ Expression* tree ]
 						tree = 0;
 					}
 					:
-					e1 = binaryexp1 { $tree = $e1.tree; $tree->SetLine(LT(1)->line); $tree->SetPosition(LT(1)->charPosition); } ( op = ( MUL | DIV ) e2 = binaryexp1
+					e1 = binaryexp1 { $tree = $e1.tree; $tree->SetLine(LT(1)->line); $tree->SetPosition(LT(1)->charPosition); } ( op = ( MUL_OP | DIV_OP ) e2 = binaryexp1
 					{ 
 						Expression* lhs = 0;
 						
@@ -1113,7 +1113,7 @@ binaryexp1			returns [ Expression* tree ]
 						tree = 0;
 					}
 					:
-					( op = (SUB | NOT)  )? e1 = binaryexpatom
+					( op = (SUB_OP | NOT)  )? e1 = binaryexpatom
 					{ 
 						Expression* rhs = $e1.tree;
 						

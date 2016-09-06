@@ -33,7 +33,7 @@ VkVariable::OnLoaded()
 
 	// add set-binding to signature
 	char buf[64];
-	sprintf(buf, sizeof(buf), "[%d-%d]", this->set, this->binding);
+	snprintf(buf, sizeof(buf), "[%d-%d]", this->set, this->binding);
 	this->signature += buf;
 
 	if (this->type >= Sampler1D && this->type <= SamplerCubeArray)
