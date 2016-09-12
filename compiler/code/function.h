@@ -12,7 +12,7 @@
 #include "datatype.h"
 #include "functionattribute.h"
 #include "parameter.h"
-#include "symbol.h"
+#include "symbol.h"	
 #include "header.h"
 namespace AnyFX
 {

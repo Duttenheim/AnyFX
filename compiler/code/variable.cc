@@ -334,17 +334,22 @@ Variable::TypeCheck(TypeChecker& typechecker)
 	// assume we have a format set when we have an image
 	if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
 	{
-		if (this->format == NoFormat)
-		{
-			std::string message = AnyFX::Format("Variable '%s' is of image type but does not have a required format qualifier, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
-			typechecker.Error(message);
-		}
-
 		if (this->accessMode == NoAccess)
 		{
 			std::string message = AnyFX::Format("Variable '%s' is of image type but does not have a required access qualifier, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
 			typechecker.Error(message);
 		}
+		else if (typechecker.GetHeader().GetType() != Header::SPIRV)
+		{
+			if (this->accessMode != Write)
+			{
+				if (this->format == NoFormat)
+				{
+					std::string message = AnyFX::Format("Variable '%s' is of image type but does not have a required format qualifier, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
+					typechecker.Error(message);
+				}
+			}
+		}		
 	}
 	else
 	{
@@ -357,7 +362,7 @@ Variable::TypeCheck(TypeChecker& typechecker)
 		if (this->accessMode != NoAccess)
 		{
 			std::string message = AnyFX::Format("Variable '%s' has an image access qualifier, but is not an image variable, %s\n", this->name.c_str(), this->ErrorSuffix().c_str());
-			typechecker.Error(message);
+			typechecker.Warning(message);
 		}
 	}
 	
@@ -457,11 +462,20 @@ Variable::Format(const Header& header, bool inVarblock) const
 	{
 		if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
 		{
-			formattedCode.append(AnyFX::Format("layout(binding=%d, ", this->binding));
-			formattedCode.append(this->FormatImageFormat(header));
-			formattedCode.append(") ");
-			formattedCode.append(this->FormatImageAccess(header));
-			formattedCode.append(" ");
+			if (this->format == NoFormat)
+			{
+				formattedCode.append(AnyFX::Format("layout(binding=%d) ", this->binding));
+				formattedCode.append(this->FormatImageAccess(header));
+				formattedCode.append(" ");
+			}
+			else
+			{
+				formattedCode.append(AnyFX::Format("layout(binding=%d, ", this->binding));
+				formattedCode.append(this->FormatImageFormat(header));
+				formattedCode.append(") ");
+				formattedCode.append(this->FormatImageAccess(header));
+				formattedCode.append(" ");
+			}
 		}    
 		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::SamplerCubeArray)
 		{
@@ -478,11 +492,20 @@ Variable::Format(const Header& header, bool inVarblock) const
 	{
 		if (this->type.GetType() >= DataType::Image1D && this->type.GetType() <= DataType::ImageCubeArray)
 		{
-			formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d, ", this->group, this->binding));
-			formattedCode.append(this->FormatImageFormat(header));
-			formattedCode.append(") ");
-			formattedCode.append(this->FormatImageAccess(header));
-			formattedCode.append(" ");
+			if (this->format == NoFormat)
+			{
+				formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d) ", this->group, this->binding));
+				formattedCode.append(this->FormatImageAccess(header));
+				formattedCode.append(" ");
+			}
+			else
+			{
+				formattedCode.append(AnyFX::Format("layout(set=%d, binding=%d, ", this->group, this->binding));
+				formattedCode.append(this->FormatImageFormat(header));
+				formattedCode.append(") ");
+				formattedCode.append(this->FormatImageAccess(header));
+				formattedCode.append(" ");
+			}
 		}
 		else if (this->type.GetType() >= DataType::Sampler1D && this->type.GetType() <= DataType::TextureCubeArray)
 		{
@@ -545,6 +568,8 @@ Variable::FormatImageFormat(const Header& header) const
 	{
 		switch (this->format)
 		{
+		case NoFormat:
+			return "";
 		case RGBA32F:
 			return "rgba32f";
 		case RGBA16F:
