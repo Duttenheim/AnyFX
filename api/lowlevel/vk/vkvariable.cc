@@ -3,6 +3,9 @@
 // (C) 2016 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
 #include "vkvariable.h"
+#if __WIN32__
+#define snprintf sprintf_s
+#endif
 
 namespace AnyFX
 {

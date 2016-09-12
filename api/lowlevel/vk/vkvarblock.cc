@@ -3,6 +3,9 @@
 // (C) 2016 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
 #include "vkvarblock.h"
+#if __WIN32__
+#define snprintf sprintf_s
+#endif
 
 namespace AnyFX
 {
