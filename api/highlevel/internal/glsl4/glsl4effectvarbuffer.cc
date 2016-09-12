@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "glsl4effectvarbuffer.h"
 #include "glsl4effectprogram.h"
+#include "glsl4effectvariable.h"
 #include <assert.h>
 #include "effectvarbuffer.h"
 

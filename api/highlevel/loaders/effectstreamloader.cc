@@ -87,7 +87,7 @@ EffectStreamLoader::Load()
 				if (numShaders > 0)
 				{
 					effect->shadersByIndex = new EffectShader*[numShaders];
-					memset(effect->shadersByIndex, NULL, numShaders * sizeof(EffectShader*));
+					memset(effect->shadersByIndex, 0, numShaders * sizeof(EffectShader*));
 
 					unsigned i;
 					for (i = 0; i < numShaders; i++)
@@ -110,7 +110,7 @@ EffectStreamLoader::Load()
 				if (numSubroutines > 0)
 				{
 					effect->subroutinesByIndex = new EffectSubroutine*[numSubroutines];
-					memset(effect->subroutinesByIndex, NULL, numSubroutines * sizeof(EffectSubroutine*));
+					memset(effect->subroutinesByIndex, 0, numSubroutines * sizeof(EffectSubroutine*));
 
 					unsigned i;
 					for (i = 0; i < numSubroutines; i++)
@@ -132,7 +132,7 @@ EffectStreamLoader::Load()
 				if (numProgs > 0)
 				{
 					effect->programsByIndex = new EffectProgram*[numProgs];
-					memset(effect->programsByIndex, NULL, numProgs * sizeof(EffectProgram*));
+					memset(effect->programsByIndex, 0, numProgs * sizeof(EffectProgram*));
 
 					unsigned i;
 					for (i = 0; i < numProgs; i++)
@@ -156,7 +156,7 @@ EffectStreamLoader::Load()
 				if (numStates > 0)
 				{
 					effect->renderStatesByIndex = new EffectRenderState*[numStates];
-					memset(effect->renderStatesByIndex, NULL, numStates * sizeof(EffectRenderState*));
+					memset(effect->renderStatesByIndex, 0, numStates * sizeof(EffectRenderState*));
 
 					unsigned i;
 					for (i = 0; i < numStates; i++)
@@ -177,7 +177,7 @@ EffectStreamLoader::Load()
 				if (numVars > 0)
 				{
 					effect->variablesByIndex = new EffectVariable*[numVars];
-					memset(effect->variablesByIndex, NULL, numVars * sizeof(EffectVariable*));
+					memset(effect->variablesByIndex, 0, numVars * sizeof(EffectVariable*));
 
 					unsigned i;
 					for (i = 0; i < numVars; i++)
@@ -200,7 +200,7 @@ EffectStreamLoader::Load()
 				if (numSamplers > 0)
 				{
 					effect->samplersByIndex = new EffectSampler*[numSamplers];
-					memset(effect->samplersByIndex, NULL, numSamplers * sizeof(EffectSampler*));
+					memset(effect->samplersByIndex, 0, numSamplers * sizeof(EffectSampler*));
 
 					unsigned i;
 					for (i = 0; i < numSamplers; i++)
@@ -221,7 +221,7 @@ EffectStreamLoader::Load()
 				if (numBlocks > 0)
 				{
 					effect->varblocksByIndex = new EffectVarblock*[numBlocks];
-					memset(effect->varblocksByIndex, NULL, numBlocks * sizeof(EffectVarblock*));
+					memset(effect->varblocksByIndex, 0, numBlocks * sizeof(EffectVarblock*));
 
 					// load varblock, also 'extract' the variables defined within
 					eastl::vector<EffectVariable*> vars;
@@ -264,7 +264,7 @@ EffectStreamLoader::Load()
 				if (numBuffers > 0)
 				{
 					effect->varbuffersByIndex = new EffectVarbuffer*[numBuffers];
-					memset(effect->varbuffersByIndex, NULL, numBuffers * sizeof(EffectVarbuffer*));
+					memset(effect->varbuffersByIndex, 0, numBuffers * sizeof(EffectVarbuffer*));
 
 					unsigned i;
 					for (i = 0; i < numBuffers; i++)

@@ -10,8 +10,8 @@
 //------------------------------------------------------------------------------
 #include "EASTL/map.h"
 #include "EASTL/string.h"
-#include "loaders/effectstreamloader.h"
-#include "loaders/streamloader.h"
+#include "highlevel/loaders/effectstreamloader.h"
+#include "lowlevel/loaders/streamloader.h"
 namespace AnyFX
 {
 class Effect;

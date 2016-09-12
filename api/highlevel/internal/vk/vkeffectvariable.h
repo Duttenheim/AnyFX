@@ -10,6 +10,8 @@
 #include <vulkan/vulkan.h>
 namespace AnyFX
 {
+class VkEffectProgram;
+class VkEffectSampler;
 class VkEffectVariable : public InternalEffectVariable
 {
 public:
