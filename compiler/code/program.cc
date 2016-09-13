@@ -653,6 +653,15 @@ Program::Compile(BinWriter& writer)
 //------------------------------------------------------------------------------
 /**
 */
+const std::vector<unsigned>&
+Program::GetBinary(unsigned shader)
+{
+	return this->binary[shader];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 void
 Program::BuildShaders(const Header& header, const std::vector<Function>& functions, std::map<std::string, Shader*>& shaders)
 {

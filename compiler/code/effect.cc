@@ -419,7 +419,21 @@ Effect::Generate(Generator& generator)
 
 	for (i = 0; i < this->programs.size(); i++)
 	{
-		this->programs[i].Generate(generator);
+		Program& prog = this->programs[i];
+		prog.Generate(generator);
+
+		if (this->header.GetFlags() & Header::OutputGeneratedShaders)
+		{
+			BinWriter out;
+			unsigned j;
+			for (j = 0; j < ProgramRow::NumProgramRows - 1; j++)
+			{
+				out.SetPath(AnyFX::Format("%s_%d%s", this->debugOutput.c_str(), i++, "_debug_bin.txt"));
+				out.Open();
+				prog.WriteBinary(prog.GetBinary(j), out);
+				out.Close();
+			}
+		}
 	}
 }
 

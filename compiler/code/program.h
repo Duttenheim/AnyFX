@@ -38,6 +38,8 @@ public:
 	void Generate(Generator& generator);
 	/// compiles program
 	void Compile(BinWriter& writer);
+	/// get binary representation for shader
+	const std::vector<unsigned>& GetBinary(unsigned shader);
 
 private:
 	friend class Effect;
