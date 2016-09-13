@@ -424,13 +424,14 @@ Effect::Generate(Generator& generator)
 
 		if (this->header.GetFlags() & Header::OutputGeneratedShaders)
 		{
-			BinWriter out;
 			unsigned j;
 			for (j = 0; j < ProgramRow::NumProgramRows - 1; j++)
 			{
-				out.SetPath(AnyFX::Format("%s_%d%s", this->debugOutput.c_str(), i++, "_debug_bin.txt"));
+				BinWriter out;
+				out.SetPath(AnyFX::Format("%s_%s_%d%s", this->debugOutput.c_str(), prog.GetName().c_str(), j, "_debug.bin"));
 				out.Open();
-				prog.WriteBinary(prog.GetBinary(j), out);
+				const std::vector<unsigned> bin = prog.GetBinary(j); 
+				prog.WriteBinary(bin, out);
 				out.Close();
 			}
 		}

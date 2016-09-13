@@ -47,7 +47,9 @@ void
 BinWriter::Close()
 {
 	assert(this->isOpen);
+	
 	this->output.close();
+	this->output.clear();
 }
 
 //------------------------------------------------------------------------------
