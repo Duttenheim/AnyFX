@@ -8,6 +8,7 @@
 #include "gl4/gl4varbuffer.h"
 #include "vk/vkvarbuffer.h"
 #include "annotationloader.h"
+#include "types.h"
 
 namespace AnyFX
 {
@@ -53,7 +54,7 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 	eastl::string name = reader->ReadString().c_str();
 	unsigned alignedSize = reader->ReadUInt();
 	unsigned size = reader->ReadUInt();
-	bool shared = reader->ReadBool();
+	Qualifiers qualifierFlags = FromInteger(reader->ReadUInt());
 	unsigned binding = reader->ReadUInt();
 	unsigned set = reader->ReadUInt();
 
@@ -79,7 +80,7 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 	varbuffer->name = name;
 	varbuffer->alignedSize = alignedSize;
 	varbuffer->size = size;
-	varbuffer->isShared = shared;
+	varbuffer->qualifiers = qualifierFlags;
 	varbuffer->set = set;
 	varbuffer->binding = binding;
 

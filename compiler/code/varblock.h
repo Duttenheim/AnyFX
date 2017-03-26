@@ -18,6 +18,9 @@ namespace AnyFX
 class VarBlock : public Symbol
 {
 public:
+
+
+
 	/// constructor
 	VarBlock();
 	/// destructor
@@ -52,11 +55,8 @@ private:
 	std::map<std::string, unsigned> offsetsByName;
 	unsigned alignedSize;
 
-
-	bool shared;
 	unsigned group;
 	unsigned binding;
-	bool push;
 
 	bool hasAnnotation;
 	Annotation annotation;
@@ -78,9 +78,8 @@ VarBlock::SetAnnotation(const Annotation& annotation)
 inline bool 
 VarBlock::IsShared() const
 {
-	return this->shared;
+	return HasFlags(this->qualifierFlags, Qualifiers::Shared);
 }
-
 
 //------------------------------------------------------------------------------
 /**

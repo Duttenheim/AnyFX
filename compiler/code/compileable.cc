@@ -12,7 +12,11 @@ namespace AnyFX
 /**
 */
 Compileable::Compileable() :
-	hasErrors(false)
+	line(-1),
+	row(-1),
+	hasWarnings(false),
+	hasErrors(false),
+	qualifierFlags(Qualifiers::None)
 {
 	// empty
 }

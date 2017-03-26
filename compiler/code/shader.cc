@@ -21,6 +21,7 @@
 #include "subroutine.h"
 #include "glslang/Include/ResourceLimits.h"
 #include "SPIRV/GLSL.std.450.h"
+#include "Public/ShaderLang.h"
 
 #define max(x, y) x > y ? x : y
 
@@ -206,7 +207,7 @@ Shader::Generate(
 	}
 	else if (header.GetType() == Header::SPIRV)
 	{
-		std::string version = Format("#version 450\n");
+		std::string version = Format("#version 450 core\n");
 		this->preamble.append(version);
 
 		// add SPIR-V specific remaps and define flag
@@ -428,9 +429,9 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	const EShLanguage shaderTable[] =
 	{
 		EShLangVertex,
-		EShLangTessControl,		
-		EShLangTessEvaluation,	
-		EShLangGeometry,		
+		EShLangTessControl,
+		EShLangTessEvaluation,
+		EShLangGeometry,
 		EShLangFragment,
 		EShLangCompute
 	};
@@ -448,13 +449,13 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	sources[1] = code.c_str();
 	lengths[1] = code.length();
 
-	EShMessages messages = (EShMessages)(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
+	EShMessages messages = (EShMessages)(EShMsgDefault | EShMsgRelaxedErrors | EShMsgSpvRules | EShMsgVulkanRules);
 	glslang::TShader* shaderObject = new glslang::TShader(shaderTable[this->shaderType]);
 	shaderObject->setStringsWithLengths(sources, lengths, 2);
 
 	// perform compilation
 	const Header& header = generator->GetHeader();
-	if (!shaderObject->parse(&DefaultResources, 450, true, messages))
+	if (!shaderObject->parse(&DefaultResources, 450, EProfile::ECoreProfile, true, true, messages))
 	{
 		std::string message = shaderObject->getInfoLog();
 		generator->Error(message);

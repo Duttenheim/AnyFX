@@ -9,6 +9,7 @@
 #include "vk/vkvarblock.h"
 #include "annotationloader.h"
 #include "variableloader.h"
+#include "types.h"
 
 namespace AnyFX
 {
@@ -53,10 +54,10 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
 
 	eastl::string name = reader->ReadString().c_str();
 	unsigned alignedSize = reader->ReadUInt();
-	bool shared = reader->ReadBool();
+	Qualifiers qualifierFlags = FromInteger(reader->ReadUInt());
+	
 	unsigned binding = reader->ReadUInt();
-	unsigned set = reader->ReadUInt();
-	bool push = reader->ReadBool();
+	unsigned set = reader->ReadUInt();	
 
     // load annotations
 	bool hasAnnotation = reader->ReadBool();
@@ -93,10 +94,9 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
     // set internal variables
 	varblock->name = name;
 	varblock->alignedSize = alignedSize;
-	varblock->isShared = shared;
+	varblock->qualifiers = qualifierFlags;
 	varblock->set = set;
 	varblock->binding = binding;
-	varblock->push = push;
 
 	varblock->OnLoaded();
 	return varblock;

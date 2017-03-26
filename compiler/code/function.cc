@@ -165,6 +165,19 @@ Function::ConsumeAttribute(const FunctionAttribute& attr)
 void
 Function::TypeCheck(TypeChecker& typechecker)
 {
+	// create a signature if not a shader target, we cannot overload shader targets
+	if (!this->shaderTarget)
+	{
+		std::string signature;
+		unsigned i;
+		for (i = 0; i < this->parameters.size(); i++)
+		{
+			const Parameter& firstParam = this->parameters[i];
+			signature += DataType::ToSignature(firstParam.GetDataType()) + ",";
+		}
+		this->signature = signature;
+	}	
+
 	// add function, if failed we must have a redefinition
 	if (!typechecker.AddSymbol(this)) return;
 
@@ -177,10 +190,8 @@ Function::TypeCheck(TypeChecker& typechecker)
 	// remove any mcpp #line markers in the source code (because they have file paths in them)
 	size_t pos = this->code.find("#line");
 
-	// make sure no parameter has an equal attribute
-	unsigned i;
-
 	// evaluate all int expressions 
+	unsigned i;
 	for (i = 0; i < FunctionAttribute::NumIntFlags; i++)
 	{
 		if (this->intExpressions[i]) 

@@ -171,8 +171,8 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-DataType::SetType( const Type& type )
+inline void
+DataType::SetType(const Type& type)
 {
 	this->type = type;
 }

@@ -36,7 +36,7 @@ Annotable::~Annotable()
 /**
 */
 bool
-Annotable::HasAnnotation(const eastl::string& name)
+Annotable::HasAnnotation(const eastl::string& name) const
 {
     return this->annotationMap.find(name) != this->annotationMap.end();
 }
@@ -44,50 +44,65 @@ Annotable::HasAnnotation(const eastl::string& name)
 //------------------------------------------------------------------------------
 /**
 */
-int 
-Annotable::GetAnnotationInt(const eastl::string& name)
+bool
+Annotable::Flag(const eastl::string& name) const
 {
-	assert(this->annotationMap.find(name) != this->annotationMap.end());
-	return this->annotationMap[name].data.intValue;
+	if (this->HasAnnotation(name)) return this->GetAnnotationBool(name);
+	return false;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+int 
+Annotable::GetAnnotationInt(const eastl::string& name) const
+{	
+	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	assert(it != this->annotationMap.end());
+	return it->second.data.intValue;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 bool 
-Annotable::GetAnnotationBool(const eastl::string& name)
+Annotable::GetAnnotationBool(const eastl::string& name) const
 {
-	assert(this->annotationMap.find(name) != this->annotationMap.end());
-	return this->annotationMap[name].data.boolValue;
+	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	assert(it != this->annotationMap.end());
+	return it->second.data.boolValue;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 double 
-Annotable::GetAnnotationDouble(const eastl::string& name)
+Annotable::GetAnnotationDouble(const eastl::string& name) const
 {
-	assert(this->annotationMap.find(name) != this->annotationMap.end());
-	return this->annotationMap[name].data.doubleValue;
+	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	assert(it != this->annotationMap.end());
+	return it->second.data.doubleValue;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 float 
-Annotable::GetAnnotationFloat(const eastl::string& name)
+Annotable::GetAnnotationFloat(const eastl::string& name) const
 {
-	assert(this->annotationMap.find(name) != this->annotationMap.end());
-	return this->annotationMap[name].data.floatValue;
+	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	assert(it != this->annotationMap.end());
+	return it->second.data.floatValue;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 const eastl::string&
-Annotable::GetAnnotationString(const eastl::string& name)
+Annotable::GetAnnotationString(const eastl::string& name) const
 {
-	assert(this->annotationMap.find(name) != this->annotationMap.end());
-	return *this->annotationMap[name].data.stringValue;
+	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	assert(it != this->annotationMap.end());
+	return *it->second.data.stringValue;
 }
 } // namespace AnyFX

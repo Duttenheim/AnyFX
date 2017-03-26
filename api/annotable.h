@@ -23,18 +23,20 @@ public:
 	virtual ~Annotable();
 
     /// returns true if annotation exists
-    bool HasAnnotation(const eastl::string& name);
+    bool HasAnnotation(const eastl::string& name) const;
+	/// returns true if annotation is bool, exists and is true
+	bool Flag(const eastl::string& name) const;
 
 	/// get int value
-    int GetAnnotationInt(const eastl::string& name);
+    int GetAnnotationInt(const eastl::string& name) const;
 	/// get bool value
-    bool GetAnnotationBool(const eastl::string& name);
+    bool GetAnnotationBool(const eastl::string& name) const;
 	/// get double value
-    double GetAnnotationDouble(const eastl::string& name);
+    double GetAnnotationDouble(const eastl::string& name) const;
 	/// get float value
-    float GetAnnotationFloat(const eastl::string& name);
+    float GetAnnotationFloat(const eastl::string& name) const;
 	/// get string value
-    const eastl::string& GetAnnotationString(const eastl::string& name);
+    const eastl::string& GetAnnotationString(const eastl::string& name) const;
 
 private:
 	friend class EffectAnnotationStreamLoader;

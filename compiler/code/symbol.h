@@ -49,19 +49,22 @@ public:
 
 	/// returns type of symbol
 	const Type& GetType() const;
+	/// get signature of symbol
+	const std::string& GetSignature() const;
 
 protected:
 
     bool reserved;
 	std::string name;
+	std::string signature;
 	Type symbolType;
 }; 
 
 //------------------------------------------------------------------------------
 /**
 */
-inline void 
-Symbol::SetName( const std::string& name )
+inline void
+Symbol::SetName(const std::string& name)
 {
 	this->name = name;
 }
@@ -102,6 +105,15 @@ inline const Symbol::Type&
 Symbol::GetType() const
 {
 	return this->symbolType;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline const std::string&
+Symbol::GetSignature() const
+{
+	return this->signature;
 }
 
 } // namespace AnyFX

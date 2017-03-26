@@ -10,6 +10,7 @@
 //------------------------------------------------------------------------------
 #include "binwriter.h"
 #include "qualifierexpression.h"
+#include "types.h"
 #include <vector>
 #include <string>
 namespace AnyFX
@@ -19,6 +20,7 @@ class Generator;
 class Compileable
 {
 public:
+
 	/// constructor
 	Compileable();
 	/// destructor
@@ -78,6 +80,7 @@ protected:
 	bool hasErrors;
 	bool hasWarnings;
 
+	Qualifiers qualifierFlags;
 	std::vector<std::string> qualifiers;
 	std::vector<QualifierExpression> qualifierExpressions;
 }; 

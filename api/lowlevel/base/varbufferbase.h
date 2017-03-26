@@ -16,6 +16,7 @@
 */
 //------------------------------------------------------------------------------
 #include "annotable.h"
+#include "types.h"
 namespace AnyFX
 {
 struct VarbufferBase : public Annotable
@@ -30,9 +31,11 @@ public:
 	eastl::string signature;
 	unsigned alignedSize;
 	unsigned size;
-	bool isShared;
 	bool active;
 	eastl::map<eastl::string, unsigned> offsetsByName;
+
+	// AnyFX qualifier flags
+	Qualifiers qualifiers;
 
 	unsigned binding;
 	unsigned set;

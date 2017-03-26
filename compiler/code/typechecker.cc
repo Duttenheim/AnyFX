@@ -49,11 +49,20 @@ TypeChecker::AddSymbol(Symbol* symbol)
 	if (this->symbols.find(symbol->GetName()) != this->symbols.end())
 	{
 		Symbol* origSymbol = this->symbols[symbol->GetName()];
-        std::string err;
-        if (origSymbol->IsReserved())   err = Format("Symbol '%s' is a reserved name and can not be used.", symbol->GetName().c_str());
-        else                            err = Format("Symbol '%s' redefinition at %d in %s. Previously defined near row %d in %s\n", symbol->GetName().c_str(), symbol->GetLine(), symbol->GetFile().c_str(), origSymbol->GetLine(), origSymbol->GetFile().c_str());
-		this->Error(err);
-		return false;	
+		if (origSymbol->GetSignature() == symbol->GetSignature())
+		{
+			std::string err;
+			if (origSymbol->IsReserved())										err = Format("Symbol '%s' is a reserved name and can not be used.", symbol->GetName().c_str());
+			else																err = Format("Symbol '%s' redefinition at %d in %s. Previously defined near row %d in %s\n", symbol->GetName().c_str(), symbol->GetLine(), symbol->GetFile().c_str(), origSymbol->GetLine(), origSymbol->GetFile().c_str());
+			this->Error(err);
+			return false;
+		}        
+		else
+		{
+			// register with signature instead, this however makes the symbol unable to be looked up
+			this->symbols[symbol->GetSignature()] = symbol;
+			return true;
+		}
 	}
 	else
 	{

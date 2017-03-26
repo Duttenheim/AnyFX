@@ -15,7 +15,7 @@ VarblockBase::VarblockBase() :
 	byteSize(0),
 	binding(0),
 	set(0),
-	push(false)
+	qualifiers(Qualifiers::None)
 {
 	// empty
 }

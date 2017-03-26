@@ -18,7 +18,6 @@ namespace AnyFX
 VarBuffer::VarBuffer() :
 	alignedSize(0),
 	size(0),
-	shared(false),
 	hasAnnotation(false),
 	group(0),
 	binding(0)
@@ -62,7 +61,7 @@ VarBuffer::TypeCheck(TypeChecker& typechecker)
 	for (unsigned i = 0; i < this->qualifiers.size(); i++)
 	{
 		const std::string& qualifier = this->qualifiers[i];
-		if (qualifier == "shared") this->shared = true;
+		if (qualifier == "shared") this->qualifierFlags |= Qualifiers::Shared;
 		else
 		{
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -211,7 +210,7 @@ VarBuffer::Compile(BinWriter& writer)
 	writer.WriteString(this->name);
 	writer.WriteUInt(this->alignedSize);
 	writer.WriteUInt(this->size);
-	writer.WriteBool(this->shared);
+	writer.WriteUInt(ToInteger(this->qualifierFlags));
 	writer.WriteUInt(this->binding);
 	writer.WriteUInt(this->group);
 

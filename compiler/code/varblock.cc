@@ -18,10 +18,8 @@ namespace AnyFX
 */
 VarBlock::VarBlock() :
 	hasAnnotation(false),
-	shared(false),
 	group(0),
-	binding(0),
-	push(false)
+	binding(0)
 {
 	this->symbolType = Symbol::VarblockType;
 }
@@ -63,8 +61,9 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 	for (unsigned i = 0; i < this->qualifiers.size(); i++)
 	{
 		const std::string& qualifier = this->qualifiers[i];
-		if (qualifier == "shared") this->shared = true;
-		else if (qualifier == "push") this->push = true;
+		if (qualifier == "shared") this->qualifierFlags |= Qualifiers::Shared;
+		else if (qualifier == "push") this->qualifierFlags |= Qualifiers::Push;
+		else if (qualifier == "rangebind") this->qualifierFlags |= Qualifiers::RangeBind;
 		else
 		{  
 			std::string message = AnyFX::Format("Unknown qualifier '%s', %s\n", qualifier.c_str(), this->ErrorSuffix().c_str());
@@ -91,7 +90,7 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 		this->binding = Shader::bindingIndices[0];
 		Shader::bindingIndices[0]++;
 	}
-	else if (header.GetType() == Header::SPIRV && !this->push)
+	else if (header.GetType() == Header::SPIRV && !HasFlags(this->qualifierFlags, Qualifiers::Push))
 	{
 		this->binding = Shader::bindingIndices[this->group];
 		Shader::bindingIndices[this->group]++;
@@ -121,7 +120,7 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 		if (header.GetType() == Header::GLSL || header.GetType() == Header::SPIRV)
 		{
 			// if we have a push constant, use std430, otherwise std140
-			if (this->push)
+			if (HasFlags(this->qualifierFlags, Qualifiers::Push))
 				alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, false, typechecker);
 			else
 				alignment = Effect::GetAlignmentGLSL(var.GetDataType(), var.GetArraySize(), alignedSize, stride, elementStride, suboffsets, true, typechecker);
@@ -182,7 +181,7 @@ VarBlock::TypeCheck(TypeChecker& typechecker)
 	}
 	else if (type == Header::SPIRV)
 	{
-		if (this->shared && this->push)
+		if (HasFlags(this->qualifierFlags, Qualifiers::Shared | Qualifiers::Push))
 		{
 			std::string message = AnyFX::Format("Varblocks can not both qualifiers 'shared' and 'push', %s\n", this->ErrorSuffix().c_str());
 			typechecker.Error(message);
@@ -201,7 +200,7 @@ VarBlock::Format(const Header& header) const
     // only output if we have variables
     if (this->variables.empty()) return formattedCode;
 
-    if (this->shared)
+    if (HasFlags(this->qualifierFlags, Qualifiers::Shared))
     {
         // varblocks of this type are only available in GLSL3-4, HLSL4-5 and SPIR-V
 		if (header.GetType() == Header::GLSL)
@@ -226,7 +225,7 @@ VarBlock::Format(const Header& header) const
 		}
 		else if (header.GetType() == Header::SPIRV)
 		{
-			if (this->push)
+			if (HasFlags(this->qualifierFlags, Qualifiers::Push))
 			{
 				std::string layout = AnyFX::Format("layout(push_constant) uniform __PC__ ");
 				formattedCode.append(layout);
@@ -242,7 +241,7 @@ VarBlock::Format(const Header& header) const
     }
 	
 	// hmm, if this is a push constant range, setup as a single instance struct
-	if (this->push)
+	if (HasFlags(this->qualifierFlags, Qualifiers::Push))
 	{
 		std::vector<std::string> macros;
 		formattedCode.append("\n{\n");
@@ -289,10 +288,11 @@ VarBlock::Compile(BinWriter& writer)
 {
 	writer.WriteString(this->name);
 	writer.WriteUInt(this->alignedSize);
-	writer.WriteBool(this->shared);
+	writer.WriteUInt(ToInteger(this->qualifierFlags));
+	//writer.WriteBool(this->shared);
 	writer.WriteUInt(this->binding);
 	writer.WriteUInt(this->group);
-	writer.WriteBool(this->push);
+	//writer.WriteBool(this->push);
 
 	// write if annotation is used
 	writer.WriteBool(this->hasAnnotation);

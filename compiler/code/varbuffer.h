@@ -52,7 +52,6 @@ private:
 	std::map<std::string, unsigned> offsetsByName;
 	unsigned alignedSize;
 
-	bool shared;
 	unsigned group;
 	unsigned binding;
 	
@@ -78,7 +77,7 @@ VarBuffer::SetAnnotation(const Annotation& annotation)
 inline bool 
 VarBuffer::IsShared() const
 {
-	return this->shared;
+	return HasFlags(this->qualifierFlags, Qualifiers::Shared);
 }
 
 //------------------------------------------------------------------------------
