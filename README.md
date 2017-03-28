@@ -24,10 +24,11 @@ The AnyFX demo project (which is optional) also uses:
 
 AnyFX is split into two major parts, the compiler and the API. The compiler will take one AnyFX formatted effect file and output a binary blob which can then be read by the API. The API then provides a simple interface to use the resources generated from the effect. 
 
-OpenGL 4
+Version 2
 =====
-AnyFX utilizes next-gen OpenGL with APIs such as glBindTextures and glBindBuffers to bind all shader resources in a single call. It provides an incremental state cache to avoid updating if not required. 
+The new version, version 2, is designed towards more of a bring-your-own-renderer mentality. Before, the API would try to manage everything related to the resources, like uniform buffer offsets, variable bindings and offsets, etc. Version 2 API is just a reflection interface which can be used in order to get the compiled shader binary (for vulkan, directx) or glsl strings (for opengl), get all uniform/constant blocks and their offsets and alignments, shader storage bindings, image/texture slots etc. As such, this iteration of the AnyFX API forces the user of the API to implement their own rendering code, including the shading system. 
 
+There is still the old API, called high-level, which can be used for OpenGL only. However, this API is deprecated and will not receive any further improvements. 
 
 Setup
 ====
@@ -37,7 +38,6 @@ AnyFX can be setup in different ways. When running CMake, you will see four vari
 * ANYFX_BUILD_COMPILER_LIBRARY
 * ANYFX_BUILD_DEMO
 * ANYFX_BUILD_GRAMMAR
-* ANYFX_TRANSPOSE_MATRICES
 
 The ANYFX_BUILD_COMPILER_LIBRARY will switch if the compiler should build as its own application, or be a library which you can link to your own application and use. When using the compiler as a library, you simply include the contained anyfxcompiler.h in your software.
 
@@ -45,11 +45,9 @@ The ANYFX_BUILD_DEMO will build an included demo project, which features a set o
 
 The ANYFX_BUILD_GRAMMAR will detect any changes in the AnyFX.g ANTLR grammar file, and will trigger a rebuild of the entire ANTLR lexer and parser. Switch this to ON if you wish to experiment with the language syntax.
 
-The ANYFX_TRANSPOSE_MATRICES is deprecated and will be removed soon. 
-
 If you wish to put AnyFX in any folder like structure in your project, just set the ANYFX_FOLDER variable to your folder name. 
 
-Features
+Features (high-level API)
 ====
 
 AnyFX is currently platform independent, although it lacks support for DirectX and HLSL at its current state. So note that AnyFX is currently only implemented for OpenGL, and currently is focused on OpenGL 4.0+ support, meaning there is no direct (as of yet) backwards compatibility with earlier versions of OpenGL, OpenGLES or GLSL. The language specification is defined in the _anyfx\_spec.pdf_ file included in the repository.
