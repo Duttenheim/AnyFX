@@ -863,7 +863,8 @@ Program::LinkSPIRV(Generator& generator, Shader* vs, Shader* hs, Shader* ds, Sha
 	}
 
 	// build reflection to get uniform stuff
-	assert(program->buildReflection());
+	bool refbuilt = program->buildReflection();
+	assert(refbuilt);
 
 	// get uniform offsets and save to program
 	int numVars = program->getNumLiveUniformVariables();
