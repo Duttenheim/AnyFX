@@ -227,7 +227,7 @@ VarBlock::Format(const Header& header) const
 		{
 			if (HasFlags(this->qualifierFlags, Qualifiers::Push))
 			{
-				std::string layout = AnyFX::Format("layout(push_constant) uniform __PC__ ");
+				std::string layout = AnyFX::Format("layout(push_constant) uniform ANYFX_PUSH_CONSTANT_BLOCK ");
 				formattedCode.append(layout);
 			}
 			else
