@@ -80,40 +80,33 @@ bool
 AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines, const std::string& vendor, std::string& output)
 {
     std::string fileName = file.substr(file.rfind("/")+1, file.length()-1);
-    std::string curDir(file);
-    unsigned lastSlash = curDir.rfind("/");
-    curDir = curDir.substr(0, lastSlash);
-
 	std::string vend = "-DVENDOR=" + vendor;
 
-    const unsigned numargs = 5 + defines.size();
-    std::string* args = new std::string[numargs];
-	args[0] = std::string("-C");
-	args[1] = std::string("-W 0");
-	args[2] = std::string("-a");
-	args[3] = vend.c_str();
-    //args[2] = "-I" + curDir;
+	const char* constArgs[] =
+	{
+		"",			// first argument is supposed to be application system path, but is omitted since we run mcpp directly
+		"-W 0",
+		"-a",
+		vend.c_str()
+	};
+	const unsigned numConstArgs = sizeof(constArgs) / sizeof(char*);
+	const unsigned numTotalArgs = numConstArgs + defines.size() + 1;
+	const char** args = new const char*[numConstArgs + defines.size() + 1];
+	memcpy(args, constArgs, sizeof(constArgs));
+
     unsigned i;
     for (i = 0; i < defines.size(); i++)
     {
-        args[4 + i] = defines[i].c_str();
+        args[numConstArgs + i] = defines[i].c_str();
     }
-    args[numargs-1] = file;
+    args[numTotalArgs-1] = file.c_str();
 
-    const char** arguments = new const char*[numargs];
-    
-    for (i = 0; i < numargs; i++)
-    {
-        arguments[i] = args[i].c_str();
-    }
-
-    // run preprocessing
+	// run preprocessing
     mcpp_use_mem_buffers(1);
-    int result = mcpp_lib_main(numargs, (char**)arguments);
+    int result = mcpp_lib_main(numTotalArgs, (char**)args);
     if (result != 0)
     {
         delete[] args;
-		delete[] arguments;
         return false;
     }
     else
@@ -121,9 +114,64 @@ AnyFXPreprocess(const std::string& file, const std::vector<std::string>& defines
         char* preprocessed = mcpp_get_mem_buffer(OUT);
         output.append(preprocessed);
 		delete[] args;
-		delete[] arguments;
         return true;
     }
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+std::vector<std::string>
+AnyFXGenerateDependencies(const std::string& file, const std::vector<std::string>& defines)
+{
+	std::vector<std::string> res;
+
+	const char* constArgs[] =
+	{
+		"",			// first argument is supposed to be application system path, but is omitted since we run mcpp directly
+		"-M"
+	};
+	const unsigned numConstArgs = sizeof(constArgs) / sizeof(char*);
+	const unsigned numTotalArgs = numConstArgs + defines.size() + 1;
+	const char** args = new const char*[numConstArgs + defines.size() + 1];
+	memcpy(args, constArgs, sizeof(constArgs));
+
+	unsigned i;
+	for (i = 0; i < defines.size(); i++)
+	{
+		args[numConstArgs + i] = defines[i].c_str();
+	}
+	args[numTotalArgs - 1] = file.c_str();
+
+	// run preprocessing
+	mcpp_use_mem_buffers(1);
+	int result = mcpp_lib_main(numTotalArgs, (char**)args);
+	if (result == 0)
+	{
+		std::string output = mcpp_get_mem_buffer(OUT);
+
+		// grah, remove the padding and the Makefile stuff, using std::string...
+		size_t colon = output.find_first_of(':')+1;
+		output = output.substr(colon);
+		size_t newline = output.find_first_of('\n');
+		while (newline != output.npos)
+		{
+			std::string line = output.substr(0, newline);
+			if (!line.empty())
+			{
+				while (line.front() == ' ')								line = line.substr(1);
+				while (line.back() == ' ' || line.back() == '\\')		line = line.substr(0, line.size() - 1);
+				res.push_back(line);
+				output = output.substr(newline + 1);
+				newline = output.find_first_of('\n');
+			}
+			else
+				break;
+		}
+	}
+	delete[] args;
+
+	return res;
 }
 
 //------------------------------------------------------------------------------
