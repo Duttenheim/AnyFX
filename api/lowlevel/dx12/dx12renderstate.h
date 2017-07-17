@@ -13,9 +13,9 @@ struct DX12RenderState
 {
 public:
 	/// constructor
-	RenderStateBase();
+	DX12RenderState();
 	/// destructor
-	virtual ~RenderStateBase();
+	virtual ~DX12RenderState();
 private:
 };
 } // namespace AnyFX

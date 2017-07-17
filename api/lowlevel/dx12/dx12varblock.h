@@ -13,9 +13,9 @@ struct DX12Varblock
 {
 public:
 	/// constructor
-	VarblockBase();
+	DX12Varblock();
 	/// destructor
-	virtual ~VarblockBase();
+	virtual ~DX12Varblock();
 private:
 };
 } // namespace AnyFX

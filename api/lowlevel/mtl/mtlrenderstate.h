@@ -13,9 +13,9 @@ struct MtlRenderState
 {
 public:
 	/// constructor
-	RenderStateBase();
+	MtlRenderState();
 	/// destructor
-	virtual ~RenderStateBase();
+	virtual ~MtlRenderState();
 private:
 };
 } // namespace AnyFX

@@ -13,9 +13,9 @@ struct MtlVarblock
 {
 public:
 	/// constructor
-	VarblockBase();
+	MtlVarblock();
 	/// destructor
-	virtual ~VarblockBase();
+	virtual ~MtlVarblock();
 private:
 };
 } // namespace AnyFX

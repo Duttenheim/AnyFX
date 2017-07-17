@@ -38,7 +38,7 @@ extern std::string parserErrorBuffer;
 #include "mcpp_lib.h"
 #include "glslang/Public/ShaderLang.h"
 
-#if WIN32
+#if __WIN32__
 //------------------------------------------------------------------------------
 /**
 */
