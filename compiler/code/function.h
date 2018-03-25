@@ -27,7 +27,7 @@ public:
 	/// set vector of function parameters
 	void SetParameters(const std::vector<Parameter>& parameters);
 	/// get number of parameters
-	const unsigned GetNumParameters() const;
+	const size_t GetNumParameters() const;
 	/// get pointer to parameter at index
 	Parameter* GetParameter(unsigned index);
     /// get pointer to parameter as constant
@@ -122,7 +122,7 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline const unsigned 
+inline const size_t
 Function::GetNumParameters() const
 {
 	return this->parameters.size();

@@ -27,7 +27,7 @@ public:
 	/// set value as string, decomposes into inferred type
 	void AddValue(Expression* expr);
 	/// get number of values
-	const unsigned GetNumValues() const;
+	const size_t GetNumValues() const;
 	/// get value
 	Expression* GetValue(unsigned index) const;
 
@@ -45,7 +45,7 @@ private:
 //------------------------------------------------------------------------------
 /**
 */
-inline const unsigned 
+inline const size_t
 ValueList::GetNumValues() const
 {
 	return this->values.size();

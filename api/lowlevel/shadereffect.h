@@ -29,81 +29,97 @@ public:
 
 	/// returns number of programs
 	unsigned GetNumPrograms() const;
+	/// returns program by index
+	ProgramBase* GetProgram(const unsigned i) const;
 	/// returns program by name
-	ProgramBase* GetProgram(const eastl::string& name);
+	ProgramBase* GetProgram(const eastl::string& name) const;
 	/// returns all programs as a list
 	const eastl::vector<ProgramBase*>& GetPrograms() const;
 	/// returns true if program exists
-	bool HasProgram(const eastl::string& name);
+	bool HasProgram(const eastl::string& name) const;
 
 	/// returns number of shaders
 	unsigned GetNumShaders() const;
+	/// returns shader by index
+	ShaderBase* GetShader(const unsigned i) const;
 	/// returns shader by name
-	ShaderBase* GetShader(const eastl::string& name);
+	ShaderBase* GetShader(const eastl::string& name) const;
 	/// returns shaders as a list
 	const eastl::vector<ShaderBase*>& GetShaders() const;
 	/// returns true if shader exists
-	bool HasShader(const eastl::string& name);
+	bool HasShader(const eastl::string& name) const;
 
 	/// returns number of render states
 	unsigned GetNumRenderStates() const;
+	/// returns render state by index
+	RenderStateBase* GetRenderState(const unsigned i) const;
 	/// returns render state by name
-	RenderStateBase* GetRenderState(const eastl::string& name);
+	RenderStateBase* GetRenderState(const eastl::string& name) const;
 	/// returns render states as a list
 	const eastl::vector<RenderStateBase*>& GetRenderStates() const;
 	/// returns true if render state exists
-	bool HasRenderState(const eastl::string& name);
+	bool HasRenderState(const eastl::string& name) const;
 
 	/// returns number of variables
 	unsigned GetNumVariables() const;
+	/// returns variable by index
+	VariableBase* GetVariable(const unsigned i) const;
 	/// returns variable by name
-	VariableBase* GetVariable(const eastl::string& name);
+	VariableBase* GetVariable(const eastl::string& name) const;
 	/// returns variables as a list
 	const eastl::vector<VariableBase*>& GetVariables() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VariableBase*>& GetVariables(const unsigned group);
+	const eastl::vector<VariableBase*>& GetVariables(const unsigned group) const;
 	/// returns true if variable exists
-	bool HasVariable(const eastl::string& name);
+	bool HasVariable(const eastl::string& name) const;
 
 	/// returns number of varblocks
 	unsigned GetNumVarblocks() const;
+	/// returns varblock by index
+	VarblockBase* GetVarblock(const unsigned i) const;
 	/// returns varblock by name
-	VarblockBase* GetVarblock(const eastl::string& name);
+	VarblockBase* GetVarblock(const eastl::string& name) const;
 	/// returns varblocks as a list
 	const eastl::vector<VarblockBase*>& GetVarblocks() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VarblockBase*>& GetVarblocks(const unsigned group);
+	const eastl::vector<VarblockBase*>& GetVarblocks(const unsigned group) const;
 	/// returns true if varblock exists
-	bool HasVarblock(const eastl::string& name);
+	bool HasVarblock(const eastl::string& name) const;
 
 	/// returns number of varbuffers
 	unsigned GetNumVarbuffers() const;
+	/// returns varbuffer by index
+	VarbufferBase* GetVarbuffer(const unsigned i) const;
 	/// returns varbuffer by name
-	VarbufferBase* GetVarbuffer(const eastl::string& name);
+	VarbufferBase* GetVarbuffer(const eastl::string& name) const;
 	/// returns varbuffer as a list
 	const eastl::vector<VarbufferBase*>& GetVarbuffers() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VarbufferBase*>& GetVarbuffers(const unsigned group);
+	const eastl::vector<VarbufferBase*>& GetVarbuffers(const unsigned group) const;
 	/// returns true if varbuffer exists
-	bool HasVarbuffer(const eastl::string& name);
+	bool HasVarbuffer(const eastl::string& name) const;
 
 	/// returns number of subroutine
 	unsigned GetNumSubroutines() const;
+	/// returns subroutine by index
+	SubroutineBase* GetSubroutineByName(const unsigned i) const;
 	/// returns subroutine by name
-	SubroutineBase* GetSubroutineByName(const eastl::string& name);
+	SubroutineBase* GetSubroutineByName(const eastl::string& name) const;
 	/// returns list of subroutines
 	const eastl::vector<SubroutineBase*>& GetSubroutines() const;
 	/// returns true if subroutine exists
-	bool HasSubroutine(const eastl::string& name);
+	bool HasSubroutine(const eastl::string& name) const;
 
 	/// returns the number of samplers
 	unsigned GetNumSamplers() const;
+	/// returns sampler by index
+	SamplerBase* GetSampler(const unsigned i) const;
 	/// returns sampler by name
-	SamplerBase* GetSampler(const eastl::string& name);
+	SamplerBase* GetSampler(const eastl::string& name) const;
 	/// returns samplers as list
 	const eastl::vector<SamplerBase*>& GetSamplers() const;
 	/// returns true if sampler exists
-	bool HasSampler(const eastl::string& name);
+	bool HasSampler(const eastl::string& name) const;
 private:
 	friend class StreamLoader;
 	friend class VarblockLoader;

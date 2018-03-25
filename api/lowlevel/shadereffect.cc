@@ -44,10 +44,20 @@ ShaderEffect::GetNumPrograms() const
 /**
 */
 ProgramBase*
-ShaderEffect::GetProgram(const eastl::string& name)
+ShaderEffect::GetProgram(const unsigned i) const
 {
-	assert(this->programs.find(name) != this->programs.end());
-	return this->programs[name];
+	return this->programsByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+ProgramBase*
+ShaderEffect::GetProgram(const eastl::string& name) const
+{
+	const auto it = this->programs.find(name);
+	assert(it != this->programs.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -63,7 +73,7 @@ ShaderEffect::GetPrograms() const
 /**
 */
 bool
-ShaderEffect::HasProgram(const eastl::string& name)
+ShaderEffect::HasProgram(const eastl::string& name) const
 {
 	return this->programs.find(name) != this->programs.end();
 }
@@ -81,10 +91,20 @@ ShaderEffect::GetNumShaders() const
 /**
 */
 ShaderBase*
-ShaderEffect::GetShader(const eastl::string& name)
+ShaderEffect::GetShader(const unsigned i) const
 {
-	assert(this->shaders.find(name) != this->shaders.end());
-	return this->shaders[name];
+	return this->shadersByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+ShaderBase*
+ShaderEffect::GetShader(const eastl::string& name) const
+{
+	const auto it = this->shaders.find(name);
+	assert(it != this->shaders.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -100,7 +120,7 @@ ShaderEffect::GetShaders() const
 /**
 */
 bool
-ShaderEffect::HasShader(const eastl::string& name)
+ShaderEffect::HasShader(const eastl::string& name) const
 {
 	return this->shaders.find(name) != this->shaders.end();
 }
@@ -118,10 +138,20 @@ ShaderEffect::GetNumRenderStates() const
 /**
 */
 RenderStateBase*
-ShaderEffect::GetRenderState(const eastl::string& name)
+ShaderEffect::GetRenderState(const unsigned i) const
 {
-	assert(this->renderstates.find(name) != this->renderstates.end());
-	return this->renderstates[name];
+	return this->renderstatesByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+RenderStateBase*
+ShaderEffect::GetRenderState(const eastl::string& name) const
+{
+	const auto it = this->renderstates.find(name);
+	assert(it != this->renderstates.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -137,7 +167,7 @@ ShaderEffect::GetRenderStates() const
 /**
 */
 bool
-ShaderEffect::HasRenderState(const eastl::string& name)
+ShaderEffect::HasRenderState(const eastl::string& name) const
 {
 	return this->renderstates.find(name) != this->renderstates.end();
 }
@@ -155,10 +185,20 @@ ShaderEffect::GetNumVariables() const
 /**
 */
 VariableBase*
-ShaderEffect::GetVariable(const eastl::string& name)
+ShaderEffect::GetVariable(const unsigned i) const
 {
-	assert(this->variables.find(name) != this->variables.end());
-	return this->variables[name];
+	return this->variablesByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+VariableBase*
+ShaderEffect::GetVariable(const eastl::string& name) const
+{
+	const auto it = this->variables.find(name);
+	assert(it != this->variables.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -174,16 +214,18 @@ ShaderEffect::GetVariables() const
 /**
 */
 const eastl::vector<VariableBase*>&
-ShaderEffect::GetVariables(const unsigned group)
+ShaderEffect::GetVariables(const unsigned group) const
 {
-	return this->variablesByGroup[group];
+	const auto it = this->variablesByGroup.find(group);
+	assert(it != this->variablesByGroup.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 bool
-ShaderEffect::HasVariable(const eastl::string& name)
+ShaderEffect::HasVariable(const eastl::string& name) const
 {
 	return this->variables.find(name) != this->variables.end();
 }
@@ -201,10 +243,20 @@ ShaderEffect::GetNumVarblocks() const
 /**
 */
 VarblockBase*
-ShaderEffect::GetVarblock(const eastl::string& name)
+ShaderEffect::GetVarblock(const unsigned i) const
 {
-	assert(this->varblocks.find(name) != this->varblocks.end());
-	return this->varblocks[name];
+	return this->varblocksByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+VarblockBase*
+ShaderEffect::GetVarblock(const eastl::string& name) const
+{
+	const auto it = this->varblocks.find(name);
+	assert(it != this->varblocks.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -220,16 +272,18 @@ ShaderEffect::GetVarblocks() const
 /**
 */
 const eastl::vector<VarblockBase*>&
-ShaderEffect::GetVarblocks(const unsigned group)
+ShaderEffect::GetVarblocks(const unsigned group) const
 {
-	return this->varblocksByGroup[group];
+	const auto it = this->varblocksByGroup.find(group);
+	assert(it != this->varblocksByGroup.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 bool
-ShaderEffect::HasVarblock(const eastl::string& name)
+ShaderEffect::HasVarblock(const eastl::string& name) const
 {
 	return this->varblocks.find(name) != this->varblocks.end();
 }
@@ -247,10 +301,20 @@ ShaderEffect::GetNumVarbuffers() const
 /**
 */
 VarbufferBase*
-ShaderEffect::GetVarbuffer(const eastl::string& name)
+ShaderEffect::GetVarbuffer(const unsigned i) const
 {
-	assert(this->varbuffers.find(name) != this->varbuffers.end());
-	return this->varbuffers[name];
+	return this->varbuffersByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+VarbufferBase*
+ShaderEffect::GetVarbuffer(const eastl::string& name) const
+{
+	const auto it = this->varbuffers.find(name);
+	assert(it != this->varbuffers.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -266,16 +330,18 @@ ShaderEffect::GetVarbuffers() const
 /**
 */
 const eastl::vector<VarbufferBase*>&
-ShaderEffect::GetVarbuffers(const unsigned group)
+ShaderEffect::GetVarbuffers(const unsigned group) const
 {
-	return this->varbuffersByGroup[group];
+	const auto it = this->varbuffersByGroup.find(group);
+	assert(it != this->varbuffersByGroup.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
 /**
 */
 bool
-ShaderEffect::HasVarbuffer(const eastl::string& name)
+ShaderEffect::HasVarbuffer(const eastl::string& name) const
 {
 	return this->varbuffers.find(name) != this->varbuffers.end();
 }
@@ -293,10 +359,20 @@ ShaderEffect::GetNumSubroutines() const
 /**
 */
 SubroutineBase*
-ShaderEffect::GetSubroutineByName(const eastl::string& name)
+ShaderEffect::GetSubroutineByName(const unsigned i) const
 {
-	assert(this->subroutines.find(name) != this->subroutines.end());
-	return this->subroutines[name];
+	return this->subroutinesByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+SubroutineBase*
+ShaderEffect::GetSubroutineByName(const eastl::string& name) const
+{
+	const auto it = this->subroutines.find(name);
+	assert(it != this->subroutines.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -312,7 +388,7 @@ ShaderEffect::GetSubroutines() const
 /**
 */
 bool
-ShaderEffect::HasSubroutine(const eastl::string& name)
+ShaderEffect::HasSubroutine(const eastl::string& name) const
 {
 	return this->subroutines.find(name) != this->subroutines.end();
 }
@@ -330,10 +406,20 @@ ShaderEffect::GetNumSamplers() const
 /**
 */
 SamplerBase*
-ShaderEffect::GetSampler(const eastl::string& name)
+ShaderEffect::GetSampler(const unsigned i) const
 {
-	assert(this->samplers.find(name) != this->samplers.end());
-	return this->samplers[name];
+	return this->samplersByIndex[i];
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+SamplerBase*
+ShaderEffect::GetSampler(const eastl::string& name) const
+{
+	const auto it = this->samplers.find(name);
+	assert(it != this->samplers.end());
+	return it->second;
 }
 
 //------------------------------------------------------------------------------
@@ -349,7 +435,7 @@ ShaderEffect::GetSamplers() const
 /**
 */
 bool
-ShaderEffect::HasSampler(const eastl::string& name)
+ShaderEffect::HasSampler(const eastl::string& name) const
 {
 	return this->samplers.find(name) != this->samplers.end();
 }

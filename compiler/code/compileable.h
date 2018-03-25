@@ -49,14 +49,14 @@ public:
 	/// add qualifier to varblock
 	void AddQualifier(const std::string& qualifier);
 	/// get number of qualifiers
-	const unsigned GetNumQualifiers() const;
+	const size_t GetNumQualifiers() const;
 	/// get qualifier by index
 	const std::string& GetQualifier(unsigned i) const;
 
 	/// add expression qualifier to varblock
 	void AddQualifierExpression(const QualifierExpression& qualifier);
 	/// get number of expression qualifiers
-	const unsigned GetNumQualifierExpressions() const;
+	const size_t GetNumQualifierExpressions() const;
 	/// get name of expression qualifier
 	const QualifierExpression& GetQualifierExpression(unsigned i) const;
 
@@ -169,7 +169,7 @@ Compileable::AddQualifier(const std::string& qualifier)
 //------------------------------------------------------------------------------
 /**
 */
-inline const unsigned
+inline const size_t
 Compileable::GetNumQualifiers() const
 {
 	return this->qualifiers.size();
@@ -196,7 +196,7 @@ Compileable::AddQualifierExpression(const QualifierExpression& qualifier)
 //------------------------------------------------------------------------------
 /**
 */
-inline const unsigned
+inline const size_t
 Compileable::GetNumQualifierExpressions() const
 {
 	return this->qualifierExpressions.size();
