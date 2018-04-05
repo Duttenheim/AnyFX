@@ -16,9 +16,9 @@
 */
 //------------------------------------------------------------------------------
 #include "annotable.h"
-#include <EASTL/string.h>
-#include <EASTL/vector.h>
-#include <EASTL/map.h>
+#include <string>
+#include <vector>
+#include <map>
 #include "types.h"
 namespace AnyFX
 {
@@ -31,13 +31,13 @@ public:
 	/// destructor
 	virtual ~VarblockBase();
 
-	eastl::string name;
-	eastl::string signature;
+	std::string name;
+	std::string signature;
 	unsigned byteSize;
 	unsigned alignedSize;
-	eastl::vector<VariableBase*> variables;
-	eastl::map<eastl::string, VariableBase*> variablesByName;
-	eastl::map<eastl::string, unsigned> offsetsByName;
+	std::vector<VariableBase*> variables;
+	std::map<std::string, VariableBase*> variablesByName;
+	std::map<std::string, unsigned> offsetsByName;
 
 	// AnyFX qualifier flags
 	Qualifiers qualifiers;

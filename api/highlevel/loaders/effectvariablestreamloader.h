@@ -9,8 +9,8 @@
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"
-#include "EASTL/map.h"
-#include "EASTL/string.h"
+#include <map>
+#include <string>
 namespace AnyFX
 {
 class Effect;
@@ -30,7 +30,7 @@ private:
 	friend class EffectVarblockStreamLoader;
 
 	EffectVariable* Load(BinReader* reader, Effect* effect, InternalEffectVarblock* varblock = 0);
-    static eastl::map<eastl::string, InternalEffectVariable*> sharedVariables;
+    static std::map<std::string, InternalEffectVariable*> sharedVariables;
 }; 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

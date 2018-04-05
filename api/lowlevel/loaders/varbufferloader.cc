@@ -51,7 +51,7 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 	}
 
 	// start loading
-	eastl::string name = reader->ReadString().c_str();
+	std::string name = reader->ReadString().c_str();
 	unsigned alignedSize = reader->ReadUInt();
 	unsigned size = reader->ReadUInt();
 	Qualifiers qualifierFlags = FromInteger(reader->ReadUInt());
@@ -71,7 +71,7 @@ VarbufferLoader::Load(BinReader* reader, ShaderEffect* effect)
 	unsigned i;
 	for (i = 0; i < numOffsets; i++)
 	{
-		eastl::string name = reader->ReadString().c_str();
+		std::string name = reader->ReadString().c_str();
 		unsigned offset = reader->ReadUInt();
 		varbuffer->offsetsByName[name] = offset;
 	}

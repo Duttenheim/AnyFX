@@ -9,8 +9,8 @@
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"
-#include "EASTL/map.h"
-#include "EASTL/string.h"
+#include <map>
+#include <string>
 
 namespace AnyFX
 {
@@ -30,7 +30,7 @@ private:
 	friend class VarblockLoader;
 
 	VariableBase* Load(BinReader* reader, ShaderEffect* effect, VarblockBase* varblock = 0);
-	static eastl::map<eastl::string, VariableBase*> sharedVariables;
+	static std::map<std::string, VariableBase*> sharedVariables;
 }; 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

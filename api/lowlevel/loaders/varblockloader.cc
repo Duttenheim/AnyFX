@@ -34,7 +34,7 @@ VarblockLoader::~VarblockLoader()
 /**
 */
 VarblockBase* 
-VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<VariableBase*>& vars)
+VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, std::vector<VariableBase*>& vars)
 {
 	VarblockBase* varblock = 0;
 
@@ -52,7 +52,7 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
 		varblock = new VarblockBase;
 	}
 
-	eastl::string name = reader->ReadString().c_str();
+	std::string name = reader->ReadString().c_str();
 	unsigned alignedSize = reader->ReadUInt();
 	Qualifiers qualifierFlags = FromInteger(reader->ReadUInt());
 	
@@ -86,7 +86,7 @@ VarblockLoader::Load(BinReader* reader, ShaderEffect* effect, eastl::vector<Vari
 	unsigned numOffsets = reader->ReadUInt();
 	for (i = 0; i < numOffsets; i++)
 	{
-		eastl::string name = reader->ReadString().c_str();
+		std::string name = reader->ReadString().c_str();
 		unsigned offset = reader->ReadUInt();
 		varblock->offsetsByName[name] = offset;
 	}

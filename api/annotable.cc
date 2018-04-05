@@ -22,7 +22,7 @@ Annotable::Annotable()
 Annotable::~Annotable()
 {
 	// clear all strings
-    eastl::map<eastl::string, AnnotationVariant>::iterator it = this->annotationMap.begin();
+    std::map<std::string, AnnotationVariant>::iterator it = this->annotationMap.begin();
 	for (it = this->annotationMap.begin(); it != this->annotationMap.end(); it++)
 	{
 		if (it->second.type == String)
@@ -36,7 +36,7 @@ Annotable::~Annotable()
 /**
 */
 bool
-Annotable::HasAnnotation(const eastl::string& name) const
+Annotable::HasAnnotation(const std::string& name) const
 {
     return this->annotationMap.find(name) != this->annotationMap.end();
 }
@@ -45,7 +45,7 @@ Annotable::HasAnnotation(const eastl::string& name) const
 /**
 */
 bool
-Annotable::Flag(const eastl::string& name) const
+Annotable::Flag(const std::string& name) const
 {
 	if (this->HasAnnotation(name)) return this->GetAnnotationBool(name);
 	return false;
@@ -55,9 +55,9 @@ Annotable::Flag(const eastl::string& name) const
 /**
 */
 int 
-Annotable::GetAnnotationInt(const eastl::string& name) const
+Annotable::GetAnnotationInt(const std::string& name) const
 {	
-	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	std::map<std::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
 	assert(it != this->annotationMap.end());
 	return it->second.data.intValue;
 }
@@ -66,9 +66,9 @@ Annotable::GetAnnotationInt(const eastl::string& name) const
 /**
 */
 bool 
-Annotable::GetAnnotationBool(const eastl::string& name) const
+Annotable::GetAnnotationBool(const std::string& name) const
 {
-	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	std::map<std::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
 	assert(it != this->annotationMap.end());
 	return it->second.data.boolValue;
 }
@@ -77,9 +77,9 @@ Annotable::GetAnnotationBool(const eastl::string& name) const
 /**
 */
 double 
-Annotable::GetAnnotationDouble(const eastl::string& name) const
+Annotable::GetAnnotationDouble(const std::string& name) const
 {
-	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	std::map<std::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
 	assert(it != this->annotationMap.end());
 	return it->second.data.doubleValue;
 }
@@ -88,9 +88,9 @@ Annotable::GetAnnotationDouble(const eastl::string& name) const
 /**
 */
 float 
-Annotable::GetAnnotationFloat(const eastl::string& name) const
+Annotable::GetAnnotationFloat(const std::string& name) const
 {
-	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	std::map<std::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
 	assert(it != this->annotationMap.end());
 	return it->second.data.floatValue;
 }
@@ -98,10 +98,10 @@ Annotable::GetAnnotationFloat(const eastl::string& name) const
 //------------------------------------------------------------------------------
 /**
 */
-const eastl::string&
-Annotable::GetAnnotationString(const eastl::string& name) const
+const std::string&
+Annotable::GetAnnotationString(const std::string& name) const
 {
-	eastl::map<eastl::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
+	std::map<std::string, AnnotationVariant>::const_iterator it = this->annotationMap.find(name);
 	assert(it != this->annotationMap.end());
 	return *it->second.data.stringValue;
 }

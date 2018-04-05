@@ -51,7 +51,7 @@ SamplerLoader::Load(BinReader* reader, ShaderEffect* effect)
 	}
 	
 	// get name
-    eastl::string name = reader->ReadString().c_str();
+    std::string name = reader->ReadString().c_str();
 	sampler->name = name;
 	sampler->binding = reader->ReadUInt();
 	sampler->set = reader->ReadUInt();
@@ -77,7 +77,7 @@ SamplerLoader::Load(BinReader* reader, ShaderEffect* effect)
 	unsigned i;
 	for (i = 0; i < numTextures; i++)
 	{
-        eastl::string texture = reader->ReadString().c_str();
+        std::string texture = reader->ReadString().c_str();
 		VariableBase* var = effect->variables[texture];
 		var->sampler = sampler;
 		sampler->textureVariables[i] = var;		

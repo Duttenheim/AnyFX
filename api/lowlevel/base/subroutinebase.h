@@ -17,7 +17,7 @@ public:
 	/// destructor
 	virtual ~SubroutineBase();
 
-	eastl::string name;
+	std::string name;
 	unsigned type;
 
 protected:

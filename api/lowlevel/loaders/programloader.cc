@@ -57,7 +57,7 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
 		program = new ProgramBase;
 	}
 	
-    eastl::string name = reader->ReadString().c_str();
+    std::string name = reader->ReadString().c_str();
 	program->name = name;
 
 	bool hasAnnotation = reader->ReadBool();
@@ -98,72 +98,72 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
     unsigned numSubroutineMappings;
 	magic = reader->ReadInt();
 	assert('VERT' == magic);
-    eastl::string vs = reader->ReadString().c_str();
+    std::string vs = reader->ReadString().c_str();
     numSubroutineMappings = reader->ReadUInt();
     for (i = 0; i < numSubroutineMappings; i++)
     {
-        eastl::string var = reader->ReadString().c_str();
-        eastl::string imp = reader->ReadString().c_str();
+        std::string var = reader->ReadString().c_str();
+        std::string imp = reader->ReadString().c_str();
     }
 	program->shaderBlock.vsBinarySize = reader->ReadUInt();
 	program->shaderBlock.vsBinary = reader->ReadBytes(program->shaderBlock.vsBinarySize);
 
 	magic = reader->ReadInt();
 	assert('HULL' == magic);
-    eastl::string hs = reader->ReadString().c_str();
+    std::string hs = reader->ReadString().c_str();
     numSubroutineMappings = reader->ReadUInt();
     for (i = 0; i < numSubroutineMappings; i++)
     {
-        eastl::string var = reader->ReadString().c_str();
-        eastl::string imp = reader->ReadString().c_str();
+        std::string var = reader->ReadString().c_str();
+        std::string imp = reader->ReadString().c_str();
     }
 	program->shaderBlock.hsBinarySize = reader->ReadUInt();
 	program->shaderBlock.hsBinary = reader->ReadBytes(program->shaderBlock.hsBinarySize);
 
 	magic = reader->ReadInt();
 	assert('DOMA' == magic);
-    eastl::string ds = reader->ReadString().c_str();
+    std::string ds = reader->ReadString().c_str();
     numSubroutineMappings = reader->ReadUInt();
     for (i = 0; i < numSubroutineMappings; i++)
     {
-        eastl::string var = reader->ReadString().c_str();
-        eastl::string imp = reader->ReadString().c_str();
+        std::string var = reader->ReadString().c_str();
+        std::string imp = reader->ReadString().c_str();
     }
 	program->shaderBlock.dsBinarySize = reader->ReadUInt();
 	program->shaderBlock.dsBinary = reader->ReadBytes(program->shaderBlock.dsBinarySize);
 
 	magic = reader->ReadInt();
 	assert('GEOM' == magic);
-    eastl::string gs = reader->ReadString().c_str();
+    std::string gs = reader->ReadString().c_str();
     numSubroutineMappings = reader->ReadUInt();
     for (i = 0; i < numSubroutineMappings; i++)
     {
-        eastl::string var = reader->ReadString().c_str();
-        eastl::string imp = reader->ReadString().c_str();
+        std::string var = reader->ReadString().c_str();
+        std::string imp = reader->ReadString().c_str();
     }
 	program->shaderBlock.gsBinarySize = reader->ReadUInt();
 	program->shaderBlock.gsBinary = reader->ReadBytes(program->shaderBlock.gsBinarySize);
 
 	magic = reader->ReadInt();
 	assert('PIXL' == magic);
-	eastl::string ps = reader->ReadString().c_str();
+	std::string ps = reader->ReadString().c_str();
 	numSubroutineMappings = reader->ReadUInt();
 	for (i = 0; i < numSubroutineMappings; i++)
 	{
-		eastl::string var = reader->ReadString().c_str();
-		eastl::string imp = reader->ReadString().c_str();
+		std::string var = reader->ReadString().c_str();
+		std::string imp = reader->ReadString().c_str();
 	}
 	program->shaderBlock.psBinarySize = reader->ReadUInt();
 	program->shaderBlock.psBinary = reader->ReadBytes(program->shaderBlock.psBinarySize);
 
 	magic = reader->ReadInt();
 	assert('COMP' == magic);
-    eastl::string cs = reader->ReadString().c_str();
+    std::string cs = reader->ReadString().c_str();
     numSubroutineMappings = reader->ReadUInt();
     for (i = 0; i < numSubroutineMappings; i++)
     {
-        eastl::string var = reader->ReadString().c_str();
-        eastl::string imp = reader->ReadString().c_str();
+        std::string var = reader->ReadString().c_str();
+        std::string imp = reader->ReadString().c_str();
     }
 	program->shaderBlock.csBinarySize = reader->ReadUInt();
 	program->shaderBlock.csBinary = reader->ReadBytes(program->shaderBlock.csBinarySize);
@@ -186,14 +186,14 @@ ProgramLoader::Load(BinReader* reader, ShaderEffect* effect)
 	unsigned numOffsets = reader->ReadUInt();
 	for (i = 0; i < numOffsets; i++)
 	{
-		eastl::string var = reader->ReadString().c_str();
+		std::string var = reader->ReadString().c_str();
 		unsigned offset = reader->ReadUInt();
 		program->variableBlockOffsets[var] = offset;
 	}
 
 	magic = reader->ReadInt();
 	assert('RSTA' == magic);
-    eastl::string rs = reader->ReadString().c_str();
+    std::string rs = reader->ReadString().c_str();
 
 	// find shaders previously loaded in the effect and attach them to this program
 	if (!vs.empty())

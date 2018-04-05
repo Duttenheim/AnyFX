@@ -7,7 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "annotable.h"
-#include <EASTL/string.h>
+#include <string>
 namespace AnyFX
 {
 struct ShaderBase : public Annotable
@@ -19,10 +19,10 @@ public:
 	virtual ~ShaderBase();
 
 	int type;
-	eastl::string sourceCode;
-	eastl::string name;
-	eastl::string error;
-	eastl::string warning;
+	std::string sourceCode;
+	std::string name;
+	std::string error;
+	std::string warning;
 	unsigned localSizes[3];
 
 protected:

@@ -9,9 +9,9 @@
 */
 //------------------------------------------------------------------------------
 #include "binreader.h"
-#include <EASTL/vector.h>
-#include <EASTL/map.h>
-#include <EASTL/string.h>
+#include <vector>
+#include <map>
+#include <string>
 namespace AnyFX
 {
 class ShaderEffect;
@@ -28,8 +28,8 @@ public:
 private:
 	friend class StreamLoader;
 
-	VarblockBase* Load(BinReader* reader, ShaderEffect* effect, eastl::vector<VariableBase*>& vars);
-	static eastl::map<eastl::string, VarblockBase*> sharedBlocks;
+	VarblockBase* Load(BinReader* reader, ShaderEffect* effect, std::vector<VariableBase*>& vars);
+	static std::map<std::string, VarblockBase*> sharedBlocks;
 }; 
 } // namespace AnyFX
 //------------------------------------------------------------------------------

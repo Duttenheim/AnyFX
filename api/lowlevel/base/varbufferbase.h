@@ -27,12 +27,12 @@ public:
 	/// destructor
 	virtual ~VarbufferBase();
 
-	eastl::string name;
-	eastl::string signature;
+	std::string name;
+	std::string signature;
 	unsigned alignedSize;
 	unsigned size;
 	bool active;
-	eastl::map<eastl::string, unsigned> offsetsByName;
+	std::map<std::string, unsigned> offsetsByName;
 
 	// AnyFX qualifier flags
 	Qualifiers qualifiers;

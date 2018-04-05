@@ -42,7 +42,7 @@ void
 VariableBase::OnLoaded()
 {
 	// setup signature
-	eastl::string typeString = TypeToString(this->type);
+	std::string typeString = TypeToString(this->type);
 	this->signature = typeString + ":" + this->name;
 
 	this->byteSize = TypeToByteSize(this->type) * this->arraySize;
@@ -61,11 +61,11 @@ VariableBase::OnLoaded()
 /**
 */
 void
-VariableBase::SetupDefaultValue(const eastl::string& string)
+VariableBase::SetupDefaultValue(const std::string& string)
 {
 	unsigned numValues = 0;
 	if (string.length() == 0) return;
-	eastl::string copy = string;
+	std::string copy = string;
 	char* data = &copy[0];
 	char* str = strtok(data, ",");
 	while (str)

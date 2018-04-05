@@ -53,7 +53,7 @@ RenderStateLoader::Load(BinReader* reader, ShaderEffect* effect)
 	}
 
 	// get name
-    eastl::string name = reader->ReadString().c_str();
+    std::string name = reader->ReadString().c_str();
 	renderState->name = name;
 
 	bool hasAnnotation = reader->ReadBool();

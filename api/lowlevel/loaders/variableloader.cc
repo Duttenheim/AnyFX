@@ -51,7 +51,7 @@ VariableLoader::Load(BinReader* reader, ShaderEffect* effect, VarblockBase* varb
 		var = new VariableBase;
 	}
 
-    eastl::string name = reader->ReadString().c_str();
+    std::string name = reader->ReadString().c_str();
     bool shared = reader->ReadBool();       
     bool bindless = reader->ReadBool();
 	unsigned binding = reader->ReadUInt();
@@ -90,7 +90,7 @@ VariableLoader::Load(BinReader* reader, ShaderEffect* effect, VarblockBase* varb
     bool isSubroutine = reader->ReadBool();
 	var->isSubroutine = isSubroutine;
 
-	eastl::string defaultValue;
+	std::string defaultValue;
 	bool hasDefaultValue = reader->ReadBool();
 	if (hasDefaultValue)
 	{

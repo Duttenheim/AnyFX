@@ -186,7 +186,7 @@ StreamLoader::Load()
 				if (numBlocks > 0)
 				{
 					// load varblock, also 'extract' the variables defined within
-					eastl::vector<VariableBase*> vars;
+					std::vector<VariableBase*> vars;
 
 					unsigned i, j;
 					for (i = 0; i < numBlocks; i++)

@@ -9,7 +9,7 @@
 #include "annotable.h"
 #include "shaderbase.h"
 #include "renderstatebase.h"
-#include <EASTL/hash_set.h>
+#include <unordered_set>
 namespace AnyFX
 {
 struct ProgramBase : public Annotable
@@ -52,15 +52,15 @@ public:
 	bool supportsTransformFeedback;
 	unsigned patchSize;
 	unsigned numVsInputs;
-	eastl::vector<unsigned> vsInputSlots;
+	std::vector<unsigned> vsInputSlots;
 	unsigned numPsOutputs;
-	eastl::vector<unsigned> psOutputSlots;
-	eastl::string name;
+	std::vector<unsigned> psOutputSlots;
+	std::string name;
 	bool valid;
 
-	eastl::hash_set<eastl::string> activeVarblockNames;
-	eastl::hash_set<eastl::string> activeVariableNames;
-	eastl::map<eastl::string, unsigned> variableBlockOffsets;
+	std::unordered_set<std::string> activeVarblockNames;
+	std::unordered_set<std::string> activeVariableNames;
+	std::map<std::string, unsigned> variableBlockOffsets;
 	RenderStateBase* renderState;
 
 protected:

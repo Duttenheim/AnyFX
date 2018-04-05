@@ -10,7 +10,7 @@
 
 //------------------------------------------------------------------------------
 
-#include <EASTL/string.h>
+#include <string>
 // some thought it would be a good idea to define bool somewhere in some lib, so we undefine it here...
 #undef Bool
 
@@ -102,7 +102,7 @@ enum VariableType
 //------------------------------------------------------------------------------
 /**
 */
-static eastl::string 
+static std::string 
 TypeToString(const VariableType& type)
 {
 	switch (type)

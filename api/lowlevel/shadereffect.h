@@ -6,8 +6,8 @@
 	(C) 2016 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
-#include <EASTL/vector.h>
-#include <EASTL/string.h>
+#include <vector>
+#include <string>
 #include "shadertypes.h"
 #include "base/programbase.h"
 #include "base/shaderbase.h"
@@ -32,94 +32,94 @@ public:
 	/// returns program by index
 	ProgramBase* GetProgram(const unsigned i) const;
 	/// returns program by name
-	ProgramBase* GetProgram(const eastl::string& name) const;
+	ProgramBase* GetProgram(const std::string& name) const;
 	/// returns all programs as a list
-	const eastl::vector<ProgramBase*>& GetPrograms() const;
+	const std::vector<ProgramBase*>& GetPrograms() const;
 	/// returns true if program exists
-	bool HasProgram(const eastl::string& name) const;
+	bool HasProgram(const std::string& name) const;
 
 	/// returns number of shaders
 	unsigned GetNumShaders() const;
 	/// returns shader by index
 	ShaderBase* GetShader(const unsigned i) const;
 	/// returns shader by name
-	ShaderBase* GetShader(const eastl::string& name) const;
+	ShaderBase* GetShader(const std::string& name) const;
 	/// returns shaders as a list
-	const eastl::vector<ShaderBase*>& GetShaders() const;
+	const std::vector<ShaderBase*>& GetShaders() const;
 	/// returns true if shader exists
-	bool HasShader(const eastl::string& name) const;
+	bool HasShader(const std::string& name) const;
 
 	/// returns number of render states
 	unsigned GetNumRenderStates() const;
 	/// returns render state by index
 	RenderStateBase* GetRenderState(const unsigned i) const;
 	/// returns render state by name
-	RenderStateBase* GetRenderState(const eastl::string& name) const;
+	RenderStateBase* GetRenderState(const std::string& name) const;
 	/// returns render states as a list
-	const eastl::vector<RenderStateBase*>& GetRenderStates() const;
+	const std::vector<RenderStateBase*>& GetRenderStates() const;
 	/// returns true if render state exists
-	bool HasRenderState(const eastl::string& name) const;
+	bool HasRenderState(const std::string& name) const;
 
 	/// returns number of variables
 	unsigned GetNumVariables() const;
 	/// returns variable by index
 	VariableBase* GetVariable(const unsigned i) const;
 	/// returns variable by name
-	VariableBase* GetVariable(const eastl::string& name) const;
+	VariableBase* GetVariable(const std::string& name) const;
 	/// returns variables as a list
-	const eastl::vector<VariableBase*>& GetVariables() const;
+	const std::vector<VariableBase*>& GetVariables() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VariableBase*>& GetVariables(const unsigned group) const;
+	const std::vector<VariableBase*>& GetVariables(const unsigned group) const;
 	/// returns true if variable exists
-	bool HasVariable(const eastl::string& name) const;
+	bool HasVariable(const std::string& name) const;
 
 	/// returns number of varblocks
 	unsigned GetNumVarblocks() const;
 	/// returns varblock by index
 	VarblockBase* GetVarblock(const unsigned i) const;
 	/// returns varblock by name
-	VarblockBase* GetVarblock(const eastl::string& name) const;
+	VarblockBase* GetVarblock(const std::string& name) const;
 	/// returns varblocks as a list
-	const eastl::vector<VarblockBase*>& GetVarblocks() const;
+	const std::vector<VarblockBase*>& GetVarblocks() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VarblockBase*>& GetVarblocks(const unsigned group) const;
+	const std::vector<VarblockBase*>& GetVarblocks(const unsigned group) const;
 	/// returns true if varblock exists
-	bool HasVarblock(const eastl::string& name) const;
+	bool HasVarblock(const std::string& name) const;
 
 	/// returns number of varbuffers
 	unsigned GetNumVarbuffers() const;
 	/// returns varbuffer by index
 	VarbufferBase* GetVarbuffer(const unsigned i) const;
 	/// returns varbuffer by name
-	VarbufferBase* GetVarbuffer(const eastl::string& name) const;
+	VarbufferBase* GetVarbuffer(const std::string& name) const;
 	/// returns varbuffer as a list
-	const eastl::vector<VarbufferBase*>& GetVarbuffers() const;
+	const std::vector<VarbufferBase*>& GetVarbuffers() const;
 	/// returns varbuffers based on group
-	const eastl::vector<VarbufferBase*>& GetVarbuffers(const unsigned group) const;
+	const std::vector<VarbufferBase*>& GetVarbuffers(const unsigned group) const;
 	/// returns true if varbuffer exists
-	bool HasVarbuffer(const eastl::string& name) const;
+	bool HasVarbuffer(const std::string& name) const;
 
 	/// returns number of subroutine
 	unsigned GetNumSubroutines() const;
 	/// returns subroutine by index
 	SubroutineBase* GetSubroutineByName(const unsigned i) const;
 	/// returns subroutine by name
-	SubroutineBase* GetSubroutineByName(const eastl::string& name) const;
+	SubroutineBase* GetSubroutineByName(const std::string& name) const;
 	/// returns list of subroutines
-	const eastl::vector<SubroutineBase*>& GetSubroutines() const;
+	const std::vector<SubroutineBase*>& GetSubroutines() const;
 	/// returns true if subroutine exists
-	bool HasSubroutine(const eastl::string& name) const;
+	bool HasSubroutine(const std::string& name) const;
 
 	/// returns the number of samplers
 	unsigned GetNumSamplers() const;
 	/// returns sampler by index
 	SamplerBase* GetSampler(const unsigned i) const;
 	/// returns sampler by name
-	SamplerBase* GetSampler(const eastl::string& name) const;
+	SamplerBase* GetSampler(const std::string& name) const;
 	/// returns samplers as list
-	const eastl::vector<SamplerBase*>& GetSamplers() const;
+	const std::vector<SamplerBase*>& GetSamplers() const;
 	/// returns true if sampler exists
-	bool HasSampler(const eastl::string& name) const;
+	bool HasSampler(const std::string& name) const;
 private:
 	friend class StreamLoader;
 	friend class VarblockLoader;
@@ -136,31 +136,31 @@ private:
 	unsigned major;
 	unsigned minor;
 
-	eastl::map<eastl::string, ProgramBase*> programs;
-	eastl::vector<ProgramBase*> programsByIndex;
+	std::map<std::string, ProgramBase*> programs;
+	std::vector<ProgramBase*> programsByIndex;
 
-	eastl::map<eastl::string, ShaderBase*> shaders;
-	eastl::vector<ShaderBase*> shadersByIndex;
+	std::map<std::string, ShaderBase*> shaders;
+	std::vector<ShaderBase*> shadersByIndex;
 
-	eastl::map<eastl::string, VariableBase*> variables;
-	eastl::map<unsigned, eastl::vector<VariableBase*>> variablesByGroup;
-	eastl::vector<VariableBase*> variablesByIndex;
+	std::map<std::string, VariableBase*> variables;
+	std::map<unsigned, std::vector<VariableBase*>> variablesByGroup;
+	std::vector<VariableBase*> variablesByIndex;
 
-	eastl::map<eastl::string, RenderStateBase*> renderstates;
-	eastl::vector<RenderStateBase*> renderstatesByIndex;
+	std::map<std::string, RenderStateBase*> renderstates;
+	std::vector<RenderStateBase*> renderstatesByIndex;
 
-	eastl::map<eastl::string, SubroutineBase*> subroutines;
-	eastl::vector<SubroutineBase*> subroutinesByIndex;
+	std::map<std::string, SubroutineBase*> subroutines;
+	std::vector<SubroutineBase*> subroutinesByIndex;
 
-	eastl::map<eastl::string, VarblockBase*> varblocks;
-	eastl::map<unsigned, eastl::vector<VarblockBase*>> varblocksByGroup;
-	eastl::vector<VarblockBase*> varblocksByIndex;
+	std::map<std::string, VarblockBase*> varblocks;
+	std::map<unsigned, std::vector<VarblockBase*>> varblocksByGroup;
+	std::vector<VarblockBase*> varblocksByIndex;
 
-	eastl::map<eastl::string, VarbufferBase*> varbuffers;
-	eastl::map<unsigned, eastl::vector<VarbufferBase*>> varbuffersByGroup;
-	eastl::vector<VarbufferBase*> varbuffersByIndex;
+	std::map<std::string, VarbufferBase*> varbuffers;
+	std::map<unsigned, std::vector<VarbufferBase*>> varbuffersByGroup;
+	std::vector<VarbufferBase*> varbuffersByIndex;
 
-	eastl::map<eastl::string, SamplerBase*> samplers;
-	eastl::vector<SamplerBase*> samplersByIndex;
+	std::map<std::string, SamplerBase*> samplers;
+	std::vector<SamplerBase*> samplersByIndex;
 };
 } // namespace AnyFX

@@ -39,46 +39,11 @@ EffectFactory::Instance()
 	return instance;
 }
 
-
-//------------------------------------------------------------------------------
-/**
-*/
-Effect* 
-EffectFactory::CreateEffectFromFile(const eastl::string& file)
-{
-	EffectStreamLoader loader;
-	BinReader reader;
-	reader.SetPath(file.c_str());
-	reader.Open();
-	loader.SetReader(&reader);
-	Effect* retval = loader.Load();
-	loader.SetReader(0);
-	reader.Close();
-	return retval;
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-Effect*
-EffectFactory::CreateEffectFromMemory(void* data, size_t size)
-{
-	EffectStreamLoader loader;
-	BinReader* reader = new BinReader;
-	reader->Open((const char*)data, size);
-	loader.SetReader(reader);
-	Effect* retval = loader.Load();
-	loader.SetReader(0);
-	reader->Close();	
-	delete reader;
-	return retval;
-}
-
 //------------------------------------------------------------------------------
 /**
 */
 ShaderEffect*
-EffectFactory::CreateShaderEffectFromFile(const eastl::string& file)
+EffectFactory::CreateShaderEffectFromFile(const std::string& file)
 {
 	StreamLoader loader;
 	BinReader reader;

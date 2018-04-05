@@ -14,7 +14,7 @@
 
 namespace AnyFX
 {
-eastl::map<eastl::string, InternalEffectVariable*> EffectVariableStreamLoader::sharedVariables;
+std::map<std::string, InternalEffectVariable*> EffectVariableStreamLoader::sharedVariables;
 //------------------------------------------------------------------------------
 /**
 */

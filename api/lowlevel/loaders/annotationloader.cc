@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 #include "annotationloader.h"
 #include "annotable.h"
-#include "EASTL/string.h"
+#include <string>
 
 namespace AnyFX
 {
@@ -36,7 +36,7 @@ AnnotationLoader::Load(BinReader* reader, Annotable* object)
 	for (i = 0; i < numAnnotations; i++)
 	{
 		// read annotation name
-        eastl::string name = reader->ReadString().c_str();
+        std::string name = reader->ReadString().c_str();
 
 		// read type
 		VariableType type = (VariableType)reader->ReadInt();
@@ -60,7 +60,7 @@ AnnotationLoader::Load(BinReader* reader, Annotable* object)
 			break;
 		case String:
 			{
-                value.data.stringValue = new eastl::string;
+                value.data.stringValue = new std::string;
 				*value.data.stringValue = reader->ReadString().c_str();
 			}			
 			break;

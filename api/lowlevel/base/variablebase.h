@@ -7,7 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "annotable.h"
-#include <EASTL/string.h>
+#include <string>
 namespace AnyFX
 {
 struct VarblockBase;
@@ -20,9 +20,9 @@ public:
 	/// destructor
 	virtual ~VariableBase();
 
-	eastl::string name;
-	eastl::string signature;
-	eastl::string defaultValueString;
+	std::string name;
+	std::string signature;
+	std::string defaultValueString;
 
 	int format;
 	int access;
@@ -50,6 +50,6 @@ protected:
 	virtual void OnLoaded();
 
 	/// sets up default value
-	void SetupDefaultValue(const eastl::string& string);
+	void SetupDefaultValue(const std::string& string);
 };
 } // namespace AnyFX

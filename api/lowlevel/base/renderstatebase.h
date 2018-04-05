@@ -70,7 +70,7 @@ public:
 		float lineWidth;
 	} renderSettings, defaultRenderSettings;
 
-	eastl::string name;
+	std::string name;
 
 protected:
 	friend class RenderStateLoader;

@@ -52,8 +52,8 @@ ShaderLoader::Load(BinReader* reader, ShaderEffect* effect)
 
 	// get data
 	unsigned shaderType = reader->ReadInt();
-    eastl::string name = reader->ReadString().c_str();
-    eastl::string code = reader->ReadString().c_str();
+    std::string name = reader->ReadString().c_str();
+    std::string code = reader->ReadString().c_str();
 
 	shader->type = shaderType;
 	shader->name = name;

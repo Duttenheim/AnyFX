@@ -9,7 +9,7 @@
 #include "annotable.h"
 #include "variablebase.h"
 #include "enums.h"
-#include <EASTL/vector.h>
+#include <vector>
 namespace AnyFX
 {
 struct SamplerBase : public Annotable
@@ -37,10 +37,10 @@ public:
 
 	} samplerSettings;
 
-	eastl::string name;
+	std::string name;
 	unsigned binding;
 	unsigned set;
-	eastl::vector<VariableBase*> textureVariables;
+	std::vector<VariableBase*> textureVariables;
 
 protected:
 	friend class SamplerLoader;
