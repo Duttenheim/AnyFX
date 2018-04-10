@@ -233,6 +233,16 @@ ShaderEffect::HasVariable(const std::string& name) const
 //------------------------------------------------------------------------------
 /**
 */
+bool
+ShaderEffect::HasVariables(const unsigned group) const
+{
+	const auto it = this->variablesByGroup.find(group);
+	return it != this->variablesByGroup.end();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 unsigned
 ShaderEffect::GetNumVarblocks() const
 {
@@ -291,6 +301,16 @@ ShaderEffect::HasVarblock(const std::string& name) const
 //------------------------------------------------------------------------------
 /**
 */
+bool
+ShaderEffect::HasVarblocks(const unsigned group) const
+{
+	const auto it = this->varblocksByGroup.find(group);
+	return it != this->varblocksByGroup.end();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 unsigned
 ShaderEffect::GetNumVarbuffers() const
 {
@@ -344,6 +364,16 @@ bool
 ShaderEffect::HasVarbuffer(const std::string& name) const
 {
 	return this->varbuffers.find(name) != this->varbuffers.end();
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+bool
+ShaderEffect::HasVarbuffers(const unsigned group) const
+{
+	const auto it = this->varbuffersByGroup.find(group);
+	return it != this->varbuffersByGroup.end();
 }
 
 //------------------------------------------------------------------------------

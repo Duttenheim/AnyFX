@@ -159,8 +159,8 @@ AnyFXGenerateDependencies(const std::string& file, const std::vector<std::string
 			std::string line = output.substr(0, newline);
 			if (!line.empty())
 			{
-				while (line.front() == ' ')								line = line.substr(1);
-				while (line.back() == ' ' || line.back() == '\\')		line = line.substr(0, line.size() - 1);
+				while (!line.empty() && (line.front() == ' '))								line = line.substr(1);
+				while (!line.empty() && (line.back() == ' ' || line.back() == '\\'))		line = line.substr(0, line.size() - 1);
 				res.push_back(line);
 				output = output.substr(newline + 1);
 				newline = output.find_first_of('\n');

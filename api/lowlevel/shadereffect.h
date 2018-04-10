@@ -72,6 +72,8 @@ public:
 	const std::vector<VariableBase*>& GetVariables(const unsigned group) const;
 	/// returns true if variable exists
 	bool HasVariable(const std::string& name) const;
+	/// returns true if variables for given group exists
+	bool HasVariables(const unsigned group) const;
 
 	/// returns number of varblocks
 	unsigned GetNumVarblocks() const;
@@ -85,6 +87,8 @@ public:
 	const std::vector<VarblockBase*>& GetVarblocks(const unsigned group) const;
 	/// returns true if varblock exists
 	bool HasVarblock(const std::string& name) const;
+	/// returns true if varblocks for given group exists
+	bool HasVarblocks(const unsigned group) const;
 
 	/// returns number of varbuffers
 	unsigned GetNumVarbuffers() const;
@@ -98,6 +102,8 @@ public:
 	const std::vector<VarbufferBase*>& GetVarbuffers(const unsigned group) const;
 	/// returns true if varbuffer exists
 	bool HasVarbuffer(const std::string& name) const;
+	/// returns true if varbuffers for given group exists
+	bool HasVarbuffers(const unsigned group) const;
 
 	/// returns number of subroutine
 	unsigned GetNumSubroutines() const;

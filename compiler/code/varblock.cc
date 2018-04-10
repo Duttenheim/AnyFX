@@ -292,7 +292,6 @@ VarBlock::Compile(BinWriter& writer)
 	//writer.WriteBool(this->shared);
 	writer.WriteUInt(this->binding);
 	writer.WriteUInt(this->group);
-	//writer.WriteBool(this->push);
 
 	// write if annotation is used
 	writer.WriteBool(this->hasAnnotation);
