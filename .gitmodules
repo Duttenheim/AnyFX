@@ -1,6 +1,3 @@
-[submodule "exts/eastl"]
-	path = exts/eastl
-	url = https://github.com/gscept/EASTL.git
 [submodule "exts/glslang"]
 	path = exts/glslang
 	url = https://github.com/KhronosGroup/glslang.git
