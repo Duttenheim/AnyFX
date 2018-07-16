@@ -94,11 +94,21 @@ void PrintLexerException(pANTLR3_EXCEPTION ex, const char* file)
 	std::string errorMessage;
 	if (character == 10)
 	{
-		errorMessage = Format("Unexpected newline at: %d:%d in file %s\n", line, row, fileString.c_str());
+		//errorMessage = Format("Unexpected newline at: %d:%d in file %s\n", line, row, fileString.c_str());
+#if _MSC_VER
+		errorMessage = Format("%s(%s): error: Unexpected newline", fileString.c_str(), line);
+#else
+		errorMessage = Format("%s:%s: error: Unexpected newline\n", fileString.c_str(), line);
+#endif
 	}
 	else
 	{
-		errorMessage = Format("Lexer error: %s '%c' at %d:%d in file %s\n", exceptionAsString, character, line, row, fileString.c_str());
+		//errorMessage = Format("Lexer error: %s '%c' at %d:%d in file %s\n", exceptionAsString, character, line, row, fileString.c_str());
+#if _MSC_VER
+		errorMessage = Format("%s(%s): error: Unexpected character '%c', %s", fileString.c_str(), line, character, exceptionAsString);
+#else
+		errorMessage = Format("%s:%s: error: Unexpected character '%c', %s\n", fileString.c_str(), line, character, exceptionAsString);
+#endif
 	}
 	lexerErrorBuffer.append(errorMessage);
 }

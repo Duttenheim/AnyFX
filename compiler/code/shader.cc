@@ -457,8 +457,57 @@ Shader::CompileSPIRV(const std::string& code, Generator* generator)
 	const Header& header = generator->GetHeader();
 	if (!shaderObject->parse(&DefaultResources, 450, EProfile::ECoreProfile, true, true, messages))
 	{
-		std::string message = shaderObject->getInfoLog();
-		generator->Error(message);
+		const char* ptr = shaderObject->getInfoLog();
+		char* message = new char[strlen(ptr)];
+		memcpy(message, ptr, strlen(ptr));
+		std::string res;
+
+		char* err = strstr(message, "ERROR:");
+		char* war = strstr(message, "WARNING:");
+		if (err)
+		{
+			char* lineRow = message + sizeof("ERROR:");
+			lineRow = strtok(lineRow, "\n");
+			char* rhs = strrchr(lineRow, ':') + 3;
+
+#if _MSC_VER
+			std::string drive = strtok(lineRow, ":") + std::string(":");
+			std::string path = strtok(NULL, ":");
+			path = drive + path;
+#else
+			std::string path = strtok(lineRow, ":");
+#endif			
+
+			char* line = strtok(NULL, ":");
+#if _MSC_VER
+			res = Format("%s(%d): error: %s", path.c_str(), atoi(line), rhs);
+#else
+			res = Format("%s:%d: error: %s\n", path.c_str(), atoi(line), rhs);
+#endif
+		}
+		else
+		{
+			char* lineRow = message + sizeof("WARNING:");
+			lineRow = strtok(lineRow, "\n");
+			char* rhs = strrchr(lineRow, ':') + 3;
+
+#if _MSC_VER
+			std::string drive = strtok(lineRow, ":") + std::string(":");
+			std::string path = strtok(NULL, ":");
+			path = drive + path;
+#else
+			std::string path = strtok(lineRow, ":");
+#endif			
+
+			char* line = strtok(NULL, ":");
+#if _MSC_VER
+			res = Format("%s(%d): warning: %s", path.c_str(), atoi(line), rhs);
+#else
+			res = Format("%s:%d: warning: %s\n", path.c_str(), atoi(line), rhs);
+#endif
+		}
+		delete[] message;
+		generator->Error(res);
 	}
 
 	this->glslShader = shaderObject;
@@ -755,8 +804,8 @@ Shader::GLSLProblemKhronos(Generator* generator, std::stringstream& stream)
 		char* data = new char[line.size() + 1];
 		strcpy(data, line.c_str());
 
-		char* errorMsg = strstr(data, "ERROR: ");
-		char* warningMsg = strstr(data, "WARNING: ");
+		char* errorMsg = strstr(data, "ERROR:");
+		char* warningMsg = strstr(data, "WARNING:");
 
 		// the error log can contain either warning or error
 		// in some cases we may also have problem padding, but we throw that part away since we handle it ourselves
@@ -774,20 +823,32 @@ Shader::GLSLProblemKhronos(Generator* generator, std::stringstream& stream)
 				if (fileValue == 0)
 				{
 					int lineValue = atoi(line);
-					std::string msg = Format("GLSL error: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): error: %s", this->func.GetFile().c_str(), lineValue, lineRow);
+#else
+					std::string msg = Format("%s:%d: error: %s\n", this->func.GetFile().c_str(), lineValue, lineRow);
+#endif
 					generator->Error(msg);
 				}
 				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
 				{
 					int lineValue = atoi(line);
 					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
-					std::string msg = Format("GLSL error in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): error: function '%s' %s", func.first.c_str(), lineValue, func.second.c_str(), lineRow);
+#else
+					std::string msg = Format("%s:%d: error: function '%s' %s\n", func.first.c_str(), lineValue, func.second.c_str(), lineRow);
+#endif
 					generator->Error(msg);
 				}
 				else
 				{
 					int lineValue = atoi(line);
-					std::string msg = Format("GLSL error: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): error: shader '%s' %s\n", this->file.c_str(), lineValue, this->name.c_str(), lineRow);
+#else
+					std::string msg = Format("%s:%d: error: shader '%s' %s\n", this->file.c_str(), lineValue, this->name.c_str(), lineRow);
+#endif
 					generator->Error(msg);
 				}
 			}
@@ -806,20 +867,32 @@ Shader::GLSLProblemKhronos(Generator* generator, std::stringstream& stream)
 				if (fileValue == 0)
 				{
 					int lineValue = atoi(line);
-					std::string msg = Format("GLSL warning: %s at row %d in file %s.\n", lineRow, lineValue, this->func.GetFile().c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): warning: %s", this->func.GetFile().c_str(), lineValue, lineRow);
+#else
+					std::string msg = Format("%s:(%d): warning: %s\n", this->func.GetFile().c_str(), lineValue, lineRow);
+#endif
 					generator->Warning(msg);
 				}
 				else if (this->indexToFileMap.find(fileValue) != this->indexToFileMap.end())
 				{
 					int lineValue = atoi(line);
 					const std::pair<std::string, std::string>& func = this->indexToFileMap[fileValue];
-					std::string msg = Format("GLSL warning in function '%s' at row %d:%s in file %s.\n", func.first.c_str(), lineValue, lineRow, func.second.c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): warning: function '%s' %s", func.first.c_str(), lineValue, func.second.c_str(), lineRow);
+#else
+					std::string msg = Format("%s:(%d): warning: function '%s'%s\n", func.first.c_str(), lineValue, func.second.c_str(), lineRow);
+#endif
 					generator->Warning(msg);
 				}
 				else
 				{
 					int lineValue = atoi(line);
-					std::string msg = Format("GLSL warning: shader '%s' at row %d:%s in file %s.\n", this->name.c_str(), lineValue, lineRow, this->file.c_str());
+#if _MSC_VER
+					std::string msg = Format("%s(%d): warning: shader '%s' %s", this->file.c_str(), lineValue, this->name.c_str(), lineRow);
+#else
+					std::string msg = Format("%s:(%d): warning: shader '%s' %s\n", this->file.c_str(), lineValue, this->name.c_str(), lineRow);
+#endif
 					generator->Warning(msg);
 				}
 			}

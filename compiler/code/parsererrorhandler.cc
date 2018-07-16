@@ -166,7 +166,12 @@ PrintParserException(pANTLR3_EXCEPTION ex, pANTLR3_UINT8* tokenNames)
 	std::string fileString(*(std::string*)token->custom);
 
 	// format error and save to buffer
-	std::string errorMessage = Format("Syntax error: %s at %d:%d in file '%s'.\n", exceptionAsString.c_str(), line, row, fileString.c_str());
+	//std::string errorMessage = Format("Syntax error: %s at %d:%d in file '%s'.\n", exceptionAsString.c_str(), line, row, fileString.c_str());
+#if _MSC_VER
+	std::string errorMessage = Format("%s(%d): error: %s", fileString.c_str(), line, exceptionAsString.c_str());
+#else
+	std::string errorMessage = Format("%s:%d: error: %s\n", fileString.c_str(), line, exceptionAsString.c_str());
+#endif
 	parserErrorBuffer.append(errorMessage);
 }
 

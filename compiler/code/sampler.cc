@@ -54,7 +54,7 @@ Sampler::Sampler() :
 	boolFlags[SamplerRow::Comparison] = false;
 	
 	floatFlags[SamplerRow::LodBias] = 0.0f;
-	floatFlags[SamplerRow::MinLod] = -FLT_MAX;
+	floatFlags[SamplerRow::MinLod] = 0;
 	floatFlags[SamplerRow::MaxLod] = FLT_MAX;
 	floatFlags[SamplerRow::MaxAnisotropic] = 16.0f;
 
