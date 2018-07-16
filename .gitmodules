@@ -1,6 +1,6 @@
 [submodule "exts/glslang"]
 	path = exts/glslang
-	url = https://github.com/KhronosGroup/glslang.git
+	url = https://github.com/gscept/glslang.git
 [submodule "exts/glew"]
 	path = exts/glew
 	url = https://github.com/gscept/glew.git
